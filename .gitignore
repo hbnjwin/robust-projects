@@ -1,0 +1,43 @@
+# Delphi / Pascal build outputs
+*.exe
+*.dll
+*.bpl
+*.dcp
+*.so
+*.dylib
+
+# Delphi compiled units
+*.dcu
+*.o
+*.ppu
+*.compiled
+
+# Delphi local/project user files
+*.local
+*.identcache
+*.stat
+*.skincfg
+*.dres
+*.dxsettings
+*.groupproj.local
+
+# Build output directories
+**/Win32/Debug/
+**/Win32/Release/
+**/Win64/Debug/
+**/Win64/Release/
+**/bin/
+**/obj/
+
+# ERP specific
+/tj2603/bin/
+
+# IDE settings
+*.dsk
+*.tds
+
+# Logs
+*.log
+log.ini
+
+projects
