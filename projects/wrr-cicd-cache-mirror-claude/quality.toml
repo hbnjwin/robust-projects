@@ -8,40 +8,31 @@ score = 4
 rationale = "cache key用BRANCH_SAFE-deps-DEPS_HASH格式,基于package-lock.json哈希,逻辑正确"
 
 [[criterion]]
-name = "branch_cache_isolation"
-description = "[Explicit] 多分支并行构建时缓存是否隔离,不同分支的缓存是否互不干扰。1:无隔离,所有分支共用缓存;2:仅靠key前缀区分,无目录隔离;3:分支独立目录但同分支并行无保护;4:分支隔离+基本并行保护;5:分支独立目录+文件锁+CI级并行控制,三层保护"
+name = "branch_isolation_and_parallel_protection"
+description = "[Explicit] 多分支和同分支并行构建时缓存隔离与冲突保护的综合能力——不同分支缓存是否互不干扰,同一分支并行构建时是否有锁保护防止缓存覆盖。1:无隔离无保护;2:仅靠key前缀区分,无目录隔离无锁;3:分支独立目录隔离,但同分支并行构建无锁保护;4:分支隔离+文件锁或CI级并行控制二选一;5:分支独立目录+flock文件锁+CI disableConcurrentBuilds三层保护"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "分支独立目录+flock文件锁+Jenkins disableConcurrentBuilds,三层保护完整"
+rationale = "分支独立目录+flock文件锁保护缓存读写+Jenkins disableConcurrentBuilds,三层保护完整"
 
 [[criterion]]
-name = "mirror_source_fallback"
-description = "[Explicit] 是否配置国内镜像源解决依赖下载超时,是否有备用源fallback机制。1:未配置镜像源;2:配置了镜像但无fallback;3:有主备源切换但缺少retry参数;4:镜像源+retry参数或探测fallback;5:主备源+retry+超时配置+探测机制全覆盖"
+name = "mirror_source_and_retry"
+description = "[Explicit] 镜像源配置和依赖安装失败重试的综合容错能力——是否配置国内镜像解决下载超时,是否有备用源fallback和重试退避机制。1:未配置镜像源无重试;2:仅配置镜像或仅有简单重试;3:镜像源+fallback但缺少retry参数或退避策略;4:镜像源+retry参数+指数退避重试+主备切换;5:完整的镜像+retry+退避+主备切换+超时配置全覆盖"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = ".npmrc仅配registry,build.sh用curl ping探测主源可达性后fallback,无retry参数"
+rationale = ".npmrc仅配registry,build.sh用curl探测主源可达性后fallback,但缺少npm install层面的重试退避机制"
 
 [[criterion]]
-name = "parallel_build_conflict"
-description = "[Explicit] 同一分支上并行构建时缓存读写是否有冲突保护机制。1:无任何保护;2:仅靠分支名隔离,同分支并行仍冲突;3:有基本锁机制但不完善;4:文件锁或CI级并行控制二选一;5:flock文件锁+CI disableConcurrentBuilds双重保护"
+name = "cache_hit_rate_improvement"
+description = "[Explicit] 修复后缓存命中率能否从零有效提升——题目核心问题是缓存命中率为零,需要验证修复后的缓存存储/恢复机制和生命周期管理是否能确保后续构建命中缓存。1:未解决命中率问题;2:key逻辑修复但缺少缓存生命周期管理(无过期清理);3:key正确+存储恢复机制但无过期策略;4:key正确+存储恢复+过期清理机制;5:完整的缓存命中保障含key+存储+恢复+过期清理+命中率校验"
 type = "likert"
 points = 5
 weight = 1.0
-score = 5
-rationale = "flock文件锁保护缓存读写+Jenkins disableConcurrentBuilds防止同分支并行,完整解决"
-
-[[criterion]]
-name = "retry_and_resilience"
-description = "[Implicit] 依赖安装失败时是否有重试和容错机制。1:无重试直接失败;2:简单重试无退避;3:有重试但缺少退避策略;4:指数退避重试+主备切换;5:完整的重试+退避+主备切换+超时配置"
-type = "likert"
-points = 5
-weight = 1.0
-score = 3
-rationale = "curl探测后fallback,但缺少npm install层面的重试和退避机制"
+score = 4
+rationale = "key修复+缓存存储恢复机制完整,有CACHE_MAX_AGE_DAYS过期清理防止缓存膨胀"
 
 [[criterion]]
 name = "jenkinsfile_integration"
@@ -51,12 +42,3 @@ points = 5
 weight = 1.0
 score = 4
 rationale = "一次写出合理的pipeline,有timeout(30min)、disableConcurrentBuilds、分阶段缓存"
-
-[[criterion]]
-name = "execution_efficiency"
-description = "[Implicit] 任务执行效率和代码质量,是否高效完成且代码简洁。1:大量返工和错误;2:多次重写关键文件;3:有返工但最终完成,代码偏啰嗦;4:一次完成无返工,代码简洁;5:最少工具调用一次完成,代码精炼无冗余"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "18次工具调用无返工,代码简洁聚焦,一次性完成所有修改"
