@@ -8,26 +8,44 @@ score = 4
 rationale = "cache key用BRANCH_SAFE-deps-DEPS_HASH格式,基于package-lock.json哈希,逻辑正确"
 
 [[criterion]]
-name = "branch_isolation_and_parallel_protection"
-description = "[Explicit] 多分支和同分支并行构建时缓存隔离与冲突保护的综合能力——不同分支缓存是否互不干扰,同一分支并行构建时是否有锁保护防止缓存覆盖。1:无隔离无保护;2:仅靠key前缀区分,无目录隔离无锁;3:分支独立目录隔离,但同分支并行构建无锁保护;4:分支隔离+文件锁或CI级并行控制二选一;5:分支独立目录+flock文件锁+CI disableConcurrentBuilds三层保护"
+name = "branch_cache_isolation"
+description = "[Explicit] 不同分支的缓存是否通过独立目录实现物理隔离——仅评估分支间隔离能力,不涉及同分支并行锁。1:所有分支共用一个缓存目录;2:仅靠key前缀区分,无目录隔离;3:有分支命名空间但未做目录级隔离;4:分支独立缓存目录,物理隔离完整;5:独立目录+缓存大小监控+自动清理过期分支缓存"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "分支独立目录+flock文件锁保护缓存读写+Jenkins disableConcurrentBuilds,三层保护完整"
+rationale = "分支独立缓存目录,物理隔离完整,不同分支缓存互不干扰"
 
 [[criterion]]
-name = "mirror_source_and_retry"
-description = "[Explicit] 镜像源配置和依赖安装失败重试的综合容错能力——是否配置国内镜像解决下载超时,是否有备用源fallback和重试退避机制。1:未配置镜像源无重试;2:仅配置镜像或仅有简单重试;3:镜像源+fallback但缺少retry参数或退避策略;4:镜像源+retry参数+指数退避重试+主备切换;5:完整的镜像+retry+退避+主备切换+超时配置全覆盖"
+name = "parallel_build_protection"
+description = "[Explicit] 同一分支并行构建时是否有锁机制防止缓存读写冲突——仅评估并行构建的互斥保护,不涉及分支间隔离。1:无任何锁或并行控制机制;2:仅文档提及需注意并行但无实现;3:有基本锁但不完善(如仅锁写不锁读);4:flock文件锁或CI级disableConcurrentBuilds二选一;5:flock文件锁+CI disableConcurrentBuilds双重保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "flock文件锁保护缓存读写+Jenkins disableConcurrentBuilds双重保护"
+
+[[criterion]]
+name = "mirror_source_config"
+description = "[Explicit] 是否正确配置国内镜像源替代默认源解决下载超时——仅评估镜像源配置和主备切换,不涉及重试退避。1:未配置任何镜像源;2:配置了镜像但格式或地址有误;3:配置正确但无备用源fallback;4:.npmrc配置镜像+有主备源切换机制;5:主备源+可达性探测+自动切换+配置持久化"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = ".npmrc仅配registry,build.sh用curl探测主源可达性后fallback,但缺少npm install层面的重试退避机制"
+rationale = ".npmrc仅配registry,build.sh用curl探测主源可达性后切换备用源"
+
+[[criterion]]
+name = "retry_resilience"
+description = "[Explicit] 依赖安装失败时是否有重试退避机制——仅评估npm install层面的重试和退避策略,不涉及镜像源配置。1:失败后直接报错退出;2:简单循环重试无退避;3:有固定间隔重试;4:指数退避重试(如5s-10s-20s);5:指数退避+最大重试次数+超时配置+失败日志"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "缺少npm install层面的重试退避机制,安装失败后无自动重试"
 
 [[criterion]]
 name = "cache_hit_rate_improvement"
-description = "[Explicit] 修复后缓存命中率能否从零有效提升——题目核心问题是缓存命中率为零,需要验证修复后的缓存存储/恢复机制和生命周期管理是否能确保后续构建命中缓存。1:未解决命中率问题;2:key逻辑修复但缺少缓存生命周期管理(无过期清理);3:key正确+存储恢复机制但无过期策略;4:key正确+存储恢复+过期清理机制;5:完整的缓存命中保障含key+存储+恢复+过期清理+命中率校验"
+description = "[Explicit] 修复后缓存命中率能否从零有效提升——题目核心问题是缓存命中率为零,需要验证修复后的缓存存储恢复机制和生命周期管理是否能确保后续构建命中缓存。1:未解决命中率问题;2:key逻辑修复但缺少缓存生命周期管理;3:key正确+存储恢复机制但无过期策略;4:key正确+存储恢复+过期清理机制;5:完整的缓存命中保障含key+存储+恢复+过期清理+命中率校验"
 type = "likert"
 points = 5
 weight = 1.0
