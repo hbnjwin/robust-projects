@@ -54,7 +54,7 @@ rationale = "key生成逻辑修复后理论上可命中缓存,但缺少缓存过
 
 [[criterion]]
 name = "jenkinsfile_integration"
-description = "[Implicit] Jenkinsfile流水线集成质量,是否能在CI环境中实际可用。1:未修改Jenkinsfile;2:Jenkinsfile有语法错误或逻辑缺陷;3:可用但有返工或冗余;4:一次写出合理pipeline,有timeout等保护;5:pipeline结构清晰,缓存/构建/报告分阶段,有完善的异常处理"
+description = "[Explicit] Jenkinsfile流水线集成质量,构建脚本是否能在CI环境中实际可用且一次写出无返工。1:未修改Jenkinsfile;2:Jenkinsfile有语法错误或逻辑缺陷;3:可用但有返工或冗余;4:一次写出合理pipeline,有timeout等保护;5:pipeline结构清晰,缓存/构建/报告分阶段,有完善的异常处理"
 type = "likert"
 points = 5
 weight = 1.0

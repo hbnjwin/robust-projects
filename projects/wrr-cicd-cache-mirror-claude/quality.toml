@@ -31,8 +31,8 @@ description = "[Explicit] 是否正确配置国内镜像源替代默认源解决
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = ".npmrc仅配registry,build.sh用curl探测主源可达性后切换备用源"
+score = 4
+rationale = ".npmrc配置npmmirror镜像源+build.sh有curl探测主备源切换fallback机制"
 
 [[criterion]]
 name = "retry_resilience"
@@ -40,8 +40,8 @@ description = "[Explicit] 依赖安装失败时是否有重试退避机制——
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "缺少npm install层面的重试退避机制,安装失败后无自动重试"
+score = 1
+rationale = "npm install失败后直接报错退出,无重试退避机制"
 
 [[criterion]]
 name = "cache_hit_rate_improvement"
@@ -54,7 +54,7 @@ rationale = "key修复+缓存存储恢复机制完整,有CACHE_MAX_AGE_DAYS过�
 
 [[criterion]]
 name = "jenkinsfile_integration"
-description = "[Implicit] Jenkinsfile流水线集成质量,是否能在CI环境中实际可用。1:未修改Jenkinsfile;2:Jenkinsfile有语法错误或逻辑缺陷;3:可用但有返工或冗余;4:一次写出合理pipeline,有timeout等保护;5:pipeline结构清晰,缓存/构建/报告分阶段,有完善的异常处理"
+description = "[Explicit] Jenkinsfile流水线集成质量,构建脚本是否能在CI环境中实际可用且一次写出无返工。1:未修改Jenkinsfile;2:Jenkinsfile有语法错误或逻辑缺陷;3:可用但有返工或冗余;4:一次写出合理pipeline,有timeout等保护;5:pipeline结构清晰,缓存/构建/报告分阶段,有完善的异常处理"
 type = "likert"
 points = 5
 weight = 1.0
