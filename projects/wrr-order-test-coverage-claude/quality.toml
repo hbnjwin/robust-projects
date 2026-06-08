@@ -1,0 +1,71 @@
+[[criterion]]
+name = "test_case_design_completeness"
+description = "测试用例设计是否系统覆盖了核心接口的正常和异常路径。1:仅保留占位测试;2:少量测试覆盖个别路径;3:覆盖主要路径但数量偏少;4:系统覆盖多数正常和异常路径;5:全面覆盖所有分支含边界条件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "从1个占位测试扩展到9个，系统性覆盖了createOrder/cancelOrder/refundOrder的正常和异常路径"
+
+[[criterion]]
+name = "exception_branch_coverage"
+description = "异常分支覆盖深度，是否针对null/empty参数、not found、状态冲突等异常编写了测试。1:无异常测试;2:仅1-2个基本异常;3:覆盖主要异常但有遗漏;4:详细覆盖多种异常场景;5:穷举所有异常分支含组合场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "9个测试详细覆盖了null/empty items、order not found、已发货订单取消、已退款重复退款等异常分支"
+
+[[criterion]]
+name = "test_code_quality_and_naming"
+description = "测试代码结构、命名规范和断言质量。1:测试代码混乱无规范;2:基本可读但命名随意;3:结构合理命名一般;4:命名规范断言明确结构清晰;5:测试代码堪称范例具有良好的文档性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "采用methodUnderTest_scenario_expectedResult命名规范，断言明确，结构清晰"
+
+[[criterion]]
+name = "task_planning_and_systematic_execution"
+description = "是否有清晰的任务规划和系统化的执行路径。1:无规划随意操作;2:无显式规划直接编码;3:有隐式规划但不系统;4:使用任务管理工具系统拆分并逐步执行;5:规划精细执行高效无冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用TaskCreate拆分为4个子任务，逐步执行并更新状态，执行路径清晰有序"
+
+[[criterion]]
+name = "engineering_minimalism"
+description = "是否避免过度工程，只产出任务必需的文件。1:大量无关文件和文档;2:有明显多余产出;3:基本聚焦但有少量多余;4:只创建必要文件无多余产出;5:极简精准零冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "只创建了必要的模型类和测试文件，无多余产出"
+
+[[criterion]]
+name = "test_execution_and_verification"
+description = "是否实际运行测试并验证结果。1:未运行测试;2:运行但未关注结果;3:运行并确认通过;4:运行验证全部通过并检查输出;5:运行验证通过且详细分析覆盖率数据"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "运行mvn test验证9个测试全部通过，0失败0错误，并详细检查了测试输出"
+
+[[criterion]]
+name = "coverage_improvement_effectiveness"
+description = "最终测试覆盖率的实际提升效果。1:覆盖率无变化;2:略有提升但仍不足;3:有一定提升覆盖主要路径;4:显著提升系统覆盖核心接口;5:极大提升接近完全覆盖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "9个测试系统覆盖三大核心接口的正常和异常路径，覆盖率提升显著"
+
+[[criterion]]
+name = "delivery_focus_and_scope_control"
+description = "是否专注于测试编写任务，控制任务边界不做无关操作。1:大量无关操作;2:有较多越界行为;3:基本聚焦但有少量越界;4:专注任务边界清晰;5:高度聚焦零越界"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "专注于测试编写任务，完成后即输出总结，任务边界清晰"
