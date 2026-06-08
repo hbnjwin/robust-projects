@@ -1,0 +1,41 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>产品对比</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="page-header">
+    <h1>产品对比</h1>
+    <p class="page-desc">选择 2-4 个产品进行参数对比</p>
+  </header>
+
+  <nav class="category-tabs" id="category-tabs">
+    <button class="cat-tab active" data-category="all">全部</button>
+  </nav>
+
+  <section class="products" id="product-grid"></section>
+
+  <div class="compare-bar" id="compare-bar">
+    <span class="compare-count">已选 <strong id="select-count">0</strong> / 4 个产品</span>
+    <button class="compare-btn" id="compare-btn" disabled>开始对比</button>
+  </div>
+
+  <div id="compare-area" class="compare-area hidden">
+    <div class="compare-toolbar">
+      <input type="text" class="search-input" id="search-input" placeholder="搜索参数...">
+      <label class="diff-toggle">
+        <input type="checkbox" id="diff-only"> 仅显示差异项
+      </label>
+      <button class="toolbar-btn collapse-all-btn" id="collapse-all-btn">全部折叠</button>
+      <button class="toolbar-btn expand-all-btn" id="expand-all-btn">全部展开</button>
+      <button class="toolbar-btn back-btn" id="back-btn">返回选择</button>
+    </div>
+    <div class="compare-table-wrapper" id="compare-table-wrapper"></div>
+  </div>
+
+  <script type="module" src="js/app.js"></script>
+</body>
+</html>
