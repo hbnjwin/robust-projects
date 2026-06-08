@@ -20,5 +20,5 @@ public class OrderService {
     }
 
     private double calculateTotal(OrderRequest req) { return 0.0; }
-    private Order findOrder(String id) { return new Order(id, "user1", "CREATED", 0.0); }
+    Order findOrder(String id) { return new Order(id, "user1", "CREATED", 0.0); }
 }
