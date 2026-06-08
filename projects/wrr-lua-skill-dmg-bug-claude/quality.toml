@@ -1,0 +1,71 @@
+[[criterion]]
+name = "root_cause_localization"
+description = "能否准确定位Lua技能系统中伤害重复计算的根因。1:完全未找到bug位置;2:找到相关文件但定位错误;3:定位到cast_skill函数但分析不完整;4:正确识别apply_damage双重调用但探索路径曲折;5:直接精准定位根因，诊断路径高效"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "用Agent快速定位后直接读取分析，诊断路径精准高效"
+
+[[criterion]]
+name = "code_exploration_efficiency"
+description = "探索项目代码的效率和工具使用合理性。1:大量无效搜索，工具调用超过20次;2:多次冗余搜索，效率低下;3:存在冗余Glob/Read但最终找到目标;4:工具调用合理，少量冗余;5:最少工具调用精准到达目标文件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "仅5个工具调用，Agent一次性完成项目探索"
+
+[[criterion]]
+name = "damage_calculation_logic_analysis"
+description = "对伤害计算逻辑（base_damage vs effect damage）和apply_effect内部机制的理解深度。1:完全未理解伤害计算流程;2:仅表面描述问题;3:识别了双重调用但未分析内部机制;4:区分了apply_effect内部处理与外层冗余调用;5:深入分析了完整伤害计算链路和各函数职责"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "明确区分了apply_effect内部处理与外层冗余调用的关系"
+
+[[criterion]]
+name = "downstream_impact_awareness"
+description = "是否分析了bug对下游系统（事件回调、吸血、统计等）的连锁影响。1:完全未考虑影响范围;2:仅提到伤害数值错误;3:提到了事件重复触发但未展开;4:分析了事件回调链和下游逻辑影响;5:全面分析了吸血、伤害统计、战斗日志等所有下游系统的影响"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了吸血、伤害统计等下游回调链的潜在影响"
+
+[[criterion]]
+name = "fix_precision_and_scope"
+description = "修复是否精准最小化，是否只改了必要的代码。1:修改了错误位置或引入新bug;2:修复正确但改动范围过大;3:修复正确但包含不必要的重构;4:精准删除冗余代码，只改一个文件;5:最小化修复且验证了不影响其他技能类型"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "同样精准删除冗余代码，修改范围最小化"
+
+[[criterion]]
+name = "explanation_and_reporting"
+description = "最终解释和报告的质量、结构和深度。1:无总结或总结错误;2:简单描述了改动但未解释原因;3:说明了根因和修复方式但结构一般;4:分层总结根因、影响范围和修复方式;5:完整报告覆盖根因、影响范围、修复方式，并附带验证说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分根因、影响范围、修复方式三层总结，结构清晰"
+
+[[criterion]]
+name = "workflow_streamlining"
+description = "整体工作流是否精简高效，是否存在不必要的操作步骤。1:超过30个轮次，大量循环操作;2:20+轮次，含多次冗余操作;3:15-20轮次，部分冗余但不影响结果;4:10-15轮次，流程较为精简;5:10轮次以内，每步都有明确目的"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "10个assistant轮次，流程精简无冗余"
+
+[[criterion]]
+name = "combat_log_cross_validation"
+description = "是否利用战斗日志交叉验证bug分析结论。1:未读取战斗日志;2:读取了但未用于分析;3:读取并作为辅助参考;4:用日志验证了受影响技能范围;5:用日志精确验证了哪些技能受影响、伤害数值偏差量"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "明确用日志验证了FireBall受影响、IceLance正常的推论"
