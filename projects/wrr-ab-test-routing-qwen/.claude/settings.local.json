@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//c/Users/wt.home/**)",
+      "Bash(pip install:*)",
+      "Bash(python -m pytest abtest_service/tests/test_abtest.py -v)"
+    ]
+  }
+}
