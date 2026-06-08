@@ -18,12 +18,12 @@ rationale = "通过分支命名空间隔离缓存目录,不同分支缓存物理
 
 [[criterion]]
 name = "parallel_build_protection"
-description = "[Explicit] 同一分支并行构建时是否有锁机制防止缓存读写冲突——仅评估并行构建的互斥保护,不涉及分支间隔离。1:无任何锁或并行控制机制;2:仅文档提及需注意并行但无实现;3:有基本锁但不完善(如仅锁写不锁读);4:flock文件锁或CI级disableConcurrentBuilds二选一;5:flock文件锁+CI disableConcurrentBuilds双重保护"
+description = "[Explicit] 同一分支并行构建时是否有锁机制防止缓存读写冲突——仅评估并行构建的互斥保护,不涉及分支间隔离。1:无任何锁或并行控制机制;2:仅文档或注释提及需注意并行但无实现;3:有基本锁但不完善(如仅锁写不锁读);4:flock文件锁或CI级disableConcurrentBuilds二选一;5:flock文件锁+CI disableConcurrentBuilds双重保护"
 type = "likert"
 points = 5
 weight = 1.0
-score = 1
-rationale = "无flock文件锁也无CI级并行控制,同一分支并行构建时缓存可能互相覆盖"
+score = 2
+rationale = "build.sh注释中提及并行构建风险但未实现flock文件锁或CI级disableConcurrentBuilds"
 
 [[criterion]]
 name = "mirror_source_config"
@@ -49,8 +49,8 @@ description = "[Explicit] 修复后缓存命中率能否从零有效提升——
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "key生成逻辑修复后理论上可命中缓存,但缺少缓存过期清理和生命周期管理机制"
+score = 3
+rationale = "key正确+缓存存储恢复机制可用,但缺少缓存过期清理和生命周期管理策略"
 
 [[criterion]]
 name = "jenkinsfile_integration"
