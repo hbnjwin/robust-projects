@@ -1,0 +1,62 @@
+[[criterion]]
+name = "cache_key_generation"
+description = "[Explicit] 缓存key生成逻辑是否正确修复,能否根据分支名+依赖哈希生成唯一key确保缓存精准命中。1:未修改key生成逻辑;2:key格式不合理或缺少关键因子;3:基本可用但缺少部分因子(如target);4:key包含分支+依赖哈希,逻辑完整;5:key设计精准,支持多种lock文件,命中率最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "cache key用branch-depHash-target三段式,支持多种lock文件哈希,逻辑完整"
+
+[[criterion]]
+name = "branch_cache_isolation"
+description = "[Explicit] 多分支并行构建时缓存是否隔离,不同分支的缓存是否互不干扰。1:无隔离,所有分支共用缓存;2:仅靠key前缀区分,无目录隔离;3:分支独立目录但同分支并行无保护;4:分支隔离+基本并行保护;5:分支独立目录+文件锁+CI级并行控制,三层保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过分支命名空间隔离缓存目录,但同一分支并行构建无锁保护"
+
+[[criterion]]
+name = "mirror_source_fallback"
+description = "[Explicit] 是否配置国内镜像源解决依赖下载超时,是否有备用源fallback机制。1:未配置镜像源;2:配置了镜像但无fallback;3:有主备源切换但缺少retry参数;4:镜像源+retry参数或探测fallback;5:主备源+retry+超时配置+探测机制全覆盖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = ".npmrc配置npmmirror+retry参数(retries=3,timeout),build.sh有主备源自动切换"
+
+[[criterion]]
+name = "parallel_build_conflict"
+description = "[Explicit] 同一分支上并行构建时缓存读写是否有冲突保护机制。1:无任何保护;2:仅靠分支名隔离,同分支并行仍冲突;3:有基本锁机制但不完善;4:文件锁或CI级并行控制二选一;5:flock文件锁+CI disableConcurrentBuilds双重保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "仅靠分支名隔离,同一分支上两个并行构建仍会互相覆盖缓存,无锁机制"
+
+[[criterion]]
+name = "retry_and_resilience"
+description = "[Implicit] 依赖安装失败时是否有重试和容错机制。1:无重试直接失败;2:简单重试无退避;3:有重试但缺少退避策略;4:指数退避重试+主备切换;5:完整的重试+退避+主备切换+超时配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "指数退避重试(5s-10s-20s),主镜像3次失败后切换备用源,容错完善"
+
+[[criterion]]
+name = "jenkinsfile_integration"
+description = "[Implicit] Jenkinsfile流水线集成质量,是否能在CI环境中实际可用。1:未修改Jenkinsfile;2:Jenkinsfile有语法错误或逻辑缺陷;3:可用但有返工或冗余;4:一次写出合理pipeline,有timeout等保护;5:pipeline结构清晰,缓存/构建/报告分阶段,有完善的异常处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "写了两版Jenkinsfile(先复杂后简化),有返工;最终版直接调用build.sh较合理"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "[Implicit] 任务执行效率和代码质量,是否高效完成且代码简洁。1:大量返工和错误;2:多次重写关键文件;3:有返工但最终完成,代码偏啰嗦;4:一次完成无返工,代码简洁;5:最少工具调用一次完成,代码精炼无冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "26次工具调用,Jenkinsfile重写了一次有返工,代码偏啰嗦(LRU cleanup等过度工程化)"
