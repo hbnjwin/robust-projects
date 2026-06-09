@@ -1,0 +1,6 @@
+server:
+  port: 8080
+
+payment:
+  center:
+    url: http://localhost:8081
