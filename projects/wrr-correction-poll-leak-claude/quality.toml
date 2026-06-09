@@ -1,62 +1,62 @@
 [[criterion]]
-name = "root_cause_analysis"
-description = "Bug根因定位能力。是否准确识别了代码缺陷的根本原因而非表面现象。1:完全未定位根因或方向错误;2:仅识别表面现象未深入;3:定位到相关代码但根因分析不完整;4:准确定位根因并能解释原理;5:精准定位根因且分析了关联影响范围"
+name = "duplicate_interval_detection"
+description = "onActivated中重复创建setInterval的问题定位。1:未识别定时器重复创建;2:知道定时器多了但不清楚触发原因;3:定位到onActivated但未关联keep-alive的多次激活;4:准确识别keep-alive激活时onActivated重复调用startPolling未清理旧定时器;5:精准定位并分析了activated/deactivated配对缺失的根本原因"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "精准定位onActivated重复创建定时器和onDeactivated未停止的双重问题"
+rationale = "精准定位CorrectionProgress.vue中onActivated每次激活都调用startPolling创建新setInterval，但未清理上一次的定时器"
 
 [[criterion]]
-name = "code_fix_quality"
-description = "修复代码质量。修复方案是否正确、完整、无副作用、符合最佳实践。1:未修复或引入新bug;2:部分修复但有明显缺陷;3:基本修复核心问题但有边界遗漏;4:修复完整且代码质量良好;5:修复完美、方案优雅且考虑了边界情况"
+name = "deactivated_cleanup_pairing"
+description = "onDeactivated中是否正确停止定时器。1:无onDeactivated处理;2:有onDeactivated但未调用clearInterval;3:onDeactivated中clearInterval了但变量引用错误;4:onDeactivated中正确调用stopPolling/clearInterval;5:完整的activated/deactivated配对含状态重置"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "startPolling前先stopPolling，onDeactivated中调用stopPolling，完整修复"
+rationale = "onDeactivated中正确调用stopPolling，与onActivated中的startPolling形成完整的生命周期配对"
 
 [[criterion]]
-name = "task_execution_efficiency"
-description = "任务执行效率。排查路径是否清晰高效，工具使用是否合理，是否存在大量无效操作。1:严重低效或死循环式试错;2:路径混乱多次无效操作;3:基本合理但有冗余步骤;4:路径清晰高效;5:极其精准直达目标零冗余"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "5次调用精准高效"
-
-[[criterion]]
-name = "code_comprehension"
-description = "代码理解深度。对Vue3/TS项目架构、响应式机制、生命周期、Element Plus组件的理解程度。1:对框架机制完全不了解;2:有基础认知但关键概念错误;3:理解基本机制但对复杂场景把握不足;4:深入理解框架特性并正确运用;5:精通框架底层原理给出专家级分析"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "深入理解keep-alive的activated/deactivated与定时器的交互"
-
-[[criterion]]
-name = "instruction_compliance"
-description = "指令遵从与问题聚焦。是否按用户描述修复了指定问题，而非自行发挥或偏离主题。1:完全偏离用户需求;2:部分偏离或过度修改;3:基本聚焦但有小幅偏离;4:准确理解并执行用户指令;5:精确聚焦问题且主动沟通不确定点"
+name = "start_before_clear_pattern"
+description = "启动新定时器前是否先清理旧定时器。1:未实现先清理;2:清理了但顺序错误;3:清理了但只在部分路径;4:startPolling方法开头统一先stopPolling再创建新interval;5:封装了安全的定时器管理工具函数"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "完整修复了用户描述的进度数字跳动问题"
+rationale = "startPolling方法开头先调用stopPolling清理旧定时器，确保任何情况下都不会出现多个interval并存"
 
 [[criterion]]
-name = "engineering_practice"
-description = "工程实践规范。代码风格一致性、TypeScript类型安全、Vue3 Composition API用法、错误处理等。1:违反多项基本规范;2:有明显规范问题;3:基本规范但有改进空间;4:规范良好符合项目风格;5:工程质量优秀堪称范例"
+name = "keep_alive_lifecycle_understanding"
+description = "对Vue3 keep-alive的activated/deactivated生命周期的理解。1:不了解keep-alive;2:知道keep-alive缓存但不清楚生命周期钩子;3:了解activated但不清楚与mounted的区别;4:正确理解activated在每次切入时触发而mounted只触发一次;5:深度理解含include/exclude和max属性对缓存行为的影响"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "定时器管理符合Vue3最佳实践"
+rationale = "深入理解keep-alive的activated在每次标签页切入时重复触发，deactivated在切出时触发，与定时器管理的交互关系"
 
 [[criterion]]
-name = "delivery_completeness"
-description = "交付完整性。修复是否涵盖所有相关场景，是否验证了修复效果，是否有遗漏。1:未交付有效修复;2:修复不完整缺少关键场景;3:核心场景已覆盖但有边缘遗漏;4:修复完整覆盖主要场景;5:全面覆盖并主动补充相关防御性代码"
+name = "progress_number_jump_fix"
+description = "进度数字跳动问题是否解决。1:跳动问题仍存在;2:减轻了但偶尔仍跳;3:不跳了但切换后进度不更新;4:完全解决跳动且切换后正确恢复轮询;5:解决跳动且进度数字平滑过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "完全解决了用户描述的进度数字跳动问题，切入时startPolling、切出时stopPolling"
+
+[[criterion]]
+name = "timer_management_best_practice"
+description = "Vue3中定时器管理是否符合最佳实践。1:定时器管理混乱;2:有清理但不系统;3:基本的clearInterval管理;4:封装了startPolling/stopPolling配对方法;5:完善的定时器管理含requestAnimationFrame或composable封装"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "覆盖了创建、激活、停用、销毁四种生命周期的定时器管理"
+rationale = "封装了startPolling/stopPolling配对方法，定时器管理符合Vue3最佳实践"
+
+[[criterion]]
+name = "investigation_path"
+description = "排查路径效率。1:超过15次工具调用;2:10-15次含冗余;3:7-10次基本合理;4:5-7次路径清晰;5:5次以内精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共5次调用精准高效：Read CorrectionProgress.vue → 分析定时器逻辑 → Edit修复startPolling/stopPolling/onDeactivated"
