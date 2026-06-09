@@ -1,0 +1,62 @@
+[[criterion]]
+name = "lineage_graph_engine"
+description = "Lineage graph engine quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "networkx directed graph with upstream/downstream"
+
+[[criterion]]
+name = "sql_parsing_capability"
+description = "SQL parsing for dependency extraction"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Independent parser.py for SQL deps"
+
+[[criterion]]
+name = "api_design_completeness"
+description = "API endpoint completeness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "10 REST endpoints"
+
+[[criterion]]
+name = "visualization_richness"
+description = "Visualization feature richness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "D3.js interactive force graph"
+
+[[criterion]]
+name = "code_modularity"
+description = "Code modularity"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "6 files with proper layering"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "22 tool calls with 10 Bash"
+
+[[criterion]]
+name = "demo_data_usability"
+description = "Demo data and usability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Has sample data"
