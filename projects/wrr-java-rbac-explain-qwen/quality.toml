@@ -1,62 +1,62 @@
 [[criterion]]
-name = "user_experience_and_interaction"
-description = "How smooth and efficient is the user experience during interaction? 1: workflow deadlock, loop errors, no valid output, completely unusable; 2: verbose reasoning, repeated self-correction, noticeable logic deviations requiring frequent intervention; 3: some repetition and redundant reasoning, occasional over-complication but user can still wait for results; 4: overall good experience with occasional redundancy or self-correction that does not affect task completion; 5: efficient reasoning, clear logic, smooth responses, accurately captures core intent, output is trustworthy with no room for optimization"
+name = "权限注解根因定位"
+description = "[Explicit] 是否准确定位权限注解不生效的根因（如@EnableGlobalMethodSecurity缺失、PermissionEvaluator未注册、@Service导入错误等）。1: 未尝试排查或完全误判根因；2: 找到部分相关代码但根因判断错误；3: 正确识别根因但定位过程有路径错误或冗余重试；4: 准确定位根因且过程较高效；5: 精准定位根因，零错误零冗余，代码证据充分"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "30次工具调用、52个assistant轮次，路径错误重试，TaskUpdate重复标记完成，推理流程拖沓"
+rationale = "正确识别@EnableGlobalMethodSecurity缺失和@Service导入问题，但首次路径定位错误需二次读取，30次调用中有冗余"
 
 [[criterion]]
-name = "task_planning_and_execution_control"
-description = "How well does the model plan, decompose, track, and execute tasks? 1: no planning, no decomposition, no task list, no tracking, no feedback, no tool usage; 2: vague or unreasonable planning, ineffective task decomposition, inconsistent tracking, sporadic feedback; 3: macro-level planning is viable but task list is incomplete or not updated, significant tool gaps, vague feedback; 4: reasonable planning, task list exists but updates lag, minor tool misuse, clear stage feedback; 5: complete and well-reasoned plan, auto-generated task list, real-time progress sync, proper tool usage, thorough stage feedback, proactively clarifies ambiguity"
-type = "likert"
-points = 5
-weight = 1.0
-score = 3
-rationale = "使用TaskCreate/TaskUpdate进行任务拆分跟踪，但存在重复标记完成、更新滞后问题"
-
-[[criterion]]
-name = "semantic_understanding_and_logical_reasoning"
-description = "How accurately does the model understand intent and reason logically? 1: completely misunderstands intent, cannot parse code structure, unable to execute even with guidance, blind output; 2: misinterprets key information, can only partially complete tasks with guidance, incorrect code location and modification; 3: understands main intent but misses details, slight deviations, achieves goals with human guidance; 4: correctly understands intent and constraints, accurate code modifications, no guidance needed, knowledge meets task requirements; 5: precisely integrates context and codebase information, minimal optimal modifications, no human guidance needed, comprehensive knowledge coverage"
-type = "likert"
-points = 5
-weight = 1.0
-score = 3
-rationale = "正确识别三个核心问题，但路径定位错误需二次读取"
-
-[[criterion]]
-name = "instruction_compliance_and_constraint_adherence"
-description = "How well does the model follow multiple constraints and maintain them throughout? 1: completely ignores complex constraints, outputs according to own defaults, enters dead loops or argues during manual correction, severely damages original structure; 2: after 2 corrections, still cannot satisfy multiple constraints simultaneously (fixes one but forgets another), final output does not meet requirements; 3: initial output ignores key constraints (e.g., modifies files it should not), can barely adjust to meet all constraints after 2 explicit warnings; 4: initial output misses 1-2 non-core constraints (e.g., variable naming), corrects all immediately after 1 user prompt; 5: perfectly adheres to all multiple constraints, never breaks prior requirements during fixes, additions, or debugging, does not forget restrictions or expand scope arbitrarily"
-type = "likert"
-points = 5
-weight = 1.0
-score = 3
-rationale = "修改6个文件，创建不必要的DemoController，改动范围偏大"
-
-[[criterion]]
-name = "engineering_quality_and_completeness"
-description = "How complete and well-engineered is the code output? 1: no engineering quality awareness, no tests provided or outputs invalid pseudo-tests; 2: attempts tests only after multiple reminders, obvious flaws in test structure, assertions, and scope; 3: supplements tests after reminders but only covers main flow; 4: provides tests in most scenarios, tests are valid but coverage or style has minor deviations; 5: proactively adds/updates test cases, covers critical paths, follows engineering standards, clearly documents verification methods"
-type = "likert"
-points = 5
-weight = 1.0
-score = 2
-rationale = "无测试用例，Caffeine缓存未验证可用性，代码大面积重写"
-
-[[criterion]]
-name = "delivery_completeness_and_usability"
-description = "How complete, runnable, and usable is the final delivery? 1: completely non-runnable, irrelevant output, maliciously false delivery; 2: fails to achieve core objectives, code cannot run, significant proportion of false delivery; 3: main functionality runs but has obvious defects requiring manual fixes, minor false delivery; 4: core functionality is complete and usable, code is executable, very few detail omissions; 5: runnable on first attempt, full feature closure, covers both explicit and implicit requirements, no false delivery"
+name = "权限注解修复正确性"
+description = "[Explicit] 权限注解不生效问题的修复是否正确完整（注解生效、PermissionEvaluator正确注册、Spring Security配置链路完整）。1: 未修复或修复方向错误；2: 部分修复但关键链路断裂；3: 修复了主要问题但方案不完整或有副作用；4: 修复正确且链路完整；5: 修复精准完整，@PreAuthorize→PermissionEvaluator→RbacService链路全部打通，零副作用"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "三个需求均完成，Caffeine缓存实现完整，核心功能完整"
+rationale = "添加@EnableGlobalMethodSecurity并修正@Service import，修复正确，但改动范围偏大"
 
 [[criterion]]
-name = "architecture_boundaries_and_security_compliance"
-description = "How well does the model respect architecture boundaries and security compliance? 1: arbitrarily deletes or damages core files, performs unauthorized high-risk operations, refuses to correct after repeated warnings; 2: frequently crosses boundaries with modifications, relapses after correction, impacts project safety and progress; 3: makes irrelevant modifications and adds redundant dependencies, recoverable with strong intervention; 4: occasionally makes minor boundary violations, stops immediately when reminded, does not touch core assets; 5: strictly respects architecture boundaries, no unauthorized operations, proactively confirms authorization for high-risk actions"
+name = "角色继承层级分析"
+description = "[Explicit] 是否准确分析角色继承关系错乱的原因（子角色权限大于父角色），并理解继承链的正确语义（子角色应继承父角色所有权限）。1: 未分析继承关系；2: 仅发现问题但未理解继承语义；3: 理解继承语义但分析过程冗长或有偏差；4: 正确分析继承链并理解递归继承需求；5: 深入分析继承链，识别递归继承缺陷，额外考虑循环继承等边界情况"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "新增pom.xml依赖、创建DemoController和application.yml等不必要文件"
+rationale = "识别继承关系问题，但分析过程冗长，30次调用中多次重复读取相同文件"
+
+[[criterion]]
+name = "角色继承修复正确性"
+description = "[Explicit] 角色继承关系修复是否正确——子角色权限应沿层级向上递归继承父角色权限，且不会出现子角色权限大于父角色的情况。1: 未修复或逻辑错误；2: 修复了但继承方向或递归逻辑有误；3: 递归继承实现正确但缺少边界保护（如循环继承）；4: 递归继承正确且有基本边界保护；5: 递归继承正确，包含循环检测、visited集合等完整边界保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "实现递归向上继承，逻辑正确，但未考虑循环继承等边界情况"
+
+[[criterion]]
+name = "缓存一致性实现"
+description = "[Explicit] 权限缓存一致性处理是否完整——需要实现权限数据缓存并在权限/角色变更时保证缓存与数据库一致。1: 未实现缓存；2: 有缓存但无失效机制；3: 有缓存和失效机制但未验证可用性或框架选型简陋；4: 缓存实现完整，失效机制合理，基本可用；5: 缓存框架成熟（如Caffeine/Redis），多级粒度失效（角色/用户/全局），线程安全，经过验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Caffeine缓存实现完整含三级粒度失效，但未验证可用性，新增pom.xml依赖偏重"
+
+[[criterion]]
+name = "代码变更范围控制"
+description = "[Implicit] 代码改动是否遵守最小改动原则和架构边界——仅修改与bug修复直接相关的文件，不新增不必要的文件、依赖或配置。1: 大范围重构或新建无关项目结构；2: 修改6+个文件含多个不必要新增；3: 修改3-5个文件，有少量不必要改动但可恢复；4: 修改2-3个核心文件，偶有轻微越界；5: 仅修改直接相关的1-2个核心文件，零越界零冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修改6个文件，新建DemoController、application.yml、pom.xml等不必要文件和依赖"
+
+[[criterion]]
+name = "交互效率与输出质量"
+description = "[Implicit] 交互效率和输出质量——轮次是否合理、是否有重复/循环、最终输出是否清晰可信。1: 流程卡死或循环错误；2: 推理拖沓，重复自纠，需频繁干预；3: 有冗余但最终完成，输出基本可用；4: 流程较高效，偶有冗余不影响结果；5: 流程精简高效，零错误，输出清晰可信"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "52轮次，TaskUpdate重复标记完成10次，推理流程拖沓但最终三个问题均完成"
