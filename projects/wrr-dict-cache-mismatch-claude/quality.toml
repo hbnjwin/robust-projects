@@ -1,6 +1,6 @@
 [[criterion]]
-name = "map_bracket_access_detection"
-description = "Map对象使用[]方括号访问的根因定位。1:未识别Map与Object的访问差异;2:知道Map应该用get但未找全所有位置;3:找到了主要的[]访问位置但遗漏了部分;4:找全了dictStore.ts中所有Map[]误用的位置;5:精准找全所有误用并解释了Map[]返回undefined的JS规范原因"
+name = "Map方括号访问检测"
+description = "[Explicit] Map对象使用[]方括号访问的根因定位。1:未识别Map与Object的访问差异;2:知道Map应该用get但未找全所有位置;3:找到了主要的[]访问位置但遗漏了部分;4:找全了dictStore.ts中所有Map[]误用的位置;5:精准找全所有误用并解释了Map[]返回undefined的JS规范原因"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 5
 rationale = "精准识别dictStore.ts中getDictByType、loadDictData、setDictMap三处Map[]误用，解释了Map.prototype无[]操作符"
 
 [[criterion]]
-name = "map_get_set_migration"
-description = "Map[]到Map.get/set的迁移是否完整正确。1:未修改或修改错误;2:只改了get未改set;3:改了get和set但has判断遗漏;4:完整迁移get/set/has三种操作;5:完整迁移并统一了整个Store的Map操作风格"
+name = "Map访问方式迁移"
+description = "[Explicit] Map[]到Map.get/set的迁移是否完整正确。1:未修改或修改错误;2:只改了get未改set;3:改了get和set但has判断遗漏;4:完整迁移get/set/has三种操作;5:完整迁移并统一了整个Store的Map操作风格"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "在dictStore.ts中统一改用Map.get/set/has，getDictByType返回值处理正确"
 
 [[criterion]]
-name = "cache_expiration_strategy"
-description = "sessionStorage字典缓存的过期策略是否合理。1:未注意缓存问题;2:注意到但过期时间设置不当;3:调整了过期时间但策略过于简单;4:合理的过期策略含时间戳比对;5:完善的缓存策略含版本号和主动失效机制"
+name = "缓存过期策略"
+description = "[Explicit] sessionStorage字典缓存的过期策略是否合理。1:未注意缓存问题;2:注意到但过期时间设置不当;3:调整了过期时间但策略过于简单;4:合理的过期策略含时间戳比对;5:完善的缓存策略含版本号和主动失效机制"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "将缓存从60秒延长到合理时长，并在setDictMap时主动更新缓存避免读到旧值"
 
 [[criterion]]
-name = "pinia_reactive_map_interaction"
-description = "Pinia状态管理中Map类型的响应式行为理解。1:不理解Pinia与Map的交互;2:基本了解但对reactive(Map)的行为有误解;3:理解Map在Pinia中需要特殊处理;4:正确理解Pinia对Map的响应式代理机制;5:深度理解Vue3 Proxy对Map的拦截行为及其限制"
+name = "Pinia响应式Map交互"
+description = "[Explicit] Pinia状态管理中Map类型的响应式行为理解。1:不理解Pinia与Map的交互;2:基本了解但对reactive(Map)的行为有误解;3:理解Map在Pinia中需要特殊处理;4:正确理解Pinia对Map的响应式代理机制;5:深度理解Vue3 Proxy对Map的拦截行为及其限制"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 4
 rationale = "理解Pinia通过reactive()包裹Map后，get/set/has方法被正确代理但[]操作符绕过代理"
 
 [[criterion]]
-name = "dict_display_verification"
-description = "字典值显示空白问题是否完整验证。1:未验证修复效果;2:只验证了一个字典类型;3:验证了主要字典类型但遗漏了嵌套场景;4:验证了所有直接使用getDictByType的页面;5:全面验证含嵌套字典和异步加载时序"
+name = "字典显示验证"
+description = "[Explicit] 字典值显示空白问题是否完整验证。1:未验证修复效果;2:只验证了一个字典类型;3:验证了主要字典类型但遗漏了嵌套场景;4:验证了所有直接使用getDictByType的页面;5:全面验证含嵌套字典和异步加载时序"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "验证了getDictByType在表格列、表单选项、详情页三种场景下的字典显示"
 
 [[criterion]]
-name = "code_exploration_and_tool_usage"
-description = "代码探索效率和工具使用合理性。1:超过20次调用大量无效;2:15-20次含大量Bash命令;3:10-15次有冗余但找到了目标;4:5-10次路径清晰;5:5次以内精准直达"
+name = "代码探索与工具使用"
+description = "[Explicit] 代码探索效率和工具使用合理性。1:超过20次调用大量无效;2:15-20次含大量Bash命令;3:10-15次有冗余但找到了目标;4:5-10次路径清晰;5:5次以内精准直达"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 4
 rationale = "共9次调用，快速定位dictStore.ts并直接修改三处Map访问"
 
 [[criterion]]
-name = "engineering_consistency"
-description = "修复后代码风格与项目现有Map使用模式的一致性。1:引入了与项目不一致的风格;2:部分一致但有混用;3:基本一致但命名风格略有差异;4:完全一致的Map操作风格;5:一致且优化了类型注解"
+name = "工程一致性"
+description = "[Explicit] 修复后代码风格与项目现有Map使用模式的一致性。1:引入了与项目不一致的风格;2:部分一致但有混用;3:基本一致但命名风格略有差异;4:完全一致的Map操作风格;5:一致且优化了类型注解"
 type = "likert"
 points = 5
 weight = 1.0

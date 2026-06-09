@@ -1,6 +1,6 @@
 [[criterion]]
-name = "async_step_lag_root_cause"
-description = "前端步骤状态滞后于后端实际进度的根因分析。1:未识别前后端状态不同步;2:识别了但归因错误;3:定位到activeStep更新时机但分析不完整;4:准确分析了API返回值不能实时反映后端异步任务进度;5:精准定位并提出了轮询后端状态接口的解决方案"
+name = "步骤滞后根因"
+description = "[Explicit] 前端步骤状态滞后于后端实际进度的根因分析。1:未识别前后端状态不同步;2:识别了但归因错误;3:定位到activeStep更新时机但分析不完整;4:准确分析了API返回值不能实时反映后端异步任务进度;5:精准定位并提出了轮询后端状态接口的解决方案"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "准确分析了KnowledgeUpload.vue中前端步骤状态依赖API返回值，而后端上传→分片→向量化是异步任务，返回值不能实时反映进度"
 
 [[criterion]]
-name = "polling_mechanism_design"
-description = "状态轮询机制的设计质量。1:未实现轮询;2:实现了但间隔不合理;3:基本轮询但缺少停止条件;4:合理的轮询间隔+完成/失败停止条件;5:完善的轮询含指数退避和超时保护"
+name = "轮询机制设计"
+description = "[Explicit] 状态轮询机制的设计质量。1:未实现轮询;2:实现了但间隔不合理;3:基本轮询但缺少停止条件;4:合理的轮询间隔+完成/失败停止条件;5:完善的轮询含指数退避和超时保护"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "实现了轮询后端状态接口驱动步骤更新，合理的轮询间隔并添加了cleanup和超时保护"
 
 [[criterion]]
-name = "step_component_state_binding"
-description = "Element Plus el-steps组件与数据状态的绑定是否正确。1:步骤显示与实际进度完全不符;2:步骤显示滞后严重;3:基本同步但切换时有短暂不一致;4:步骤状态与后端进度实时同步;5:步骤状态同步且包含进度百分比显示"
+name = "步骤组件状态绑定"
+description = "[Explicit] Element Plus el-steps组件与数据状态的绑定是否正确。1:步骤显示与实际进度完全不符;2:步骤显示滞后严重;3:基本同步但切换时有短暂不一致;4:步骤状态与后端进度实时同步;5:步骤状态同步且包含进度百分比显示"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "通过轮询机制驱动activeStep更新，el-steps组件实时反映后端上传/分片/向量化三步的实际进度"
 
 [[criterion]]
-name = "upload_chunk_vectorize_flow"
-description = "对上传→分片→向量化三步异步流程的理解。1:不理解三步流程;2:理解单步但不了解串行关系;3:理解串行流程但对每步完成通知机制不清楚;4:正确理解三步串行及各步完成的状态判断;5:深度理解含失败重试和断点续传的场景"
+name = "上传分片向量化流程"
+description = "[Explicit] 对上传→分片→向量化三步异步流程的理解。1:不理解三步流程;2:理解单步但不了解串行关系;3:理解串行流程但对每步完成通知机制不清楚;4:正确理解三步串行及各步完成的状态判断;5:深度理解含失败重试和断点续传的场景"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 4
 rationale = "理解了上传→分片→向量化的异步串行流程，以及每步触发后需要轮询等待完成的必要性"
 
 [[criterion]]
-name = "error_and_failure_handling"
-description = "上传/处理失败时步骤状态的错误处理。1:失败后步骤状态混乱;2:失败检测了但UI未更新;3:显示了失败但缺少重试入口;4:失败后正确显示错误状态并提供重试;5:完善的错误处理含错误详情和分步重试"
+name = "失败错误处理"
+description = "[Explicit] 上传/处理失败时步骤状态的错误处理。1:失败后步骤状态混乱;2:失败检测了但UI未更新;3:显示了失败但缺少重试入口;4:失败后正确显示错误状态并提供重试;5:完善的错误处理含错误详情和分步重试"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "轮询检测到失败状态后正确停止并显示错误，覆盖了正常完成和失败两种场景"
 
 [[criterion]]
-name = "code_exploration_efficiency"
-description = "排查路径是否高效。1:超过20次工具调用;2:15-20次;3:10-15次有部分冗余;4:5-10次路径清晰;5:5次以内精准修复"
+name = "代码探索效率"
+description = "[Explicit] 排查路径是否高效。1:超过20次工具调用;2:15-20次;3:10-15次有部分冗余;4:5-10次路径清晰;5:5次以内精准修复"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 4
 rationale = "共7次调用路径清晰，快速定位KnowledgeUpload.vue中的步骤逻辑并实施修复"
 
 [[criterion]]
-name = "cleanup_on_unmount"
-description = "组件卸载时轮询定时器的清理。1:未清理定时器;2:onUnmounted中清理但onDeactivated遗漏;3:基本清理但存在泄漏场景;4:onUnmounted和onDeactivated都正确清理;5:完善的清理含AbortController取消pending请求"
+name = "组件卸载清理"
+description = "[Explicit] 组件卸载时轮询定时器的清理。1:未清理定时器;2:onUnmounted中清理但onDeactivated遗漏;3:基本清理但存在泄漏场景;4:onUnmounted和onDeactivated都正确清理;5:完善的清理含AbortController取消pending请求"
 type = "likert"
 points = 5
 weight = 1.0

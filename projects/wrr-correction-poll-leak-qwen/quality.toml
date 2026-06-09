@@ -1,6 +1,6 @@
 [[criterion]]
-name = "duplicate_interval_detection"
-description = "onActivated中重复创建setInterval的问题定位。1:未识别定时器重复创建;2:知道定时器多了但不清楚触发原因;3:定位到onActivated但未关联keep-alive的多次激活;4:准确识别keep-alive激活时onActivated重复调用startPolling未清理旧定时器;5:精准定位并分析了activated/deactivated配对缺失的根本原因"
+name = "定时器重复创建检测"
+description = "[Explicit] onActivated中重复创建setInterval的问题定位。1:未识别定时器重复创建;2:知道定时器多了但不清楚触发原因;3:定位到onActivated但未关联keep-alive的多次激活;4:准确识别keep-alive激活时onActivated重复调用startPolling未清理旧定时器;5:精准定位并分析了activated/deactivated配对缺失的根本原因"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 3
 rationale = "在CorrectionProgress.vue中识别了定时器未清理问题，但对keep-alive多次激活的触发机制分析不够"
 
 [[criterion]]
-name = "deactivated_cleanup_pairing"
-description = "onDeactivated中是否正确停止定时器。1:无onDeactivated处理;2:有onDeactivated但未调用clearInterval;3:onDeactivated中clearInterval了但变量引用错误;4:onDeactivated中正确调用stopPolling/clearInterval;5:完整的activated/deactivated配对含状态重置"
+name = "Deactivated清理配对"
+description = "[Explicit] onDeactivated中是否正确停止定时器。1:无onDeactivated处理;2:有onDeactivated但未调用clearInterval;3:onDeactivated中clearInterval了但变量引用错误;4:onDeactivated中正确调用stopPolling/clearInterval;5:完整的activated/deactivated配对含状态重置"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 3
 rationale = "添加了startPolling前的clearInterval但onDeactivated中的stopPolling处理不完整"
 
 [[criterion]]
-name = "start_before_clear_pattern"
-description = "启动新定时器前是否先清理旧定时器。1:未实现先清理;2:清理了但顺序错误;3:清理了但只在部分路径;4:startPolling方法开头统一先stopPolling再创建新interval;5:封装了安全的定时器管理工具函数"
+name = "启动前清理模式"
+description = "[Explicit] 启动新定时器前是否先清理旧定时器。1:未实现先清理;2:清理了但顺序错误;3:清理了但只在部分路径;4:startPolling方法开头统一先stopPolling再创建新interval;5:封装了安全的定时器管理工具函数"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 3
 rationale = "添加了startPolling前的clearInterval但不是在所有调用路径都先清理"
 
 [[criterion]]
-name = "keep_alive_lifecycle_understanding"
-description = "对Vue3 keep-alive的activated/deactivated生命周期的理解。1:不了解keep-alive;2:知道keep-alive缓存但不清楚生命周期钩子;3:了解activated但不清楚与mounted的区别;4:正确理解activated在每次切入时触发而mounted只触发一次;5:深度理解含include/exclude和max属性对缓存行为的影响"
+name = "Keep-alive生命周期理解"
+description = "[Explicit] 对Vue3 keep-alive的activated/deactivated生命周期的理解。1:不了解keep-alive;2:知道keep-alive缓存但不清楚生命周期钩子;3:了解activated但不清楚与mounted的区别;4:正确理解activated在每次切入时触发而mounted只触发一次;5:深度理解含include/exclude和max属性对缓存行为的影响"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 3
 rationale = "对keep-alive生命周期钩子理解基本正确，知道activated会多次触发"
 
 [[criterion]]
-name = "progress_number_jump_fix"
-description = "进度数字跳动问题是否解决。1:跳动问题仍存在;2:减轻了但偶尔仍跳;3:不跳了但切换后进度不更新;4:完全解决跳动且切换后正确恢复轮询;5:解决跳动且进度数字平滑过渡"
+name = "进度数字跳动修复"
+description = "[Explicit] 进度数字跳动问题是否解决。1:跳动问题仍存在;2:减轻了但偶尔仍跳;3:不跳了但切换后进度不更新;4:完全解决跳动且切换后正确恢复轮询;5:解决跳动且进度数字平滑过渡"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 3
 rationale = "核心泄漏问题已修复但页面不可见时的暂停逻辑未实现，可能有轻微跳动"
 
 [[criterion]]
-name = "timer_management_best_practice"
-description = "Vue3中定时器管理是否符合最佳实践。1:定时器管理混乱;2:有清理但不系统;3:基本的clearInterval管理;4:封装了startPolling/stopPolling配对方法;5:完善的定时器管理含requestAnimationFrame或composable封装"
+name = "定时器管理最佳实践"
+description = "[Explicit] Vue3中定时器管理是否符合最佳实践。1:定时器管理混乱;2:有清理但不系统;3:基本的clearInterval管理;4:封装了startPolling/stopPolling配对方法;5:完善的定时器管理含requestAnimationFrame或composable封装"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 3
 rationale = "生命周期清理代码基本规范但未封装成配对方法"
 
 [[criterion]]
-name = "investigation_path"
-description = "排查路径效率。1:超过15次工具调用;2:10-15次含冗余;3:7-10次基本合理;4:5-7次路径清晰;5:5次以内精准修复"
+name = "排查路径效率"
+description = "[Explicit] 排查路径效率。1:超过15次工具调用;2:10-15次含冗余;3:7-10次基本合理;4:5-7次路径清晰;5:5次以内精准修复"
 type = "likert"
 points = 5
 weight = 1.0

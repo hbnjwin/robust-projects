@@ -1,6 +1,6 @@
 [[criterion]]
-name = "memleak_root_cause"
-description = "C网关程序内存泄漏根因的定位能力。1:未找到任何泄漏点;2:仅发现内存增长但未定位到具体函数;3:找到config_set中重复追加的问题但遗漏其他泄漏点;4:准确定位config_set无去重导致链表无限增长的根因;5:精准定位所有泄漏点并分析OOM触发机制"
+name = "内存泄漏根因定位"
+description = "[Explicit] C网关程序内存泄漏根因的定位能力。1:未找到任何泄漏点;2:仅发现内存增长但未定位到具体函数;3:找到config_set中重复追加的问题但遗漏其他泄漏点;4:准确定位config_set无去重导致链表无限增长的根因;5:精准定位所有泄漏点并分析OOM触发机制"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "准确定位gateway.c中config_set函数每次调用都append新节点而不检查key是否已存在，导致链表无限增长最终OOM"
 
 [[criterion]]
-name = "memory_ownership_fix"
-description = "内存所有权管理的修复质量。1:未处理内存所有权;2:free了旧值但未strdup新值导致悬挂指针;3:strdup+free基本正确但顺序有隐患;4:正确的strdup新值→free旧值→赋值的安全顺序;5:完善的所有权管理含NULL检查和错误路径释放"
+name = "内存所有权修复"
+description = "[Explicit] 内存所有权管理的修复质量。1:未处理内存所有权;2:free了旧值但未strdup新值导致悬挂指针;3:strdup+free基本正确但顺序有隐患;4:正确的strdup新值→free旧值→赋值的安全顺序;5:完善的所有权管理含NULL检查和错误路径释放"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "在config_set中先strdup新值确认成功后再free旧值再赋值，避免了strdup失败导致数据丢失的风险"
 
 [[criterion]]
-name = "realloc_safety"
-description = "realloc返回值的安全检查。1:直接用原指针接收realloc返回值;2:知道需要检查但实现错误;3:使用临时变量接收但失败路径未free原内存;4:正确使用临时变量检查NULL并在失败时保留原指针;5:完整的realloc安全模式含失败后的恢复和日志"
+name = "realloc安全检查"
+description = "[Explicit] realloc返回值的安全检查。1:直接用原指针接收realloc返回值;2:知道需要检查但实现错误;3:使用临时变量接收但失败路径未free原内存;4:正确使用临时变量检查NULL并在失败时保留原指针;5:完整的realloc安全模式含失败后的恢复和日志"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "在buffer_append中用void *tmp = realloc(buf->data, new_cap)，tmp为NULL时保留原buf->data并返回错误码"
 
 [[criterion]]
-name = "cleanup_function"
-description = "资源清理函数的设计质量。1:无清理函数程序退出即泄漏;2:有清理但仅释放部分结构;3:config_destroy释放了链表节点但遗漏key/value字符串;4:完整释放所有动态分配的内存含链表节点和字符串;5:完整清理含atexit注册确保异常退出也能释放"
+name = "清理函数设计"
+description = "[Explicit] 资源清理函数的设计质量。1:无清理函数程序退出即泄漏;2:有清理但仅释放部分结构;3:config_destroy释放了链表节点但遗漏key/value字符串;4:完整释放所有动态分配的内存含链表节点和字符串;5:完整清理含atexit注册确保异常退出也能释放"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 4
 rationale = "添加config_destroy函数：遍历链表逐个free(node->key)、free(node->value)、free(node)，内存释放完整"
 
 [[criterion]]
-name = "fix_explanation_quality"
-description = "修复说明的专业深度。1:无任何说明;2:仅列出修改了哪些文件;3:表格总结了5处修复但未解释C内存管理原理;4:清晰说明每处修复的根因和C语言内存管理要点;5:专业深度说明含valgrind/AddressSanitizer验证建议"
+name = "修复说明质量"
+description = "[Explicit] 修复说明的专业深度。1:无任何说明;2:仅列出修改了哪些文件;3:表格总结了5处修复但未解释C内存管理原理;4:清晰说明每处修复的根因和C语言内存管理要点;5:专业深度说明含valgrind/AddressSanitizer验证建议"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "清晰说明了每处修复对应的内存问题：config_set去重防泄漏、strdup所有权转移、realloc安全检查、cleanup函数设计"
 
 [[criterion]]
-name = "execution_efficiency"
-description = "排查路径效率。1:超过20次工具调用大量无效探索;2:15-20次含多次冗余读取;3:10-15次有部分冗余;4:5-10次路径清晰直达目标;5:5次以内精准定位并修复"
+name = "排查执行效率"
+description = "[Explicit] 排查路径效率。1:超过20次工具调用大量无效探索;2:15-20次含多次冗余读取;3:10-15次有部分冗余;4:5-10次路径清晰直达目标;5:5次以内精准定位并修复"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 4
 rationale = "共5次工具调用路径清晰，快速定位gateway.c中的内存管理问题并逐一修复"
 
 [[criterion]]
-name = "code_correctness"
-description = "修复代码的正确性和健壮性。1:修复引入新的内存bug;2:部分修复但仍有泄漏点;3:核心OOM问题修复但边界处理不够健壮;4:所有修复正确彻底消除了OOM根因;5:修复完美含防御性编程和边界条件处理"
+name = "代码修复正确性"
+description = "[Explicit] 修复代码的正确性和健壮性。1:修复引入新的内存bug;2:部分修复但仍有泄漏点;3:核心OOM问题修复但边界处理不够健壮;4:所有修复正确彻底消除了OOM根因;5:修复完美含防御性编程和边界条件处理"
 type = "likert"
 points = 5
 weight = 1.0

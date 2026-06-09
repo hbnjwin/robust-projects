@@ -1,6 +1,6 @@
 [[criterion]]
-name = "slow_query_diagnosis"
-description = "MongoDB慢查询的诊断能力。1:未识别慢查询原因;2:知道查询慢但未关联到索引缺失;3:识别了user_id字段缺少索引;4:准确诊断user_id+created_at复合索引缺失导致全集合扫描;5:完整的explain分析含执行计划和扫描行数对比"
+name = "慢查询诊断"
+description = "[Explicit] MongoDB慢查询的诊断能力。1:未识别慢查询原因;2:知道查询慢但未关联到索引缺失;3:识别了user_id字段缺少索引;4:准确诊断user_id+created_at复合索引缺失导致全集合扫描;5:完整的explain分析含执行计划和扫描行数对比"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "准确诊断query_service.py中的find查询缺少{user_id:1,created_at:1}复合索引导致COLLSCAN全扫描"
 
 [[criterion]]
-name = "index_design_quality"
-description = "索引设计的合理性。1:未创建索引;2:创建了user_id单字段索引不覆盖排序;3:复合索引{user_id:1,created_at:1}基本合理;4:正确的复合索引设计符合ESR原则;5:含覆盖索引和分析对写入性能影响的最优设计"
+name = "索引设计质量"
+description = "[Explicit] 索引设计的合理性。1:未创建索引;2:创建了user_id单字段索引不覆盖排序;3:复合索引{user_id:1,created_at:1}基本合理;4:正确的复合索引设计符合ESR原则;5:含覆盖索引和分析对写入性能影响的最优设计"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "创建{user_id:1,created_at:-1}复合索引，排序方向与查询一致，同时设置background:true避免阻塞写入"
 
 [[criterion]]
-name = "cache_consistency_solution"
-description = "缓存与数据库一致性的解决方案质量。1:未处理缓存不一致;2:仅设置ReadPreference.PRIMARY绕过从节点延迟;3:有缓存失效策略但过于简单;4:正确的cache-aside模式含写入时失效;5:完善的一致性方案含TTL+事件驱动失效+读写分离"
+name = "缓存一致性方案"
+description = "[Explicit] 缓存与数据库一致性的解决方案质量。1:未处理缓存不一致;2:仅设置ReadPreference.PRIMARY绕过从节点延迟;3:有缓存失效策略但过于简单;4:正确的cache-aside模式含写入时失效;5:完善的一致性方案含TTL+事件驱动失效+读写分离"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 5
 rationale = "实现了完整的cache-aside模式：写入时主动删除缓存key，读取时先查缓存→miss后查DB→回写缓存，含TTL过期兜底"
 
 [[criterion]]
-name = "query_result_control"
-description = "查询结果集大小的控制。1:无限制返回全部数据;2:设了limit但值不合理;3:设置了默认limit=100合理限制;4:limit+skip分页参数化;5:游标分页+结果集大小监控"
+name = "查询结果控制"
+description = "[Explicit] 查询结果集大小的控制。1:无限制返回全部数据;2:设了limit但值不合理;3:设置了默认limit=100合理限制;4:limit+skip分页参数化;5:游标分页+结果集大小监控"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 3
 rationale = "同样添加了limit限制，但未实现skip分页参数化"
 
 [[criterion]]
-name = "solution_depth"
-description = "解决方案的整体深度。1:仅表面修改一个点;2:修复了索引或缓存其中一个;3:同时处理了索引和查询优化但缓存方案不足;4:索引+查询+缓存三方面综合修复;5:全面方案含慢查询监控、告警阈值和性能基线"
+name = "方案深度"
+description = "[Explicit] 解决方案的整体深度。1:仅表面修改一个点;2:修复了索引或缓存其中一个;3:同时处理了索引和查询优化但缓存方案不足;4:索引+查询+缓存三方面综合修复;5:全面方案含慢查询监控、告警阈值和性能基线"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "综合修复了索引设计、结果集控制和缓存一致性三个方面，方案完整"
 
 [[criterion]]
-name = "execution_efficiency"
-description = "排查路径效率。1:超过20次工具调用;2:15-20次含大量Bash;3:10-15次有冗余但方向正确;4:5-10次路径清晰;5:5次以内精准直达"
+name = "排查执行效率"
+description = "[Explicit] 排查路径效率。1:超过20次工具调用;2:15-20次含大量Bash;3:10-15次有冗余但方向正确;4:5-10次路径清晰;5:5次以内精准直达"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 4
 rationale = "共6次工具调用路径清晰，快速定位慢查询并修复索引和缓存"
 
 [[criterion]]
-name = "code_maintainability"
-description = "修复代码的可维护性。1:硬编码散乱难以维护;2:有基本组织但命名不规范;3:代码基本规范索引创建幂等;4:代码清晰修改幂等含createIndex的if_not_exists;5:模块化设计含配置外置和文档注释"
+name = "代码可维护性"
+description = "[Explicit] 修复代码的可维护性。1:硬编码散乱难以维护;2:有基本组织但命名不规范;3:代码基本规范索引创建幂等;4:代码清晰修改幂等含createIndex的if_not_exists;5:模块化设计含配置外置和文档注释"
 type = "likert"
 points = 5
 weight = 1.0

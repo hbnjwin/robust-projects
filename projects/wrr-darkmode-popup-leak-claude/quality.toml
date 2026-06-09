@@ -1,6 +1,6 @@
 [[criterion]]
-name = "css_var_scope_identification"
-description = "setCssVar只设置#app容器而未设置document根元素的问题定位。1:未识别CSS变量作用域问题;2:知道弹窗颜色不对但未关联到CSS变量;3:定位到setCssVar函数但未分析作用域;4:准确识别setCssVar只设置了#app而非document.documentElement;5:精准定位并解释了CSS变量继承机制和teleport脱离DOM树的关系"
+name = "CSS变量作用域定位"
+description = "[Explicit] setCssVar只设置#app容器而未设置document根元素的问题定位。1:未识别CSS变量作用域问题;2:知道弹窗颜色不对但未关联到CSS变量;3:定位到setCssVar函数但未分析作用域;4:准确识别setCssVar只设置了#app而非document.documentElement;5:精准定位并解释了CSS变量继承机制和teleport脱离DOM树的关系"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "在appStore.ts中准确识别setCssVar只给#app设置CSS变量，而Element Plus弹窗teleport到body下无法继承"
 
 [[criterion]]
-name = "teleport_mount_point_understanding"
-description = "对Element Plus Teleport弹窗挂载机制的理解。1:不了解Teleport机制;2:知道弹窗不在#app内但未关联到样式问题;3:理解Teleport挂载到body但分析不完整;4:正确理解MessageBox/Notification等组件teleport到body后脱离#app的CSS变量作用域;5:深度理解含Teleport的to属性配置和全局样式覆盖策略"
+name = "Teleport挂载机制理解"
+description = "[Explicit] 对Element Plus Teleport弹窗挂载机制的理解。1:不了解Teleport机制;2:知道弹窗不在#app内但未关联到样式问题;3:理解Teleport挂载到body但分析不完整;4:正确理解MessageBox/Notification等组件teleport到body后脱离#app的CSS变量作用域;5:深度理解含Teleport的to属性配置和全局样式覆盖策略"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "理解Element Plus的MessageBox、Notification、Popover等组件通过Teleport挂载到body，脱离了#app的CSS变量作用域"
 
 [[criterion]]
-name = "document_root_css_fix"
-description = "是否在document.documentElement上设置CSS变量。1:未做任何修改;2:修改了错误的DOM节点;3:设置了body但未设置html根元素;4:正确在document.documentElement上增加CSS变量设置;5:同时设置documentElement和body并处理了优先级"
+name = "根元素CSS修复"
+description = "[Explicit] 是否在document.documentElement上设置CSS变量。1:未做任何修改;2:修改了错误的DOM节点;3:设置了body但未设置html根元素;4:正确在document.documentElement上增加CSS变量设置;5:同时设置documentElement和body并处理了优先级"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "在setCssVar中增加了document.documentElement.style.setProperty，覆盖了body下所有teleport元素"
 
 [[criterion]]
-name = "dark_mode_toggle_completeness"
-description = "暗色/亮色模式切换是否对所有组件生效。1:弹窗组件全部不生效;2:部分弹窗生效部分不生效;3:主要弹窗生效但Popover等小组件遗漏;4:MessageBox、Notification、Popover全部生效;5:所有弹窗类组件生效含自定义Teleport组件"
+name = "暗色模式切换完整性"
+description = "[Explicit] 暗色/亮色模式切换是否对所有组件生效。1:弹窗组件全部不生效;2:部分弹窗生效部分不生效;3:主要弹窗生效但Popover等小组件遗漏;4:MessageBox、Notification、Popover全部生效;5:所有弹窗类组件生效含自定义Teleport组件"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 3
 rationale = "修复了核心问题但未逐一验证所有弹窗组件（MessageBox/Notification/Popover/Dialog/Drawer）"
 
 [[criterion]]
-name = "task_completion_and_delivery"
-description = "任务是否完成交付。1:未执行任何有效操作;2:仅阅读了代码就结束;3:开始分析但中途放弃;4:完成了核心修复;5:完成修复并验证了效果"
+name = "任务完成与交付"
+description = "[Explicit] 任务是否完成交付。1:未执行任何有效操作;2:仅阅读了代码就结束;3:开始分析但中途放弃;4:完成了核心修复;5:完成修复并验证了效果"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "共3次调用完成修复：Read appStore.ts → 分析setCssVar → Edit增加document.documentElement设置"
 
 [[criterion]]
-name = "element_plus_theming_approach"
-description = "是否采用了Element Plus官方推荐的暗色模式方案。1:不了解官方方案;2:了解但未采用;3:采用了部分官方方案;4:基本采用官方setCssVar方案;5:完整采用官方useDark或暗色类名方案"
+name = "Element Plus主题方案"
+description = "[Explicit] 是否采用了Element Plus官方推荐的暗色模式方案。1:不了解官方方案;2:了解但未采用;3:采用了部分官方方案;4:基本采用官方setCssVar方案;5:完整采用官方useDark或暗色类名方案"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 3
 rationale = "基本正确修复但未采用Element Plus官方推荐的useDark组合式函数方案"
 
 [[criterion]]
-name = "code_output_evidence"
-description = "是否有实际的代码修改输出。1:无任何Edit/Write操作;2:有Edit但改错了文件;3:修改了正确文件但方案不完整;4:修改了appStore.ts中setCssVar函数且方案正确;5:修改完整且附带了变量映射表"
+name = "代码输出证据"
+description = "[Explicit] 是否有实际的代码修改输出。1:无任何Edit/Write操作;2:有Edit但改错了文件;3:修改了正确文件但方案不完整;4:修改了appStore.ts中setCssVar函数且方案正确;5:修改完整且附带了变量映射表"
 type = "likert"
 points = 5
 weight = 1.0
