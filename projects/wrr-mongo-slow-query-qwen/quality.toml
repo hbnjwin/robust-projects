@@ -1,0 +1,62 @@
+[[criterion]]
+name = "slow_query_diagnosis"
+description = "Slow query diagnosis ability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Identified missing index on user_id+created_at"
+
+[[criterion]]
+name = "index_design_quality"
+description = "Index design quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Compound index {user_id:1,created_at:1}"
+
+[[criterion]]
+name = "cache_consistency_solution"
+description = "Cache consistency solution"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReadPreference.PRIMARY workaround not root fix"
+
+[[criterion]]
+name = "query_result_control"
+description = "Query result control"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Added limit default 100"
+
+[[criterion]]
+name = "solution_depth"
+description = "Solution depth"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Index+limit+ReadPreference cache issue only bypassed"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "9 tool calls"
+
+[[criterion]]
+name = "code_maintainability"
+description = "Code maintainability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Clear modifications idempotent index"
