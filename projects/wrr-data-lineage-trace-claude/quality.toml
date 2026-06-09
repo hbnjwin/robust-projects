@@ -1,0 +1,62 @@
+[[criterion]]
+name = "lineage_graph_engine"
+description = "Lineage graph engine quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "networkx + BFS depth limit + full chain query"
+
+[[criterion]]
+name = "sql_parsing_capability"
+description = "SQL parsing for dependency extraction"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Regex FROM/JOIN extraction"
+
+[[criterion]]
+name = "api_design_completeness"
+description = "API endpoint completeness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Full REST with register/parse-sql/upstream/downstream/delete"
+
+[[criterion]]
+name = "visualization_richness"
+description = "Visualization feature richness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "D3.js + search filter + node coloring by type + mode switch + depth control + detail panel"
+
+[[criterion]]
+name = "code_modularity"
+description = "Code modularity"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Single main.py but well-structured internally"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "11 tool calls efficiently"
+
+[[criterion]]
+name = "demo_data_usability"
+description = "Demo data and usability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Pre-built ODS-DWD-DWS-ADS data lineage chain"
