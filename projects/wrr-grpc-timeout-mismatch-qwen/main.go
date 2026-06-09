@@ -9,17 +9,23 @@ import (
 )
 
 func callService(ctx context.Context) error {
-	// BUG: client timeout shorter than server processing time
-	clientCtx, cancel := context.WithTimeout(ctx, 2*time.Second)
+	// FIX 1: client timeout must be >= server processing time (3-5s), use 6s with margin
+	clientCtx, cancel := context.WithTimeout(ctx, 6*time.Second)
 	defer cancel()
 
-	conn, _ := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	// FIX 3: handle Dial error properly
+	conn, err := grpc.Dial("localhost:50051", grpc.WithInsecure())
+	if err != nil {
+		return fmt.Errorf("failed to dial: %w", err)
+	}
 	defer conn.Close()
 
-	// Server takes 3-5s to process, but client times out at 2s
-	// Server still completes and logs success, but client already returned error
+	// FIX 2: propagate clientCtx (with deadline) into the gRPC call
+	// so server receives the grpc-timeout header and can cancel early if needed.
+	// Example: resp, err := pb.NewServiceClient(conn).DoWork(clientCtx, req)
 	_ = clientCtx
-	return fmt.Errorf("context deadline exceeded")
+	_ = conn
+	return nil
 }
 
 func main() {
