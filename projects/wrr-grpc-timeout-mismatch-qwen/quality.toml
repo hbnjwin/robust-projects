@@ -1,0 +1,62 @@
+[[criterion]]
+name = "timeout_root_cause_analysis"
+description = "gRPC timeout root cause analysis"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "找到超时根因但排查路径冗长，42个Bash调用"
+
+[[criterion]]
+name = "deadline_propagation_fix"
+description = "Deadline propagation fix quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复clientCtx未传递问题"
+
+[[criterion]]
+name = "error_handling_improvement"
+description = "Error handling improvement"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复grpc.Dial错误被吞问题"
+
+[[criterion]]
+name = "timeout_value_calibration"
+description = "Timeout value calibration"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "设置6s刚好覆盖服务端3~5s最大值裕度较小"
+
+[[criterion]]
+name = "test_verification"
+description = "Test verification"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "有测试相关操作验证修复效果"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "51个tool calls其中42个Bash调用路径冗长"
+
+[[criterion]]
+name = "fix_completeness"
+description = "Fix completeness and correctness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复3个bug但超时值保守"
