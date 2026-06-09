@@ -1,6 +1,6 @@
 [[criterion]]
-name = "module_separation_quality"
-description = "ML训练脚本模块拆分的质量。1:未拆分仍为单文件;2:仅拆为2个文件拆分不彻底;3:拆为config/model/data/train四个模块职责基本清晰;4:清晰的职责划分含模块间接口定义;5:高内聚低耦合的模块设计含__init__.py导出"
+name = "模块拆分质量"
+description = "[Explicit] ML训练脚本模块拆分的质量。1:未拆分仍为单文件;2:仅拆为2个文件拆分不彻底;3:拆为config/model/data/train四个模块职责基本清晰;4:清晰的职责划分含模块间接口定义;5:高内聚低耦合的模块设计含__init__.py导出"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "拆分为四个独立模块：config.py管理超参、model.py定义网络结构、data.py处理数据加载、train.py只含训练循环"
 
 [[criterion]]
-name = "interface_design"
-description = "模块间接口设计质量。1:模块间接口混乱有循环依赖;2:有import但依赖方向不清;3:清晰的单向import关系;4:模块间通过明确的函数签名通信;5:接口抽象含类型注解和文档"
+name = "模块接口设计"
+description = "[Explicit] 模块间接口设计质量。1:模块间接口混乱有循环依赖;2:有import但依赖方向不清;3:清晰的单向import关系;4:模块间通过明确的函数签名通信;5:接口抽象含类型注解和文档"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "模块间通过明确的函数签名通信：create_model(config)、load_data(config)、train(model, dataloader, config)"
 
 [[criterion]]
-name = "training_consistency"
-description = "重构后训练一致性的验证。1:未验证重构后能否正常训练;2:仅检查import无报错;3:运行了训练验证loss能收敛;4:验证loss从2.39降到0.01与原始脚本一致;5:完整的数值对比含随机种子固定和精度验证"
+name = "训练一致性验证"
+description = "[Explicit] 重构后训练一致性的验证。1:未验证重构后能否正常训练;2:仅检查import无报错;3:运行了训练验证loss能收敛;4:验证loss从2.39降到0.01与原始脚本一致;5:完整的数值对比含随机种子固定和精度验证"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 3
 rationale = "验证了重构后训练能正常运行和收敛，但未做精确的数值对比"
 
 [[criterion]]
-name = "config_management"
-description = "配置管理方案的合理性。1:超参硬编码散落在各文件中;2:部分提取但位置不统一;3:独立config.py集中管理超参;4:结构化的配置含默认值和类型定义;5:支持命令行覆盖和配置文件加载的配置系统"
+name = "配置管理方案"
+description = "[Explicit] 配置管理方案的合理性。1:超参硬编码散落在各文件中;2:部分提取但位置不统一;3:独立config.py集中管理超参;4:结构化的配置含默认值和类型定义;5:支持命令行覆盖和配置文件加载的配置系统"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 3
 rationale = "同样创建了config.py但配置项组织方式略有不同"
 
 [[criterion]]
-name = "code_cleanliness"
-description = "代码整洁度和无冗余文件。1:大量冗余代码和无用文件;2:有明显多余的生成文件;3:基本整洁但包含_gen_result.py等不必要文件;4:代码整洁无冗余文件;5:代码规范整洁含适当的类型注解"
+name = "代码整洁度"
+description = "[Explicit] 代码整洁度和无冗余文件。1:大量冗余代码和无用文件;2:有明显多余的生成文件;3:基本整洁但包含_gen_result.py等不必要文件;4:代码整洁无冗余文件;5:代码规范整洁含适当的类型注解"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "代码整洁，无冗余文件，各模块代码精简"
 
 [[criterion]]
-name = "execution_efficiency"
-description = "重构任务的执行效率。1:超过40次工具调用;2:30-40次含大量试错;3:20-30次有冗余;4:10-20次基本合理;5:10次以内高效"
+name = "排查执行效率"
+description = "[Explicit] 重构任务的执行效率。1:超过40次工具调用;2:30-40次含大量试错;3:20-30次有冗余;4:10-20次基本合理;5:10次以内高效"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 5
 rationale = "共7次工具调用极其高效：Read原文件→Write四个新模块→运行验证"
 
 [[criterion]]
-name = "refactor_scope_adherence"
-description = "重构范围控制是否符合要求。1:大幅修改了训练逻辑和算法;2:添加了大量原需求之外的新功能;3:保持了原有功能但添加了少量额外内容;4:严格按要求拆分模块未改变训练逻辑;5:精确重构仅涉及文件结构调整零功能变更"
+name = "重构范围控制"
+description = "[Explicit] 重构范围控制是否符合要求。1:大幅修改了训练逻辑和算法;2:添加了大量原需求之外的新功能;3:保持了原有功能但添加了少量额外内容;4:严格按要求拆分模块未改变训练逻辑;5:精确重构仅涉及文件结构调整零功能变更"
 type = "likert"
 points = 5
 weight = 1.0
