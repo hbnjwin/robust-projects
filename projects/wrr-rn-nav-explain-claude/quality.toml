@@ -1,0 +1,62 @@
+[[criterion]]
+name = "navigation_bug_root_cause_analysis"
+description = "RN导航问题的根因分析能力。1:完全未识别navigate/push区别和Tab嵌套Stack状态丢失;2:仅表面修复未分析根因;3:识别了部分根因但分析不系统;4:准确识别多数根因并给出合理解释;5:精准定位所有根因(navigate复用实例、Tab切换Stack状态重置、无泛型约束)并深入分析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "精准识别3个根因：navigate复用同名路由实例导致参数覆盖、Tab嵌套Stack状态丢失、createStackNavigator无泛型参数导致类型为any"
+
+[[criterion]]
+name = "parameter_retention_fix_precision"
+description = "深层页面返回参数丢失的修复精度。1:未修复参数丢失;2:临时方案如全局变量传参;3:使用了push替代navigate但未加运行时校验;4:push替代navigate并加了参数类型约束;5:push+TypeScript严格泛型+运行时参数校验+缺失参数自动goBack"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用push替代navigate创建新实例，加了严格参数类型定义和运行时参数校验，参数缺失时自动goBack"
+
+[[criterion]]
+name = "navigation_guard_design"
+description = "导航守卫实现的完善程度。1:未实现守卫;2:仅有简单的页面拦截;3:实现了beforeRemove监听或基本认证检查;4:beforeRemove+AuthContext条件渲染+弹窗确认;5:完整守卫体系包含认证隔离、beforeRemove、lazy Tab防状态丢失、initialRouteName明确指定"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "beforeRemove守卫+AuthContext认证隔离+lazy:true防Tab状态丢失+明确initialRouteName"
+
+[[criterion]]
+name = "typescript_type_safety"
+description = "TypeScript类型安全在导航中的应用。1:无类型约束;2:仅基本类型注解;3:定义了ParamList但覆盖不完整;4:完整ParamList泛型覆盖所有路由;5:严格泛型+编译期参数错误拦截+Screen组件参数类型推导"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "严格的ParamList参数类型定义如Detail必须传{id,title}，编译期拦截参数错误"
+
+[[criterion]]
+name = "execution_path_efficiency"
+description = "任务执行路径效率。1:超过100次工具调用仍未完成;2:大量重复/无效调用(70+);3:中等效率(40-70次调用);4:较高效率(25-40次);5:极高效率(<25次)直达目标"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "仅25次工具调用，Write 9次精准修改，Bash仅2次，极其高效"
+
+[[criterion]]
+name = "code_modification_quality"
+description = "代码修改的工程质量。1:引入新bug或破坏现有功能;2:修复有效但代码风格差;3:修复正确代码规范但缺少边界处理;4:高质量修复含边界处理和错误防御;5:高质量修复+完善的错误防御+代码结构优化+一致的编码风格"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "同样修改9个文件，过程精简无试错，代码结构清晰含错误防御"
+
+[[criterion]]
+name = "solution_documentation_clarity"
+description = "解决方案说明的清晰度。1:无总结;2:简单列出修改文件;3:有修复总结表格但缺少根因;4:有根因+修复方案对照;5:每个问题独立分析根因、修复方案、代码位置引用，结构清晰可追溯"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "每个问题独立段落分析根因和修复，引用具体代码位置如AppNavigator.tsx:40"
