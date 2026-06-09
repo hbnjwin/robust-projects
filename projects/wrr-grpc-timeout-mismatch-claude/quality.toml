@@ -1,0 +1,62 @@
+[[criterion]]
+name = "timeout_root_cause_analysis"
+description = "gRPC timeout root cause analysis"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "快速定位客户端超时<服务端处理时间+deadline未传递两个根因"
+
+[[criterion]]
+name = "deadline_propagation_fix"
+description = "Deadline propagation fix quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "正确修复deadline传播+合理超时设置10s覆盖服务端最大处理时间"
+
+[[criterion]]
+name = "error_handling_improvement"
+description = "Error handling improvement"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "完整错误处理链+grpc.Dial返回值检查"
+
+[[criterion]]
+name = "timeout_value_calibration"
+description = "Timeout value calibration"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "设置10s给充足裕度避免边界超时"
+
+[[criterion]]
+name = "test_verification"
+description = "Test verification"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "未执行测试验证"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "31个tool calls高效精简"
+
+[[criterion]]
+name = "fix_completeness"
+description = "Fix completeness and correctness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复完整覆盖超时+deadline+错误处理三个问题"
