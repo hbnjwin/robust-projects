@@ -1,0 +1,62 @@
+[[criterion]]
+name = "slow_query_diagnosis"
+description = "Slow query diagnosis ability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Identified missing index + analyzed ESR principle"
+
+[[criterion]]
+name = "index_design_quality"
+description = "Index design quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Compound index + ESR principle analysis"
+
+[[criterion]]
+name = "cache_consistency_solution"
+description = "Cache consistency solution"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "Built-in TTL cache + invalidate_stats_cache API + param hash key"
+
+[[criterion]]
+name = "query_result_control"
+description = "Query result control"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Added limit default 50"
+
+[[criterion]]
+name = "solution_depth"
+description = "Solution depth"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Index+limit+built-in cache fundamentally solves consistency"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "5 tool calls"
+
+[[criterion]]
+name = "code_maintainability"
+description = "Code maintainability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Cache key param hash + invalidate API + idempotent index"
