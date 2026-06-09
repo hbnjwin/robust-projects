@@ -1,0 +1,62 @@
+[[criterion]]
+name = "encoding_root_cause_analysis"
+description = "FastAPI encoding root cause analysis"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Identified 7 issues including CORS charset NFC"
+
+[[criterion]]
+name = "cors_browser_compatibility"
+description = "CORS and browser fix quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Added CORSMiddleware for frontend"
+
+[[criterion]]
+name = "input_validation_error_handling"
+description = "Input validation and error handling"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Pydantic field_validator returns 422"
+
+[[criterion]]
+name = "file_upload_encoding_fix"
+description = "Chinese filename upload fix"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "NFC normalization + path traversal guard"
+
+[[criterion]]
+name = "test_verification"
+description = "Test verification coverage"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "7 test scenarios all passed"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "12 tool calls"
+
+[[criterion]]
+name = "solution_architecture"
+description = "Solution architecture quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "UTF8JSONResponse + CORS + Pydantic"
