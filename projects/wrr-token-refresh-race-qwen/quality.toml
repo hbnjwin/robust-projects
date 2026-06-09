@@ -1,62 +1,62 @@
 [[criterion]]
-name = "root_cause_analysis"
-description = "Bug根因定位能力。是否准确识别了代码缺陷的根本原因而非表面现象。1:完全未定位根因或方向错误;2:仅识别表面现象未深入;3:定位到相关代码但根因分析不完整;4:准确定位根因并能解释原理;5:精准定位根因且分析了关联影响范围"
+name = "concurrent_refresh_guard"
+description = "Token并发刷新的重入保护机制。1:未识别并发刷新问题;2:识别了但锁机制实现错误;3:实现了isRefreshing标志但存在竞态窗口;4:正确实现了基于Promise的单次刷新+排队机制;5:完善的重入保护含超时兜底"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "识别了并发刷新问题但对竞态时序分析不深入"
+rationale = "request.ts中识别了isRefreshing标志的作用，但对refreshToken函数内部Promise排队的竞态时序分析不深入"
 
 [[criterion]]
-name = "code_fix_quality"
-description = "修复代码质量。修复方案是否正确、完整、无副作用、符合最佳实践。1:未修复或引入新bug;2:部分修复但有明显缺陷;3:基本修复核心问题但有边界遗漏;4:修复完整且代码质量良好;5:修复完美、方案优雅且考虑了边界情况"
+name = "pending_request_traversal"
+description = "pendingRequests数组遍历期间的修改安全性。1:未注意遍历问题;2:注意到但未修复;3:改用了安全遍历但逻辑有瑕疵;4:正确使用splice+while替代forEach避免遍历竞态;5:完美解决含并发安全性证明"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "修复了部分问题但pendingRequests遍历期间的竞态未处理"
+rationale = "在request.ts中使用forEach遍历pendingRequests并resolve，未意识到遍历期间新请求push进来导致的竞态"
 
 [[criterion]]
-name = "task_execution_efficiency"
-description = "任务执行效率。排查路径是否清晰高效，工具使用是否合理，是否存在大量无效操作。1:严重低效或死循环式试错;2:路径混乱多次无效操作;3:基本合理但有冗余步骤;4:路径清晰高效;5:极其精准直达目标零冗余"
+name = "refresh_failure_propagation"
+description = "刷新Token失败时排队请求的错误传播。1:刷新失败后排队请求永久挂起;2:刷新失败但只reject了部分请求;3:reject了所有排队请求但未清理状态;4:正确reject所有排队请求并重置isRefreshing;5:完善的错误传播含重试策略和用户提示"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "17次工具调用含多次Bash和Glob效率偏低"
+rationale = "request.ts中refreshToken失败时catch块只重置了isRefreshing，pendingRequests中的请求未reject导致泄漏"
 
 [[criterion]]
-name = "code_comprehension"
-description = "代码理解深度。对Vue3/TS项目架构、响应式机制、生命周期、Element Plus组件的理解程度。1:对框架机制完全不了解;2:有基础认知但关键概念错误;3:理解基本机制但对复杂场景把握不足;4:深入理解框架特性并正确运用;5:精通框架底层原理给出专家级分析"
+name = "axios_interceptor_design"
+description = "Axios响应拦截器中401处理的设计质量。1:拦截器逻辑混乱或死循环;2:基本能拦截401但多次触发刷新;3:正确拦截401并触发单次刷新;4:完整的拦截→刷新→重试流程;5:拦截器设计优雅含白名单和最大重试次数"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "对axios拦截器和Promise队列机制理解一般"
+rationale = "response interceptor中401处理基本正确，但对拦截器自身请求（refreshToken请求本身401）的递归问题未充分考虑"
 
 [[criterion]]
-name = "instruction_compliance"
-description = "指令遵从与问题聚焦。是否按用户描述修复了指定问题，而非自行发挥或偏离主题。1:完全偏离用户需求;2:部分偏离或过度修改;3:基本聚焦但有小幅偏离;4:准确理解并执行用户指令;5:精确聚焦问题且主动沟通不确定点"
+name = "auth_module_structure"
+description = "auth.ts模块中Token管理的代码组织。1:Token管理代码散乱无结构;2:有基本结构但职责不清;3:getToken/setToken/refreshToken职责分明;4:模块结构清晰含类型定义;5:模块设计优秀含单一职责和可测试性"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "基本聚焦token刷新问题"
+rationale = "auth.ts中getToken/setToken/refreshToken基本分离，但refreshToken的Promise返回值类型不够严格"
 
 [[criterion]]
-name = "engineering_practice"
-description = "工程实践规范。代码风格一致性、TypeScript类型安全、Vue3 Composition API用法、错误处理等。1:违反多项基本规范;2:有明显规范问题;3:基本规范但有改进空间;4:规范良好符合项目风格;5:工程质量优秀堪称范例"
+name = "investigation_path_efficiency"
+description = "排查路径是否高效精准。1:超过20次工具调用大量试错;2:15-20次调用含多次无效搜索;3:10-15次调用有冗余但方向正确;4:5-10次调用路径清晰;5:5次以内精准直达"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "异步错误处理不够完善，刷新失败时pending请求泄漏"
+rationale = "共17次工具调用包含多次Bash和Glob搜索，在request.ts和auth.ts之间反复跳转"
 
 [[criterion]]
-name = "delivery_completeness"
-description = "交付完整性。修复是否涵盖所有相关场景，是否验证了修复效果，是否有遗漏。1:未交付有效修复;2:修复不完整缺少关键场景;3:核心场景已覆盖但有边缘遗漏;4:修复完整覆盖主要场景;5:全面覆盖并主动补充相关防御性代码"
+name = "type_safety_and_error_handling"
+description = "TypeScript类型安全和异步错误处理的规范性。1:无类型注解且Promise未处理reject;2:部分类型注解但async/await错误处理不完整;3:类型基本正确但catch块处理不够;4:类型安全且async/await错误链完整;5:严格类型安全含泛型和完整的错误边界"
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "核心竞态部分修复但刷新失败时的reject逻辑缺失"
+score = 2
+rationale = "异步错误处理不完善，refreshToken失败时pending请求的Promise泄漏未处理"
