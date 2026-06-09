@@ -1,0 +1,62 @@
+[[criterion]]
+name = "root_cause_identification"
+description = "RecyclerView重复加载根因定位。1:未找到;2:方向错误;3:怀疑去重问题;4:找到addAll无去重;5:找到去重+isLoading双重问题"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "找到addItems无去重的核心问题"
+
+[[criterion]]
+name = "dedup_implementation"
+description = "去重实现质量。1:无去重;2:简单过滤;3:HashSet去重;4:HashSet+高效判断;5:含ID级别去重和数据一致性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用HashSet但以toString()作key，可能不稳定"
+
+[[criterion]]
+name = "loading_state_management"
+description = "加载状态管理。1:无管理;2:设置不重置;3:基本管理;4:正确管理含重置;5:完整状态机含错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "未修复isLoading永远为true不重置的问题"
+
+[[criterion]]
+name = "fix_correctness"
+description = "修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且健壮"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "去重逻辑正确但isLoading永远为true的严重问题未修复，影响后续加载"
+
+[[criterion]]
+name = "code_exploration"
+description = "代码探索。1:未探索;2:表面;3:读了主文件;4:理解Adapter结构;5:深度理解"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "读了LoadMoreAdapter理解了基本结构"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "4次工具调用，路径高效"
+
+[[criterion]]
+name = "notify_optimization"
+description = "RecyclerView通知优化。1:无优化;2:notifyDataSetChanged;3:notifyItemRangeInserted;4:精确范围通知+DiffUtil;5:含动画和性能优化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "改为notifyItemRangeInserted但计算范围可能有偏差"

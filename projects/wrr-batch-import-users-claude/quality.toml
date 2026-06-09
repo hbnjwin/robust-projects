@@ -1,0 +1,62 @@
+[[criterion]]
+name = "dirty_data_handling"
+description = "脏数据容错处理。1:无容错;2:简单过滤;3:基本清洗;4:列映射+格式清理+去重;5:智能识别+多策略清洗+异常报告"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "智能列映射含中英文关键词识别+手动调整+预览确认"
+
+[[criterion]]
+name = "progress_bar_implementation"
+description = "导入进度条实现。1:无进度;2:假进度;3:简单百分比;4:实时进度含分批处理;5:精确进度含速率和剩余时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分批处理实时进度条"
+
+[[criterion]]
+name = "import_report_design"
+description = "导入报告设计。1:无报告;2:简单成功失败数;3:分类统计;4:详细报告含每行结果;5:可视化报告含导出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "四色卡片汇总+每行详细处理结果"
+
+[[criterion]]
+name = "column_mapping_intelligence"
+description = "列映射智能度。1:固定列顺序;2:简单列名匹配;3:多别名匹配;4:中英文别名+手动调整;5:ML级别自动映射"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "中英文关键词自动匹配+手动调整+前5行预览"
+
+[[criterion]]
+name = "task_planning"
+description = "任务规划。1:无规划;2:无显式规划;3:简单规划;4:使用任务管理;5:精细规划"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用TaskCreate系统规划"
+
+[[criterion]]
+name = "execution_correctness"
+description = "执行正确性，是否在正确的目录和环境中操作。1:写入错误目录;2:部分操作错误;3:基本正确;4:完全正确;5:正确且有验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在正确的项目目录中编写代码"
+
+[[criterion]]
+name = "delivery_completeness"
+description = "交付完整性。1:未完成;2:部分功能;3:核心功能完成;4:全部功能完成;5:完成含构建验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "完整实现含上传、映射、处理、报告四步流程"
