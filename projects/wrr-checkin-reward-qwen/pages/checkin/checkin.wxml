@@ -1,0 +1,5 @@
+<view class="container">
+  <text class="title">Daily Check-in</text>
+  <button bindtap="handleCheckIn">Check In</button>
+  <!-- TODO: implement check-in logic and reward display -->
+</view>
