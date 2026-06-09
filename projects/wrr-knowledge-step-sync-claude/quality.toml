@@ -1,0 +1,62 @@
+[[criterion]]
+name = "root_cause_analysis"
+description = "Bug根因定位能力。是否准确识别了代码缺陷的根本原因而非表面现象。1:完全未定位根因或方向错误;2:仅识别表面现象未深入;3:定位到相关代码但根因分析不完整;4:准确定位根因并能解释原理;5:精准定位根因且分析了关联影响范围"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确分析了前端步骤状态滞后于后端实际进度的根因"
+
+[[criterion]]
+name = "code_fix_quality"
+description = "修复代码质量。修复方案是否正确、完整、无副作用、符合最佳实践。1:未修复或引入新bug;2:部分修复但有明显缺陷;3:基本修复核心问题但有边界遗漏;4:修复完整且代码质量良好;5:修复完美、方案优雅且考虑了边界情况"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "改为轮询后端状态接口驱动步骤更新而非依赖API返回值"
+
+[[criterion]]
+name = "task_execution_efficiency"
+description = "任务执行效率。排查路径是否清晰高效，工具使用是否合理，是否存在大量无效操作。1:严重低效或死循环式试错;2:路径混乱多次无效操作;3:基本合理但有冗余步骤;4:路径清晰高效;5:极其精准直达目标零冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "7次调用路径清晰"
+
+[[criterion]]
+name = "code_comprehension"
+description = "代码理解深度。对Vue3/TS项目架构、响应式机制、生命周期、Element Plus组件的理解程度。1:对框架机制完全不了解;2:有基础认知但关键概念错误;3:理解基本机制但对复杂场景把握不足;4:深入理解框架特性并正确运用;5:精通框架底层原理给出专家级分析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "理解异步任务触发与完成的时间差需要轮询解决"
+
+[[criterion]]
+name = "instruction_compliance"
+description = "指令遵从与问题聚焦。是否按用户描述修复了指定问题，而非自行发挥或偏离主题。1:完全偏离用户需求;2:部分偏离或过度修改;3:基本聚焦但有小幅偏离;4:准确理解并执行用户指令;5:精确聚焦问题且主动沟通不确定点"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "完整修复了上传-分片-向量三步的状态同步"
+
+[[criterion]]
+name = "engineering_practice"
+description = "工程实践规范。代码风格一致性、TypeScript类型安全、Vue3 Composition API用法、错误处理等。1:违反多项基本规范;2:有明显规范问题;3:基本规范但有改进空间;4:规范良好符合项目风格;5:工程质量优秀堪称范例"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "轮询逻辑加了cleanup和超时保护"
+
+[[criterion]]
+name = "delivery_completeness"
+description = "交付完整性。修复是否涵盖所有相关场景，是否验证了修复效果，是否有遗漏。1:未交付有效修复;2:修复不完整缺少关键场景;3:核心场景已覆盖但有边缘遗漏;4:修复完整覆盖主要场景;5:全面覆盖并主动补充相关防御性代码"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "覆盖了正常完成和失败两种场景的步骤显示"
