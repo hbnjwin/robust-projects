@@ -1,0 +1,62 @@
+[[criterion]]
+name = "drag_drop_core_quality"
+description = "拖拽核心功能实现质量。1:无拖拽或拖拽不可用;2:仅基本HTML5拖拽;3:使用dnd-kit跨列拖动但无同列排序;4:跨列+同列排序;5:跨列+同列排序+DragOverlay视觉反馈+拖拽动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "使用@dnd-kit/core+@dnd-kit/sortable实现跨列拖动和同列排序，DragOverlay带旋转阴影效果，原位卡片半透明"
+
+[[criterion]]
+name = "visual_feedback_and_ux"
+description = "拖拽视觉反馈和用户体验。1:无视觉反馈;2:基本拖拽光标变化;3:拖拽时有高亮但效果简单;4:DragOverlay+目标列高亮;5:DragOverlay带动画效果+原位占位符+目标列高亮+流畅过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "DragOverlay带旋转(3deg)+阴影效果，原位卡片半透明(opacity:0.5)，拖拽过程视觉体验流畅"
+
+[[criterion]]
+name = "admin_layout_integration"
+description = "与管理后台的集成程度。1:独立页面无后台框架;2:仅有基本页面容器;3:antd等UI框架包裹但无管理后台布局;4:完整AdminLayout含侧边栏+路由+Dashboard;5:AdminLayout+权限+多页面路由+面包屑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用antd ConfigProvider但无管理后台布局，看板作为独立应用而非后台模块"
+
+[[criterion]]
+name = "typescript_type_definition"
+description = "TypeScript类型定义的规范性。1:无类型定义(any);2:基本类型注解;3:独立类型文件定义Card/Column;4:完整类型覆盖含泛型和工具类型;5:严格类型+泛型约束+类型守卫+编译零警告"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "类型内联在KanbanBoard.tsx中，定义严格，构建零错误"
+
+[[criterion]]
+name = "execution_path_efficiency"
+description = "任务执行路径效率。1:超过100次工具调用;2:60-100次调用;3:40-60次调用;4:25-40次调用;5:25次以下精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "仅26次工具调用(Write 8+Bash 3+Read 2)，极其高效精准"
+
+[[criterion]]
+name = "card_operations_and_features"
+description = "卡片操作和功能丰富度。1:仅展示无操作;2:仅拖拽移动;3:拖拽+新增/删除;4:拖拽+增删+优先级/标签+描述;5:完整CRUD+优先级+标签+搜索/筛选+批量操作"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "拖拽+新增/删除+高中低三色优先级标签+卡片描述"
+
+[[criterion]]
+name = "responsive_design"
+description = "响应式设计适配。1:无响应式;2:固定宽度布局;3:基本flexbox但无断点;4:响应式布局含媒体查询断点;5:完整响应式+移动端触控适配+断点切换布局"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "响应式布局，窄屏自动切换为单列展示"
