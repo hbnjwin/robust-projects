@@ -1,0 +1,62 @@
+[[criterion]]
+name = "memleak_root_cause"
+description = "Memory leak root cause identification"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Identified heartbeat key written millions of times with strdup never freed"
+
+[[criterion]]
+name = "memory_ownership_fix"
+description = "Memory ownership fix quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Unified deep copy for key and value with ownership semantics"
+
+[[criterion]]
+name = "realloc_safety"
+description = "realloc safety check"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Temp variable + NULL check before assignment"
+
+[[criterion]]
+name = "cleanup_function"
+description = "Cleanup function design"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Free each key+value per entry then free array for orderly shutdown"
+
+[[criterion]]
+name = "fix_explanation_quality"
+description = "Fix explanation professionalism"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Each fix references line numbers + memory ownership semantics analysis"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "5 tool calls"
+
+[[criterion]]
+name = "code_correctness"
+description = "Fix code correctness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Fixes correct + memory management semantic consistency analysis"
