@@ -1,6 +1,6 @@
 [[criterion]]
-name = "mobile_css_understanding"
-description = "移动端CSS适配理解。1:不理解;2:基本了解;3:知道viewport和媒体查询;4:理解多设备适配和安全区域;5:深度理解含CSS性能和GPU加速"
+name = "移动端CSS理解"
+description = "[Explicit] 移动端CSS适配理解。1:不理解;2:基本了解;3:知道viewport和媒体查询;4:理解多设备适配和安全区域;5:深度理解含CSS性能和GPU加速"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 3
 rationale = "使用了媒体查询和viewport但方案偏复杂"
 
 [[criterion]]
-name = "carousel_fix_quality"
-description = "轮播图修复质量。1:未修复;2:简单修复;3:基本修复;4:修复了闪白屏和显示问题;5:修复完善含性能优化"
+name = "轮播修复质量"
+description = "[Explicit] 轮播图修复质量。1:未修复;2:简单修复;3:基本修复;4:修复了闪白屏和显示问题;5:修复完善含性能优化"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 3
 rationale = "改用transform滑动，修复了闪白屏"
 
 [[criterion]]
-name = "responsive_design"
-description = "响应式设计质量。1:无响应式;2:简单媒体查询;3:基本适配;4:多断点适配含横屏;5:完整适配含安全区域和折叠屏"
+name = "响应式设计"
+description = "[Explicit] 响应式设计质量。1:无响应式;2:简单媒体查询;3:基本适配;4:多断点适配含横屏;5:完整适配含安全区域和折叠屏"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 3
 rationale = "处理了小屏按钮截断和横屏布局"
 
 [[criterion]]
-name = "cross_device_compatibility"
-description = "跨设备兼容性。1:只考虑一种设备;2:基本兼容;3:主流设备兼容;4:含Android特殊处理;5:全面兼容含降级方案"
+name = "跨设备兼容性"
+description = "[Explicit] 跨设备兼容性。1:只考虑一种设备;2:基本兼容;3:主流设备兼容;4:含Android特殊处理;5:全面兼容含降级方案"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 3
 rationale = "处理了安卓机型不显示的问题"
 
 [[criterion]]
-name = "task_planning"
-description = "任务规划。1:无规划;2:无显式规划;3:简单规划;4:使用任务管理系统规划;5:精细规划含优先级"
+name = "任务规划"
+description = "[Explicit] 任务规划。1:无规划;2:无显式规划;3:简单规划;4:使用任务管理系统规划;5:精细规划含优先级"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "使用TaskCreate拆分了修复任务"
 
 [[criterion]]
-name = "execution_efficiency"
-description = "执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
+name = "执行效率"
+description = "[Explicit] 执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 2
 rationale = "24次工具调用含10次Read，过程冗长"
 
 [[criterion]]
-name = "fix_completeness"
-description = "修复完整性。1:未修复;2:修了一个问题;3:修了主要问题;4:四个问题全修复;5:全修复含预防措施"
+name = "修复完整性"
+description = "[Explicit] 修复完整性。1:未修复;2:修了一个问题;3:修了主要问题;4:四个问题全修复;5:全修复含预防措施"
 type = "likert"
 points = 5
 weight = 1.0
