@@ -33,7 +33,11 @@
 
 <script setup lang="ts">
 import { ref, reactive, onActivated } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import axios from 'axios'
+
+const route = useRoute()
+const router = useRouter()
 
 const queryParams = reactive({
   status: undefined as number | undefined,
@@ -57,8 +61,28 @@ const getList = async () => {
   }
 }
 
+/** 从 URL query 参数恢复 queryParams（URL 为唯一数据源） */
+const syncQueryFromUrl = () => {
+  const query = route.query
+  queryParams.status = query.status !== undefined ? Number(query.status) : undefined
+  queryParams.username = (query.username as string) || ''
+  queryParams.pageNo = query.pageNo ? Number(query.pageNo) : 1
+  queryParams.pageSize = query.pageSize ? Number(query.pageSize) : 20
+}
+
+/** 将当前 queryParams 同步写入 URL（replace 模式，避免过多历史记录） */
+const pushQueryToUrl = () => {
+  const query: Record<string, any> = {}
+  if (queryParams.status !== undefined) query.status = queryParams.status
+  if (queryParams.username) query.username = queryParams.username
+  if (queryParams.pageNo !== 1) query.pageNo = queryParams.pageNo
+  if (queryParams.pageSize !== 20) query.pageSize = queryParams.pageSize
+  router.replace({ query })
+}
+
 const handleQuery = () => {
   queryParams.pageNo = 1
+  pushQueryToUrl()
   getList()
 }
 
@@ -66,21 +90,18 @@ const resetQuery = () => {
   queryParams.status = undefined
   queryParams.username = ''
   queryParams.pageNo = 1
+  pushQueryToUrl()
   getList()
 }
 
-// BUG: keep-alive 组件被重新激活时，表单 queryParams 被 Vue 的响应式系统恢复
-// 但如果用户在其他标签页通过 URL 参数修改了筛选条件
-// 或者表单被 resetQuery 重置了但没有重新获取数据
-// 导致表单显示的筛选条件和实际展示的数据不一致
+// FIX: keep-alive 重新激活时，先从 URL 恢复 queryParams，再获取数据
+// 确保筛选表单和表格数据始终一致
 onActivated(() => {
-  // BUG: 这里只重新获取数据，但没有从 URL query 参数恢复 queryParams
-  // 用户看到的筛选表单是 keep-alive 缓存的旧状态
-  // 但 getList 用的是被 resetQuery 修改后的 queryParams
-  // 表格数据刷新了但表单显示的是旧的筛选条件
+  syncQueryFromUrl()
   getList()
 })
 
-// 初始加载
+// 初始加载：从 URL 恢复参数后获取数据
+syncQueryFromUrl()
 getList()
 </script>
