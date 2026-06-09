@@ -4,8 +4,8 @@ description = "防改时间作弊的机制设计。1:完全信任客户端时间
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "使用Mock API层的getServerDate()概念正确，但无真实服务端实现，生产环境仍依赖客户端"
+score = 3
+rationale = "Mock层getServerDate()概念上使用服务端时间，有防作弊意识但缺少数据库级防护"
 
 [[criterion]]
 name = "server_side_architecture"
@@ -13,8 +13,8 @@ description = "服务端架构的真实可用性。1:无服务端;2:仅Mock/模�
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "utils/api.js为Mock API层，提供__setServerTimeOffset测试接口，需替换为wx.request才可用"
+score = 3
+rationale = "完整Mock API层含签到/查询/记录CRUD接口，基本可用但需替换为真实后端"
 
 [[criterion]]
 name = "consecutive_reward_design"
@@ -49,8 +49,8 @@ description = "并发和重复签到防护。1:无防护;2:仅前端防护;3:前
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "Mock层内存去重，无数据库级防护，并发场景不安全"
+score = 3
+rationale = "Mock层内存去重+前端isChecking防重复提交，属于前端+简单后端去重"
 
 [[criterion]]
 name = "code_deployability"
