@@ -1,6 +1,6 @@
 [[criterion]]
-name = "root_cause_identification"
-description = "Spring单例Bean并发问题的根因定位。1:未找到;2:方向错误;3:怀疑并发但未定位;4:找到实例变量被并发共享;5:找到根因并分析线程安全机制"
+name = "根因定位"
+description = "[Explicit] Spring单例Bean并发问题的根因定位。1:未找到;2:方向错误;3:怀疑并发但未定位;4:找到实例变量被并发共享;5:找到根因并分析线程安全机制"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "找到了currentPage/pageSize实例变量共享问题"
 
 [[criterion]]
-name = "concurrency_understanding"
-description = "对Java并发和Spring Bean作用域的理解。1:不理解;2:基本了解;3:知道单例问题;4:理解单例+线程安全;5:深度理解含解决方案对比"
+name = "并发理解"
+description = "[Explicit] 对Java并发和Spring Bean作用域的理解。1:不理解;2:基本了解;3:知道单例问题;4:理解单例+线程安全;5:深度理解含解决方案对比"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 3
 rationale = "找到问题但分析不够深入"
 
 [[criterion]]
-name = "fix_correctness"
-description = "修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且最佳实践"
+name = "修复正确性"
+description = "[Explicit] 修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且最佳实践"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "改为方法参数传递，修复正确"
 
 [[criterion]]
-name = "execution_efficiency"
-description = "执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
+name = "执行效率"
+description = "[Explicit] 执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 2
 rationale = "16次工具调用，包含多次Bash和重复Read，效率偏低"
 
 [[criterion]]
-name = "code_exploration"
-description = "代码探索。1:未探索;2:表面;3:读了相关文件;4:理解架构;5:深度理解"
+name = "代码探索效率"
+description = "[Explicit] 代码探索。1:未探索;2:表面;3:读了相关文件;4:理解架构;5:深度理解"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 3
 rationale = "读了多个文件但有冗余探索"
 
 [[criterion]]
-name = "fix_explanation"
-description = "修复说明。1:无;2:简略;3:基本;4:清晰含原理;5:专业深度"
+name = "修复说明质量"
+description = "[Explicit] 修复说明。1:无;2:简略;3:基本;4:清晰含原理;5:专业深度"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 3
 rationale = "表格总结了修复内容但深度一般"
 
 [[criterion]]
-name = "fix_minimalism"
-description = "修复精简度。1:大量无关改动;2:过度修改;3:略有冗余;4:恰当;5:最小化"
+name = "修复最小化"
+description = "[Explicit] 修复精简度。1:大量无关改动;2:过度修改;3:略有冗余;4:恰当;5:最小化"
 type = "likert"
 points = 5
 weight = 1.0
