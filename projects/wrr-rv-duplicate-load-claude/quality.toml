@@ -1,6 +1,6 @@
 [[criterion]]
-name = "root_cause_identification"
-description = "RecyclerView重复加载根因定位。1:未找到;2:方向错误;3:怀疑去重问题;4:找到addAll无去重;5:找到去重+isLoading双重问题"
+name = "根因定位"
+description = "[Explicit] RecyclerView重复加载根因定位。1:未找到;2:方向错误;3:怀疑去重问题;4:找到addAll无去重;5:找到去重+isLoading双重问题"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "找到addAll无去重和isLoading未重置两个问题"
 
 [[criterion]]
-name = "dedup_implementation"
-description = "去重实现质量。1:无去重;2:简单过滤;3:HashSet去重;4:HashSet+高效判断;5:含ID级别去重和数据一致性"
+name = "去重实现"
+description = "[Explicit] 去重实现质量。1:无去重;2:简单过滤;3:HashSet去重;4:HashSet+高效判断;5:含ID级别去重和数据一致性"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "使用HashSet去重，基于item内容判断"
 
 [[criterion]]
-name = "loading_state_management"
-description = "加载状态管理。1:无管理;2:设置不重置;3:基本管理;4:正确管理含重置;5:完整状态机含错误处理"
+name = "加载状态管理"
+description = "[Explicit] 加载状态管理。1:无管理;2:设置不重置;3:基本管理;4:正确管理含重置;5:完整状态机含错误处理"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "在addItems末尾正确重置isLoading为false"
 
 [[criterion]]
-name = "fix_correctness"
-description = "修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且健壮"
+name = "修复正确性"
+description = "[Explicit] 修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且健壮"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 4
 rationale = "去重和isLoading双修复正确"
 
 [[criterion]]
-name = "code_exploration"
-description = "代码探索。1:未探索;2:表面;3:读了主文件;4:理解Adapter结构;5:深度理解"
+name = "代码探索效率"
+description = "[Explicit] 代码探索。1:未探索;2:表面;3:读了主文件;4:理解Adapter结构;5:深度理解"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "读了Adapter代码理解了加载状态流程"
 
 [[criterion]]
-name = "execution_efficiency"
-description = "执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
+name = "执行效率"
+description = "[Explicit] 执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 4
 rationale = "4次工具调用，路径高效"
 
 [[criterion]]
-name = "notify_optimization"
-description = "RecyclerView通知优化。1:无优化;2:notifyDataSetChanged;3:notifyItemRangeInserted;4:精确范围通知+DiffUtil;5:含动画和性能优化"
+name = "通知优化"
+description = "[Explicit] RecyclerView通知优化。1:无优化;2:notifyDataSetChanged;3:notifyItemRangeInserted;4:精确范围通知+DiffUtil;5:含动画和性能优化"
 type = "likert"
 points = 5
 weight = 1.0
