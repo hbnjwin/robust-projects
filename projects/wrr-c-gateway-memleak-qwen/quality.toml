@@ -1,0 +1,62 @@
+[[criterion]]
+name = "memleak_root_cause"
+description = "Memory leak root cause identification"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Found config_set always appends without dedup"
+
+[[criterion]]
+name = "memory_ownership_fix"
+description = "Memory ownership fix quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "strdup + free old value on update"
+
+[[criterion]]
+name = "realloc_safety"
+description = "realloc safety check"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Temp variable for realloc return"
+
+[[criterion]]
+name = "cleanup_function"
+description = "Cleanup function design"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Added config_destroy to free all memory"
+
+[[criterion]]
+name = "fix_explanation_quality"
+description = "Fix explanation professionalism"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Table summary of 5 fixes basic depth"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Only 4 tool calls"
+
+[[criterion]]
+name = "code_correctness"
+description = "Fix code correctness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "All 5 fixes correct OOM root cause eliminated"
