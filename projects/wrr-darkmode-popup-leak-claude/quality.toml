@@ -1,62 +1,62 @@
 [[criterion]]
-name = "root_cause_analysis"
-description = "Bug根因定位能力。是否准确识别了代码缺陷的根本原因而非表面现象。1:完全未定位根因或方向错误;2:仅识别表面现象未深入;3:定位到相关代码但根因分析不完整;4:准确定位根因并能解释原理;5:精准定位根因且分析了关联影响范围"
+name = "css_var_scope_identification"
+description = "setCssVar只设置#app容器而未设置document根元素的问题定位。1:未识别CSS变量作用域问题;2:知道弹窗颜色不对但未关联到CSS变量;3:定位到setCssVar函数但未分析作用域;4:准确识别setCssVar只设置了#app而非document.documentElement;5:精准定位并解释了CSS变量继承机制和teleport脱离DOM树的关系"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "识别到setCssVar只设置#app而未设置document.documentElement"
+rationale = "在appStore.ts中准确识别setCssVar只给#app设置CSS变量，而Element Plus弹窗teleport到body下无法继承"
 
 [[criterion]]
-name = "code_fix_quality"
-description = "修复代码质量。修复方案是否正确、完整、无副作用、符合最佳实践。1:未修复或引入新bug;2:部分修复但有明显缺陷;3:基本修复核心问题但有边界遗漏;4:修复完整且代码质量良好;5:修复完美、方案优雅且考虑了边界情况"
+name = "teleport_mount_point_understanding"
+description = "对Element Plus Teleport弹窗挂载机制的理解。1:不了解Teleport机制;2:知道弹窗不在#app内但未关联到样式问题;3:理解Teleport挂载到body但分析不完整;4:正确理解MessageBox/Notification等组件teleport到body后脱离#app的CSS变量作用域;5:深度理解含Teleport的to属性配置和全局样式覆盖策略"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "在setCssVar中增加对document.documentElement的CSS变量设置"
+rationale = "理解Element Plus的MessageBox、Notification、Popover等组件通过Teleport挂载到body，脱离了#app的CSS变量作用域"
 
 [[criterion]]
-name = "task_execution_efficiency"
-description = "任务执行效率。排查路径是否清晰高效，工具使用是否合理，是否存在大量无效操作。1:严重低效或死循环式试错;2:路径混乱多次无效操作;3:基本合理但有冗余步骤;4:路径清晰高效;5:极其精准直达目标零冗余"
+name = "document_root_css_fix"
+description = "是否在document.documentElement上设置CSS变量。1:未做任何修改;2:修改了错误的DOM节点;3:设置了body但未设置html根元素;4:正确在document.documentElement上增加CSS变量设置;5:同时设置documentElement和body并处理了优先级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在setCssVar中增加了document.documentElement.style.setProperty，覆盖了body下所有teleport元素"
+
+[[criterion]]
+name = "dark_mode_toggle_completeness"
+description = "暗色/亮色模式切换是否对所有组件生效。1:弹窗组件全部不生效;2:部分弹窗生效部分不生效;3:主要弹窗生效但Popover等小组件遗漏;4:MessageBox、Notification、Popover全部生效;5:所有弹窗类组件生效含自定义Teleport组件"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "3次调用完成修复"
+rationale = "修复了核心问题但未逐一验证所有弹窗组件（MessageBox/Notification/Popover/Dialog/Drawer）"
 
 [[criterion]]
-name = "code_comprehension"
-description = "代码理解深度。对Vue3/TS项目架构、响应式机制、生命周期、Element Plus组件的理解程度。1:对框架机制完全不了解;2:有基础认知但关键概念错误;3:理解基本机制但对复杂场景把握不足;4:深入理解框架特性并正确运用;5:精通框架底层原理给出专家级分析"
+name = "task_completion_and_delivery"
+description = "任务是否完成交付。1:未执行任何有效操作;2:仅阅读了代码就结束;3:开始分析但中途放弃;4:完成了核心修复;5:完成修复并验证了效果"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "理解Element Plus Teleport弹窗挂载到body的机制"
+rationale = "共3次调用完成修复：Read appStore.ts → 分析setCssVar → Edit增加document.documentElement设置"
 
 [[criterion]]
-name = "instruction_compliance"
-description = "指令遵从与问题聚焦。是否按用户描述修复了指定问题，而非自行发挥或偏离主题。1:完全偏离用户需求;2:部分偏离或过度修改;3:基本聚焦但有小幅偏离;4:准确理解并执行用户指令;5:精确聚焦问题且主动沟通不确定点"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "按要求修复了暗色模式弹窗颜色不一致"
-
-[[criterion]]
-name = "engineering_practice"
-description = "工程实践规范。代码风格一致性、TypeScript类型安全、Vue3 Composition API用法、错误处理等。1:违反多项基本规范;2:有明显规范问题;3:基本规范但有改进空间;4:规范良好符合项目风格;5:工程质量优秀堪称范例"
+name = "element_plus_theming_approach"
+description = "是否采用了Element Plus官方推荐的暗色模式方案。1:不了解官方方案;2:了解但未采用;3:采用了部分官方方案;4:基本采用官方setCssVar方案;5:完整采用官方useDark或暗色类名方案"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "基本正确但未采用Element Plus官方的useDark方案"
+rationale = "基本正确修复但未采用Element Plus官方推荐的useDark组合式函数方案"
 
 [[criterion]]
-name = "delivery_completeness"
-description = "交付完整性。修复是否涵盖所有相关场景，是否验证了修复效果，是否有遗漏。1:未交付有效修复;2:修复不完整缺少关键场景;3:核心场景已覆盖但有边缘遗漏;4:修复完整覆盖主要场景;5:全面覆盖并主动补充相关防御性代码"
+name = "code_output_evidence"
+description = "是否有实际的代码修改输出。1:无任何Edit/Write操作;2:有Edit但改错了文件;3:修改了正确文件但方案不完整;4:修改了appStore.ts中setCssVar函数且方案正确;5:修改完整且附带了变量映射表"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "修复了核心问题但未覆盖所有弹窗组件的测试验证"
+rationale = "使用Edit精确修改了appStore.ts的setCssVar函数，增加了document.documentElement的CSS变量设置"

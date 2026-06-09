@@ -1,62 +1,62 @@
 [[criterion]]
-name = "root_cause_analysis"
-description = "Bug根因定位能力。是否准确识别了代码缺陷的根本原因而非表面现象。1:完全未定位根因或方向错误;2:仅识别表面现象未深入;3:定位到相关代码但根因分析不完整;4:准确定位根因并能解释原理;5:精准定位根因且分析了关联影响范围"
+name = "composition_event_timing"
+description = "Chrome下compositionend与keydown事件时序的理解。1:不了解IME事件模型;2:知道有IME问题但时序分析错误;3:了解compositionend在keydown之后触发但处理方案不够;4:准确分析时序并用isComposing属性解决;5:深度理解W3C InputEvents规范中compositionend/keydown的跨浏览器时序差异"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "准确分析Chrome下compositionend在keydown之后触发的时序"
+rationale = "准确分析Chrome下compositionend在keydown之后触发的时序，理解了keydown事件中e.isComposing的作用"
 
 [[criterion]]
-name = "code_fix_quality"
-description = "修复代码质量。修复方案是否正确、完整、无副作用、符合最佳实践。1:未修复或引入新bug;2:部分修复但有明显缺陷;3:基本修复核心问题但有边界遗漏;4:修复完整且代码质量良好;5:修复完美、方案优雅且考虑了边界情况"
+name = "is_composing_usage"
+description = "是否使用KeyboardEvent.isComposing替代手动标志位。1:未处理输入法状态;2:使用compositionstart/end手动维护标志位;3:使用了手动标志位但存在时序竞态;4:使用e.isComposing属性替代手动标志;5:使用e.isComposing并处理了旧浏览器兼容"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "使用e.isComposing替代手动维护的标志位并添加preventDefault"
+rationale = "使用KeyboardEvent.isComposing替代手动维护的composing标志位，代码更简洁且无时序竞态"
 
 [[criterion]]
-name = "task_execution_efficiency"
-description = "任务执行效率。排查路径是否清晰高效，工具使用是否合理，是否存在大量无效操作。1:严重低效或死循环式试错;2:路径混乱多次无效操作;3:基本合理但有冗余步骤;4:路径清晰高效;5:极其精准直达目标零冗余"
+name = "enter_key_send_vs_newline"
+description = "回车键发送消息与textarea换行的行为区分。1:未区分发送和换行;2:区分了但逻辑错误;3:基本区分但shift+enter处理不完整;4:正确处理enter发送+shift+enter换行;5:完整处理含Ctrl+Enter和Mac的Cmd+Enter"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "正确使用e.preventDefault()阻止Enter键默认换行行为，shift+Enter正常换行"
+
+[[criterion]]
+name = "ime_input_method_coverage"
+description = "修复是否覆盖了搜狗、微软拼音等主流输入法。1:未考虑输入法差异;2:只测试了一种输入法;3:考虑了但方案对部分输入法无效;4:方案对搜狗和微软拼音都有效;5:方案对所有主流输入法有效含日文韩文IME"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "4次调用极其精准"
+rationale = "使用isComposing的方案对搜狗、微软拼音、谷歌拼音等均有效，是W3C标准行为"
 
 [[criterion]]
-name = "code_comprehension"
-description = "代码理解深度。对Vue3/TS项目架构、响应式机制、生命周期、Element Plus组件的理解程度。1:对框架机制完全不了解;2:有基础认知但关键概念错误;3:理解基本机制但对复杂场景把握不足;4:深入理解框架特性并正确运用;5:精通框架底层原理给出专家级分析"
+name = "keydown_handler_code_quality"
+description = "handleKeydown事件处理函数的代码质量。1:逻辑混乱难以理解;2:功能正确但条件嵌套过深;3:基本清晰但有冗余判断;4:逻辑清晰简洁;5:优雅简洁符合事件处理最佳实践"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "深入理解浏览器IME事件模型和isComposing属性的标准行为"
+rationale = "handleKeydown中条件判断简洁：if (e.isComposing || e.key !== \"Enter\") return，符合事件处理最佳实践"
 
 [[criterion]]
-name = "instruction_compliance"
-description = "指令遵从与问题聚焦。是否按用户描述修复了指定问题，而非自行发挥或偏离主题。1:完全偏离用户需求;2:部分偏离或过度修改;3:基本聚焦但有小幅偏离;4:准确理解并执行用户指令;5:精确聚焦问题且主动沟通不确定点"
+name = "exploration_and_fix_speed"
+description = "从定位到修复的执行效率。1:超过15次工具调用;2:10-15次含大量试错;3:6-10次有部分冗余;4:4-6次路径清晰;5:3次以内精准修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "精确修复了搜狗和微软拼音的回车冲突"
+rationale = "共4次调用极其精准：Read ChatInput.vue → 分析 → Edit handleKeydown → 验证"
 
 [[criterion]]
-name = "engineering_practice"
-description = "工程实践规范。代码风格一致性、TypeScript类型安全、Vue3 Composition API用法、错误处理等。1:违反多项基本规范;2:有明显规范问题;3:基本规范但有改进空间;4:规范良好符合项目风格;5:工程质量优秀堪称范例"
+name = "event_handling_spec_compliance"
+description = "事件处理是否符合W3C InputEvents规范。1:违反规范的事件处理;2:功能正确但不符合规范;3:基本符合但未使用标准API;4:使用标准API(isComposing)符合规范;5:完全符合规范并正确处理了事件冒泡和默认行为"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "事件处理符合W3C InputEvents规范"
-
-[[criterion]]
-name = "delivery_completeness"
-description = "交付完整性。修复是否涵盖所有相关场景，是否验证了修复效果，是否有遗漏。1:未交付有效修复;2:修复不完整缺少关键场景;3:核心场景已覆盖但有边缘遗漏;4:修复完整覆盖主要场景;5:全面覆盖并主动补充相关防御性代码"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "同时修复了选词发送和textarea换行两个问题"
+rationale = "使用e.isComposing标准属性，符合W3C InputEvents规范，事件处理符合标准"
