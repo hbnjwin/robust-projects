@@ -1,62 +1,62 @@
 [[criterion]]
-name = "root_cause_analysis"
-description = "Bug根因定位能力。是否准确识别了代码缺陷的根本原因而非表面现象。1:完全未定位根因或方向错误;2:仅识别表面现象未深入;3:定位到相关代码但根因分析不完整;4:准确定位根因并能解释原理;5:精准定位根因且分析了关联影响范围"
+name = "keep_alive_cache_vs_url_sync"
+description = "keep-alive缓存的组件状态与URL query参数不同步的根因定位。1:未识别缓存与URL的不同步;2:知道筛选不一致但归因错误;3:定位到onActivated但未关联route.query;4:准确分析keep-alive恢复缓存状态但未从route.query重新同步queryParams;5:精准定位并提出了onActivated中从route.query恢复参数的方案"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "花了大量时间探索但根因分析效率极低"
+rationale = "在UserList.vue中花了大量时间探索但根因分析效率极低，41次工具调用含25次Bash"
 
 [[criterion]]
-name = "code_fix_quality"
-description = "修复代码质量。修复方案是否正确、完整、无副作用、符合最佳实践。1:未修复或引入新bug;2:部分修复但有明显缺陷;3:基本修复核心问题但有边界遗漏;4:修复完整且代码质量良好;5:修复完美、方案优雅且考虑了边界情况"
+name = "activated_param_restore"
+description = "onActivated中是否从route.query恢复queryParams。1:未处理参数恢复;2:恢复了但覆盖不完整;3:恢复了主要参数但遗漏了分页;4:完整恢复queryParams后调用刷新列表;5:恢复参数并对比是否有变化，只在变化时刷新"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "修复方案不够直接，代码改动不够精准"
+rationale = "修复方案不够直接，onActivated中的参数恢复逻辑不完整"
 
 [[criterion]]
-name = "task_execution_efficiency"
-description = "任务执行效率。排查路径是否清晰高效，工具使用是否合理，是否存在大量无效操作。1:严重低效或死循环式试错;2:路径混乱多次无效操作;3:基本合理但有冗余步骤;4:路径清晰高效;5:极其精准直达目标零冗余"
+name = "filter_table_consistency"
+description = "筛选表单与表格数据是否一致。1:筛选和表格完全不一致;2:首次加载一致但切换后不一致;3:标签页切换后基本一致但偶有不同步;4:标签页切换后筛选和表格完全同步;5:全场景一致含浏览器前进后退"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了部分问题但onActivated的参数恢复逻辑不完整，切换后可能仍有不一致"
+
+[[criterion]]
+name = "route_query_bidirectional_sync"
+description = "路由query参数与组件状态的双向同步。1:未实现同步;2:只实现了组件→URL的单向;3:实现了双向但有竞态;4:正确实现双向同步：筛选变化→更新URL，标签切入→从URL恢复;5:完善的双向同步含debounce防抖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "代码组织有改进空间，路由参数同步逻辑不够健壮"
+
+[[criterion]]
+name = "reset_filter_handling"
+description = "重置筛选按钮的行为是否正确。1:重置后筛选和数据仍不一致;2:重置了表单但URL未更新;3:重置了表单和URL但表格未刷新;4:重置表单→清空URL query→刷新列表三步完整;5:完整重置含分页重置回第1页"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了部分问题但重置按钮的queryParams清空和URL同步不完整"
+
+[[criterion]]
+name = "exploration_efficiency"
+description = "代码探索和修复的效率。1:超过30次工具调用严重低效;2:20-30次含大量Bash试错;3:10-20次有冗余;4:5-10次路径清晰;5:5次以内精准修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 1
-rationale = "41次工具调用含25次Bash严重低效，可能在大量试错"
+rationale = "共41次工具调用含25次Bash命令，严重低效，可能在大量试错和反复搜索"
 
 [[criterion]]
-name = "code_comprehension"
-description = "代码理解深度。对Vue3/TS项目架构、响应式机制、生命周期、Element Plus组件的理解程度。1:对框架机制完全不了解;2:有基础认知但关键概念错误;3:理解基本机制但对复杂场景把握不足;4:深入理解框架特性并正确运用;5:精通框架底层原理给出专家级分析"
+name = "tag_switch_scenario_coverage"
+description = "是否覆盖了筛选、重置、标签页切换三种场景。1:三种场景都未覆盖;2:只处理了一种;3:处理了两种但遗漏一种;4:三种场景全部正确处理;5:全部覆盖含极端场景如快速连续切换"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "对keep-alive缓存机制和URL参数同步理解不深"
-
-[[criterion]]
-name = "instruction_compliance"
-description = "指令遵从与问题聚焦。是否按用户描述修复了指定问题，而非自行发挥或偏离主题。1:完全偏离用户需求;2:部分偏离或过度修改;3:基本聚焦但有小幅偏离;4:准确理解并执行用户指令;5:精确聚焦问题且主动沟通不确定点"
-type = "likert"
-points = 5
-weight = 1.0
-score = 3
-rationale = "基本聚焦了筛选不一致问题"
-
-[[criterion]]
-name = "engineering_practice"
-description = "工程实践规范。代码风格一致性、TypeScript类型安全、Vue3 Composition API用法、错误处理等。1:违反多项基本规范;2:有明显规范问题;3:基本规范但有改进空间;4:规范良好符合项目风格;5:工程质量优秀堪称范例"
-type = "likert"
-points = 5
-weight = 1.0
-score = 2
-rationale = "代码组织有改进空间"
-
-[[criterion]]
-name = "delivery_completeness"
-description = "交付完整性。修复是否涵盖所有相关场景，是否验证了修复效果，是否有遗漏。1:未交付有效修复;2:修复不完整缺少关键场景;3:核心场景已覆盖但有边缘遗漏;4:修复完整覆盖主要场景;5:全面覆盖并主动补充相关防御性代码"
-type = "likert"
-points = 5
-weight = 1.0
-score = 2
-rationale = "修复了部分问题但onActivated的参数恢复逻辑不完整"
+rationale = "修复了部分问题但onActivated的参数恢复逻辑不完整，标签页切换场景有遗漏"
