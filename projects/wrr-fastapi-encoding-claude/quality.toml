@@ -1,0 +1,62 @@
+[[criterion]]
+name = "encoding_root_cause_analysis"
+description = "FastAPI encoding root cause analysis"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Clear root cause table mapping 4 symptoms to causes"
+
+[[criterion]]
+name = "cors_browser_compatibility"
+description = "CORS and browser fix quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "CORS + dedicated UTF-8 charset middleware"
+
+[[criterion]]
+name = "input_validation_error_handling"
+description = "Input validation and error handling"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Pydantic + global UnicodeDecodeError handler returns 400"
+
+[[criterion]]
+name = "file_upload_encoding_fix"
+description = "Chinese filename upload fix"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Latin-1/GBK/RFC5987 multi-scenario handling"
+
+[[criterion]]
+name = "test_verification"
+description = "Test verification coverage"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "No test execution"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "9 tool calls"
+
+[[criterion]]
+name = "solution_architecture"
+description = "Solution architecture quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Layered middleware architecture + global exception handler"
