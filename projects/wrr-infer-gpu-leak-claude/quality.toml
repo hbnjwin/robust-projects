@@ -1,0 +1,62 @@
+[[criterion]]
+name = "gpu_memory_leak_root_cause_analysis"
+description = "显存泄漏根因定位能力,能否准确识别导致GPU显存无法释放的核心原因。1:完全未定位到泄漏点;2:发现表面问题但根因错误;3:找到部分泄漏原因但遗漏关键根因;4:定位到主要泄漏原因并给出合理解释;5:精准定位所有泄漏根因(如view引用链/缓存未清理等)并给出完整分析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "精准定位outputs[0]是view，持有整个outputs张量引用导致底层显存无法释放"
+
+[[criterion]]
+name = "cuda_memory_management_understanding"
+description = "对CUDA内存管理机制的理解深度,包括PyTorch CUDA分配器缓存、张量引用计数、显式释放等。1:不了解CUDA内存机制;2:仅知道基本API但理解有误;3:了解empty_cache等基本操作但理解较浅;4:理解分配器缓存机制和引用链原理;5:深入理解CUDA内存生命周期并能据此设计最优释放策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "理解CUDA分配器缓存机制和view引用链，修复有理论依据"
+
+[[criterion]]
+name = "fix_precision_and_scope"
+description = "修复方案的精准度与改动范围是否合理,是否聚焦于泄漏问题本身。1:修改无效或引入新问题;2:修复有效但混入大量无关改动;3:大部分修改相关但仍有冗余;4:修改精准，全部针对泄漏问题;5:修改最小化且每处都精确对应一个泄漏根因"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "精确3处修改全部针对泄漏根因，无多余改动"
+
+[[criterion]]
+name = "batch_inference_cleanup_design"
+description = "批推理场景下的显存清理策略设计是否合理,清理时机和层级是否恰当。1:未处理批推理清理;2:清理逻辑存在但时机或层级有误;3:在外层添加清理可用但架构冗余;4:清理逻辑层级合理,单次推理内部完成清理;5:清理策略最优,兼顾性能和显存回收效率"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在generate内部完成清理，batch自然受益，架构更合理"
+
+[[criterion]]
+name = "investigation_path_efficiency"
+description = "排查路径的效率,工具调用次数和策略是否高效。1:大量无效探索超过15次调用;2:探索较多但方向正确;3:调用次数适中(8-12次)但有冗余;4:调用精简(5-7次)且路径清晰;5:最少调用即精准定位,排查策略最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "6次调用，Glob+Read精准定位问题文件"
+
+[[criterion]]
+name = "code_modification_quality"
+description = "代码修改的质量,包括修改是否清晰、意图是否明确、是否使用了正确的技术手段。1:修改有语法错误或逻辑缺陷;2:修改可运行但意图模糊;3:修改有效但不够精炼;4:修改清晰且使用了正确技术(如clone断开引用);5:修改优雅、最小化且每处都体现深入理解"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "每处修改直接解决泄漏，clone()断开引用是关键技巧"
+
+[[criterion]]
+name = "delivery_completeness"
+description = "交付完整性,是否满足题目显式和隐式要求(修复泄漏、不影响性能、添加显存监控)。1:未完成核心修复;2:完成核心修复但缺少多项隐式要求;3:完成修复并解释了原理但缺少监控/测试;4:完成修复+监控或测试之一;5:完成修复+显存监控+测试验证全部到位"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修了bug并清晰说明原理，但也没加监控测试"
