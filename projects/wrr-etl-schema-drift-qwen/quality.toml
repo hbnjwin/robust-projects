@@ -1,0 +1,62 @@
+[[criterion]]
+name = "schema_drift_detection"
+description = "Schema drift detection"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Detects missing fields + WARNING for new fields"
+
+[[criterion]]
+name = "validation_design"
+description = "Field validation mechanism"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "REQUIRED_FIELDS + SchemaValidationError"
+
+[[criterion]]
+name = "safe_field_access"
+description = "Safe field access implementation"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "safe_output list comprehension avoids KeyError"
+
+[[criterion]]
+name = "error_message_quality"
+description = "Error message diagnostic value"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "SchemaValidationError with missing list basic info"
+
+[[criterion]]
+name = "code_modification_precision"
+description = "Code modification precision"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Write rewrote entire transform.py"
+
+[[criterion]]
+name = "constant_extraction"
+description = "Constant extraction and maintainability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "REQUIRED_FIELDS and OUTPUT_FIELDS constants"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Only 5 tool calls"

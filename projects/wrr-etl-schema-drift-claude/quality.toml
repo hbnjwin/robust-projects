@@ -1,0 +1,62 @@
+[[criterion]]
+name = "schema_drift_detection"
+description = "Schema drift detection"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "validate_schema for missing and extra fields with proper logging"
+
+[[criterion]]
+name = "validation_design"
+description = "Field validation mechanism"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "REQUIRED_COLUMNS/OUTPUT_COLUMNS module-level constants"
+
+[[criterion]]
+name = "safe_field_access"
+description = "Safe field access implementation"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Constants for OUTPUT_COLUMNS"
+
+[[criterion]]
+name = "error_message_quality"
+description = "Error message diagnostic value"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ValueError reports missing cols and actual cols clearly"
+
+[[criterion]]
+name = "code_modification_precision"
+description = "Code modification precision"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Precise Edit on key positions only"
+
+[[criterion]]
+name = "constant_extraction"
+description = "Constant extraction and maintainability"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Module-level constants change one place only"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "6 tool calls"
