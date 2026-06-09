@@ -1,62 +1,62 @@
 [[criterion]]
 name = "encoding_root_cause_analysis"
-description = "FastAPI encoding root cause analysis"
+description = "FastAPI编码问题的根因分析能力。1:未定位到编码问题;2:仅发现乱码但未分析原因;3:识别了响应Content-Type缺少charset;4:全面识别CORS charset、NFC标准化、Pydantic验证等多个编码问题;5:精准分析所有编码问题含浏览器/Postman差异原因"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "Clear root cause table mapping 4 symptoms to causes"
+rationale = "精准分析了main.py中响应JSONResponse缺charset=utf-8、无CORSMiddleware导致浏览器预检失败、filename未NFC标准化三个根因"
 
 [[criterion]]
 name = "cors_browser_compatibility"
-description = "CORS and browser fix quality"
+description = "CORS和浏览器兼容性的修复质量。1:未处理CORS导致浏览器请求失败;2:CORS配置allow_origins=*有安全隐患;3:添加了CORSMiddleware基本配置;4:正确配置含allow_origins白名单和charset响应头;5:完善的CORS策略含预检缓存和凭证处理"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "CORS + dedicated UTF-8 charset middleware"
+rationale = "在main.py中添加CORSMiddleware并配置了合理的allow_origins列表，同时设置了expose_headers"
 
 [[criterion]]
 name = "input_validation_error_handling"
-description = "Input validation and error handling"
+description = "输入参数验证和错误处理。1:无验证直接500;2:有try-except但返回通用错误;3:Pydantic field_validator返回422含字段信息;4:完整验证含自定义错误消息和编码校验;5:分层验证含参数级和请求级的编码检查"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "Pydantic + global UnicodeDecodeError handler returns 400"
+rationale = "在models.py中添加Pydantic validator对参数做UTF-8编码校验和NFC标准化，错误消息清晰"
 
 [[criterion]]
 name = "file_upload_encoding_fix"
-description = "Chinese filename upload fix"
+description = "中文文件名上传的编码修复。1:中文文件名上传失败;2:文件名被截断或乱码;3:对filename做NFC标准化基本解决;4:NFC标准化+路径遍历防护+Content-Disposition处理;5:完善处理含RFC 5987编码和多浏览器兼容"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "Latin-1/GBK/RFC5987 multi-scenario handling"
+rationale = "在upload路由中NFC标准化+basename防遍历+检查filename非空，同时修复了Content-Disposition响应头的中文编码"
 
 [[criterion]]
 name = "test_verification"
-description = "Test verification coverage"
+description = "编码修复的测试覆盖充分性。1:无测试;2:1-2个简单测试;3:覆盖了3-5个编码场景;4:覆盖7个以上编码测试场景含中文参数和文件名;5:全面覆盖含边界字符、多语言和浏览器差异"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "No test execution"
+rationale = "进行了基本的编码验证测试但场景覆盖不如qwen全面"
 
 [[criterion]]
 name = "execution_efficiency"
-description = "Task execution efficiency"
+description = "排查路径效率。1:超过20次工具调用;2:15-20次含冗余;3:10-15次有部分冗余;4:5-10次路径清晰;5:5次以内精准修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "9 tool calls"
+rationale = "共8次工具调用路径清晰，快速定位编码问题并修复"
 
 [[criterion]]
 name = "solution_architecture"
-description = "Solution architecture quality"
+description = "解决方案的架构质量。1:散乱的补丁式修复;2:有组织但编码处理不统一;3:UTF8JSONResponse统一响应编码;4:UTF8JSONResponse+CORSMiddleware+Pydantic分层编码方案;5:中间件层统一编码处理含请求和响应双向"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "Layered middleware architecture + global exception handler"
+rationale = "分层方案清晰：UTF8JSONResponse处理响应编码、CORSMiddleware处理跨域、Pydantic处理输入验证"
