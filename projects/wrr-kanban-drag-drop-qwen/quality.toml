@@ -1,6 +1,6 @@
 [[criterion]]
-name = "drag_drop_core_quality"
-description = "拖拽核心功能实现质量。1:无拖拽或拖拽不可用;2:仅基本HTML5拖拽;3:使用dnd-kit跨列拖动但无同列排序;4:跨列+同列排序;5:跨列+同列排序+DragOverlay视觉反馈+拖拽动画"
+name = "拖拽核心质量"
+description = "[Explicit] 拖拽核心功能实现质量。1:无拖拽或拖拽不可用;2:仅基本HTML5拖拽;3:使用dnd-kit跨列拖动但无同列排序;4:跨列+同列排序;5:跨列+同列排序+DragOverlay视觉反馈+拖拽动画"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 3
 rationale = "使用@dnd-kit实现跨列拖动(useDroppable/useDraggable)，但未使用sortable模块，不支持同列排序"
 
 [[criterion]]
-name = "visual_feedback_and_ux"
-description = "拖拽视觉反馈和用户体验。1:无视觉反馈;2:基本拖拽光标变化;3:拖拽时有高亮但效果简单;4:DragOverlay+目标列高亮;5:DragOverlay带动画效果+原位占位符+目标列高亮+流畅过渡"
+name = "视觉反馈与体验"
+description = "[Explicit] 拖拽视觉反馈和用户体验。1:无视觉反馈;2:基本拖拽光标变化;3:拖拽时有高亮但效果简单;4:DragOverlay+目标列高亮;5:DragOverlay带动画效果+原位占位符+目标列高亮+流畅过渡"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 2
 rationale = "基本拖拽实现，无DragOverlay或特殊视觉反馈效果"
 
 [[criterion]]
-name = "admin_layout_integration"
-description = "与管理后台的集成程度。1:独立页面无后台框架;2:仅有基本页面容器;3:antd等UI框架包裹但无管理后台布局;4:完整AdminLayout含侧边栏+路由+Dashboard;5:AdminLayout+权限+多页面路由+面包屑"
+name = "管理后台布局集成"
+description = "[Explicit] 与管理后台的集成程度。1:独立页面无后台框架;2:仅有基本页面容器;3:antd等UI框架包裹但无管理后台布局;4:完整AdminLayout含侧边栏+路由+Dashboard;5:AdminLayout+权限+多页面路由+面包屑"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "完整AdminLayout含侧边栏和Header布局，有Dashboard仪表盘页面和路由配置，符合管理后台定位"
 
 [[criterion]]
-name = "typescript_type_definition"
-description = "TypeScript类型定义的规范性。1:无类型定义(any);2:基本类型注解;3:独立类型文件定义Card/Column;4:完整类型覆盖含泛型和工具类型;5:严格类型+泛型约束+类型守卫+编译零警告"
+name = "TypeScript类型定义"
+description = "[Explicit] TypeScript类型定义的规范性。1:无类型定义(any);2:基本类型注解;3:独立类型文件定义Card/Column;4:完整类型覆盖含泛型和工具类型;5:严格类型+泛型约束+类型守卫+编译零警告"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 3
 rationale = "独立types/kanban.ts定义Card和Column接口"
 
 [[criterion]]
-name = "execution_path_efficiency"
-description = "任务执行路径效率。1:超过100次工具调用;2:60-100次调用;3:40-60次调用;4:25-40次调用;5:25次以下精准完成"
+name = "执行路径效率"
+description = "[Explicit] 任务执行路径效率。1:超过100次工具调用;2:60-100次调用;3:40-60次调用;4:25-40次调用;5:25次以下精准完成"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 2
 rationale = "61次工具调用，其中Bash 9次、Read 7次、Edit 7次，执行路径较长"
 
 [[criterion]]
-name = "card_operations_and_features"
-description = "卡片操作和功能丰富度。1:仅展示无操作;2:仅拖拽移动;3:拖拽+新增/删除;4:拖拽+增删+优先级/标签+描述;5:完整CRUD+优先级+标签+搜索/筛选+批量操作"
+name = "卡片操作与功能"
+description = "[Explicit] 卡片操作和功能丰富度。1:仅展示无操作;2:仅拖拽移动;3:拖拽+新增/删除;4:拖拽+增删+优先级/标签+描述;5:完整CRUD+优先级+标签+搜索/筛选+批量操作"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 3
 rationale = "支持拖拽移动+新增卡片(AddCardForm组件)+删除卡片"
 
 [[criterion]]
-name = "responsive_design"
-description = "响应式设计适配。1:无响应式;2:固定宽度布局;3:基本flexbox但无断点;4:响应式布局含媒体查询断点;5:完整响应式+移动端触控适配+断点切换布局"
+name = "响应式设计"
+description = "[Explicit] 响应式设计适配。1:无响应式;2:固定宽度布局;3:基本flexbox但无断点;4:响应式布局含媒体查询断点;5:完整响应式+移动端触控适配+断点切换布局"
 type = "likert"
 points = 5
 weight = 1.0

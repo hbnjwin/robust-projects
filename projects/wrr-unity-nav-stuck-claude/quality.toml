@@ -1,6 +1,6 @@
 [[criterion]]
-name = "pathfinding_understanding"
-description = "Unity NavMesh寻路机制的理解。1:不理解;2:基本了解;3:理解NavMeshAgent基本用法;4:理解路径状态和速度检测;5:深度理解含障碍物处理和烘焙"
+name = "寻路理解"
+description = "[Explicit] Unity NavMesh寻路机制的理解。1:不理解;2:基本了解;3:理解NavMeshAgent基本用法;4:理解路径状态和速度检测;5:深度理解含障碍物处理和烘焙"
 type = "likert"
 points = 5
 weight = 1.0
@@ -8,8 +8,8 @@ score = 4
 rationale = "准确利用velocity和pathStatus检测卡住状态"
 
 [[criterion]]
-name = "stuck_detection_design"
-description = "卡住检测机制设计。1:无检测;2:简单距离检测;3:位置变化检测;4:速度+时间的复合检测;5:多维度检测含路径验证"
+name = "卡住检测设计"
+description = "[Explicit] 卡住检测机制设计。1:无检测;2:简单距离检测;3:位置变化检测;4:速度+时间的复合检测;5:多维度检测含路径验证"
 type = "likert"
 points = 5
 weight = 1.0
@@ -17,8 +17,8 @@ score = 4
 rationale = "velocity.sqrMagnitude速度检测+计时器，更准确"
 
 [[criterion]]
-name = "fix_correctness"
-description = "修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且健壮"
+name = "修复正确性"
+description = "[Explicit] 修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且健壮"
 type = "likert"
 points = 5
 weight = 1.0
@@ -26,8 +26,8 @@ score = 4
 rationale = "卡住跳下一点的逻辑简洁正确"
 
 [[criterion]]
-name = "fix_minimalism"
-description = "修复精简度。1:大量改动;2:过度复杂;3:略有冗余;4:恰当;5:最小化"
+name = "修复最小化"
+description = "[Explicit] 修复精简度。1:大量改动;2:过度复杂;3:略有冗余;4:恰当;5:最小化"
 type = "likert"
 points = 5
 weight = 1.0
@@ -35,8 +35,8 @@ score = 4
 rationale = "只增加卡住检测和跳点逻辑，修复精简"
 
 [[criterion]]
-name = "code_exploration"
-description = "代码探索。1:未探索;2:表面;3:读了主文件;4:理解AI架构;5:深度理解"
+name = "代码探索效率"
+description = "[Explicit] 代码探索。1:未探索;2:表面;3:读了主文件;4:理解AI架构;5:深度理解"
 type = "likert"
 points = 5
 weight = 1.0
@@ -44,8 +44,8 @@ score = 4
 rationale = "通过Agent和Read理解了AI状态机"
 
 [[criterion]]
-name = "execution_efficiency"
-description = "执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
+name = "执行效率"
+description = "[Explicit] 执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
 type = "likert"
 points = 5
 weight = 1.0
@@ -53,8 +53,8 @@ score = 4
 rationale = "3次工具调用，使用Edit精确修改"
 
 [[criterion]]
-name = "recovery_mechanism"
-description = "卡住恢复机制的合理性。1:无恢复;2:简单重置;3:基本恢复;4:合理的渐进恢复;5:智能恢复含上下文感知"
+name = "恢复机制设计"
+description = "[Explicit] 卡住恢复机制的合理性。1:无恢复;2:简单重置;3:基本恢复;4:合理的渐进恢复;5:智能恢复含上下文感知"
 type = "likert"
 points = 5
 weight = 1.0
