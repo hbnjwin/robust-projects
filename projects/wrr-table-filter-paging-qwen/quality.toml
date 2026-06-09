@@ -1,0 +1,62 @@
+[[criterion]]
+name = "root_cause_identification"
+description = "筛选后分页数据异常的根因定位能力。1:未尝试定位;2:方向错误;3:定位到相关代码但未找到根因;4:准确找到筛选未重置分页;5:找到根因并分析影响范围"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "未进行有效的问题分析，summary显示项目目录为空"
+
+[[criterion]]
+name = "fix_correctness"
+description = "修复代码的正确性和完整性。1:未修改任何代码;2:修改了但逻辑错误;3:部分修复;4:核心问题修复正确;5:修复正确且考虑了边界情况"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "未修改任何代码文件"
+
+[[criterion]]
+name = "code_exploration"
+description = "对项目代码的探索和理解程度。1:未有效探索;2:只做了表面浏览;3:读了相关文件;4:系统阅读并理解了组件关系;5:深度理解含数据流和状态管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "使用了Glob和Read但未找到有效代码"
+
+[[criterion]]
+name = "fix_minimalism"
+description = "修复方案的精简程度。1:未做修复;2:大量无关改动;3:改动偏多;4:只修改必要代码;5:一行精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "未做任何修复"
+
+[[criterion]]
+name = "task_completion"
+description = "任务完成度。1:完全未完成;2:开始了但中途放弃;3:部分完成;4:核心功能完成;5:完全完成含验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "完全未完成任务，可能遇到环境问题"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "工具调用和执行路径的效率。1:大量无效操作;2:效率低下;3:一般效率;4:路径清晰高效;5:最优路径零冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "5次工具调用但未产生有效输出"
+
+[[criterion]]
+name = "fix_explanation"
+description = "修复说明的专业性和清晰度。1:无说明;2:说明模糊;3:基本说明了改动;4:清晰说明根因和修复逻辑;5:含根因分析、修复原理和影响评估"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "未提供修复说明"

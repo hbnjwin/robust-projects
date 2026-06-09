@@ -1,0 +1,62 @@
+[[criterion]]
+name = "root_cause_identification"
+description = "Spring单例Bean并发问题的根因定位。1:未找到;2:方向错误;3:怀疑并发但未定位;4:找到实例变量被并发共享;5:找到根因并分析线程安全机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "准确定位实例变量竞态，分析了线程A/B交叉覆盖场景"
+
+[[criterion]]
+name = "concurrency_understanding"
+description = "对Java并发和Spring Bean作用域的理解。1:不理解;2:基本了解;3:知道单例问题;4:理解单例+线程安全;5:深度理解含解决方案对比"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "清晰解释了单例Bean+实例变量的竞态条件和单测不复现的原因"
+
+[[criterion]]
+name = "fix_correctness"
+description = "修复正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且最佳实践"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "改为方法参数，修复正确"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "4次工具调用即完成，路径清晰高效"
+
+[[criterion]]
+name = "code_exploration"
+description = "代码探索。1:未探索;2:表面;3:读了相关文件;4:理解架构;5:深度理解"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Agent快速理解了Controller结构"
+
+[[criterion]]
+name = "fix_explanation"
+description = "修复说明。1:无;2:简略;3:基本;4:清晰含原理;5:专业深度"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "清晰解释了根因、单测不复现原因和修复原理"
+
+[[criterion]]
+name = "fix_minimalism"
+description = "修复精简度。1:大量无关改动;2:过度修改;3:略有冗余;4:恰当;5:最小化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "精准修改Controller参数化"
