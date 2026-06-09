@@ -1,0 +1,62 @@
+[[criterion]]
+name = "module_separation_quality"
+description = "Module separation quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Split into 4 files config/model/data/train"
+
+[[criterion]]
+name = "interface_design"
+description = "Inter-module interface design"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Clear import relationships"
+
+[[criterion]]
+name = "training_consistency"
+description = "Training consistency verification"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Verified loss 2.39 to 0.01 matches original"
+
+[[criterion]]
+name = "config_management"
+description = "Config management approach"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Independent config.py for hyperparams"
+
+[[criterion]]
+name = "code_cleanliness"
+description = "Code cleanliness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Contains _gen_result.py unnecessary file"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "31 tool calls"
+
+[[criterion]]
+name = "refactor_scope_adherence"
+description = "Refactor scope control"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Kept original function but added extras"

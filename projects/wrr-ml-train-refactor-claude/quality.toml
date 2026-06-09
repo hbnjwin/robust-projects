@@ -1,0 +1,62 @@
+[[criterion]]
+name = "module_separation_quality"
+description = "Module separation quality"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Split into 3 files model/data/train minimal and precise"
+
+[[criterion]]
+name = "interface_design"
+description = "Inter-module interface design"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "create_dataloader with default params for flexibility"
+
+[[criterion]]
+name = "training_consistency"
+description = "Training consistency verification"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "No actual run verification"
+
+[[criterion]]
+name = "config_management"
+description = "Config management approach"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Params as function defaults"
+
+[[criterion]]
+name = "code_cleanliness"
+description = "Code cleanliness"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Only 3 necessary files"
+
+[[criterion]]
+name = "execution_efficiency"
+description = "Task execution efficiency"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "Only 8 tool calls extremely efficient"
+
+[[criterion]]
+name = "refactor_scope_adherence"
+description = "Refactor scope control"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Precise split no more no less"
