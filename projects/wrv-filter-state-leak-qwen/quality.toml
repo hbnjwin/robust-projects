@@ -1,0 +1,62 @@
+[[criterion]]
+name = "状态重置"
+description = "[Explicit] 路由切换时filterParams与请求参数的同步修复。1:未修复;2:部分重置;3:统一重置但时机不对;4:路由离开时正确重置所有筛选状态;5:重置+恢复+状态持久化策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了index.vue添加了组件销毁时的状态重置，但额外创建了useTableState.js composable过度抽象了简单的重置逻辑"
+
+[[criterion]]
+name = "排序修复"
+description = "[Explicit] 不存在字段排序导致后端500的修复。1:未修复;2:忽略错误;3:清除排序字段;4:清除+校验字段有效性;5:前端字段映射+后端容错"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "重置了排序字段但在useTableState.js中的实现增加了不必要的抽象层"
+
+[[criterion]]
+name = "分页同步"
+description = "[Explicit] currentPage在路由切换后的同步问题修复。1:未修复;2:只重置页码;3:重置页码+总数;4:完整分页状态重置;5:重置+记住滚动位置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了table-pagination组件和index.vue双文件处理分页，改动范围过大"
+
+[[criterion]]
+name = "改动范围控制"
+description = "[Implicit] 修复范围是否合理控制在必要最小范围。1:创建新文件或大规模重构;2:跨多文件改动;3:2-3文件合理改动;4:精准修改1-2文件;5:单文件最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "创建了useTableState.js composable、修改了table-pagination组件、api/index.js、index.vue共5个文件和plan文件，对一个状态重置bug来说严重过度工程"
+
+[[criterion]]
+name = "路由钩子"
+description = "[Explicit] 路由生命周期钩子的使用正确性。1:未使用;2:使用了但时机错误;3:正确使用onUnmounted;4:onBeforeRouteLeave+activated/deactivated;5:完整路由守卫+keep-alive策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在组件中使用了onUnmounted重置状态，但未使用onBeforeRouteLeave，如果组件被keep-alive缓存则不会触发"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有明显冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "29次工具调用，创建了5个文件的修改和plan，Agent调用3次，大量冗余探索和过度设计"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "29次工具调用包含EnterPlanMode、3次Agent、5次Write创建新文件，对一个状态重置bug来说严重低效"

@@ -1,0 +1,62 @@
+[[criterion]]
+name = "内存泄漏修复"
+description = "[Explicit] reactive嵌套代理对象未回收的内存泄漏修复。1:未修复;2:简单清空;3:避免深拷贝到store;4:shallowRef替代reactive+手动清理;5:完整的响应式优化+WeakRef+GC友好"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用shallowRef替代reactive存储表格数据，避免深层Proxy嵌套，手动管理响应式更新"
+
+[[criterion]]
+name = "存储优化"
+description = "[Explicit] localStorage存储量持续增长的优化方案。1:未处理;2:限制大小;3:只存配置不存数据;4:配置+LRU淘汰+大小监控;5:IndexedDB迁移+压缩+容量策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将表格数据从localStorage持久化中排除，仅存储列配置和筛选条件等轻量配置"
+
+[[criterion]]
+name = "深拷贝优化"
+description = "[Explicit] 表格数据深拷贝的性能优化。1:未优化;2:减少拷贝频次;3:浅拷贝替代;4:引用传递+冻结;5:结构化克隆+增量更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "去除tableStoreColumns的深拷贝操作，改为浅拷贝仅复制顶层引用"
+
+[[criterion]]
+name = "缓存策略"
+description = "[Implicit] Pinia store与localStorage联动的缓存策略优化。1:无策略;2:全量写入;3:按需写入;4:防抖+按需+大小限制;5:多级缓存+持久化策略+迁移"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "添加了persist的paths配置，仅持久化必要的配置字段，排除表格数据"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "4次工具调用(2 Read+1 Glob+1 Edit)精准高效"
+
+[[criterion]]
+name = "性能意识"
+description = "[Implicit] 对前端性能问题的分析深度和优化意识。1:无意识;2:表面优化;3:定位问题并修复;4:修复+性能分析;5:修复+基准测试+监控建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "清晰分析了内存泄漏的Proxy引用链原因，优化方案直击根因"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "4次工具调用完成修复，最简路径"
