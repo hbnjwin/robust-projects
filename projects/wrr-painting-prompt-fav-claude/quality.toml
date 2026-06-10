@@ -1,0 +1,62 @@
+[[criterion]]
+name = "收藏功能"
+description = "[Explicit] 支持收藏当前提示词到本地存储。1:未实现;2:实现但有bug;3:基本收藏;4:收藏+标签提取;5:收藏+标签+去重提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "PaintingPanel.vue中点击'收藏提示词'按钮保存到localStorage，自动提取前3个关键词作为标签，重复收藏时ElMessage警告提示"
+
+[[criterion]]
+name = "历史记录"
+description = "[Explicit] 查看和复用历史提示词。1:未实现;2:仅记录;3:记录+查看;4:记录+查看+复用;5:记录+查看+复用+上限管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "PaintingPanel.vue中生成图片成功后自动记录历史（上限50条），支持'复用'填入和'收藏'转存，可一键清空"
+
+[[criterion]]
+name = "快速填入"
+description = "[Explicit] 从收藏列表快速填入提示词到输入框。1:未实现;2:填入但不清除旧内容;3:基本填入;4:填入+关闭弹窗;5:填入+关闭+可编辑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "PaintingPanel.vue中收藏夹弹窗中点击'使用'直接填入输入框"
+
+[[criterion]]
+name = "localStorage持久化"
+description = "[Explicit] 收藏和历史数据正确存储在localStorage。1:未持久化;2:存储格式有问题;3:基本存储;4:分key存储+JSON序列化;5:存储+版本管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "PaintingPanel.vue中使用painting_prompt_favorites和painting_prompt_history两个localStorage key存储"
+
+[[criterion]]
+name = "UI交互设计"
+description = "[Implicit] 收藏和历史管理的界面交互是否友好。1:无UI;2:基本展示;3:弹窗管理;4:弹窗+操作按钮;5:弹窗+分类+搜索"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "PaintingPanel.vue中收藏夹和历史记录分别用el-dialog弹窗管理，每项有'使用''删除'操作按钮"
+
+[[criterion]]
+name = "代码组织"
+description = "[Implicit] 功能代码的组织结构是否清晰。1:混乱;2:耦合严重;3:功能分离但冗余;4:composable抽取;5:最小改动完成功能"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "全部逻辑集中在PaintingPanel.vue一个文件中，利用响应式ref管理状态，改动最小化"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>15次;2:10-15次;3:7-9次;4:4-6次;5:<=3次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "共5次工具调用（Read*2+Bash+Glob+Edit），路径极其高效"

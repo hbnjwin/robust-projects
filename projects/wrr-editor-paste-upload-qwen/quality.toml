@@ -1,0 +1,62 @@
+[[criterion]]
+name = "粘贴拦截"
+description = "[Explicit] 拦截富文本编辑器的粘贴事件处理图片。1:未拦截;2:拦截但不完整;3:基本拦截;4:customPaste+类型检测;5:customPaste+多种粘贴源兼容"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "NewsEditor.vue第30-37行新增uploadImageFile函数，但customPaste的拦截逻辑对不同粘贴源（浏览器/微信）的兼容性有待验证"
+
+[[criterion]]
+name = "自动上传"
+description = "[Explicit] 粘贴图片自动上传到文件服务器转成URL。1:未上传;2:上传但失败;3:基本上传;4:FormData+API调用;5:上传+进度+错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "NewsEditor.vue中uploadImageFile函数使用axios+FormData上传到/api/infra/file/upload，但缺少上传失败时的错误处理和用户提示"
+
+[[criterion]]
+name = "base64兜底清理"
+description = "[Implicit] 保存时清理HTML中残留的base64图片。1:无兜底;2:有检测但不处理;3:基本替换;4:正则扫描+逐个上传替换;5:扫描+替换+失败回退"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "NewsEditor.vue中仅在粘贴时拦截上传，handleSave时未做base64残留检查，如果粘贴HTML片段中内嵌base64仍会保存失败"
+
+[[criterion]]
+name = "上传接口复用"
+description = "[Explicit] 复用现有文件上传API而非新建接口。1:新建接口;2:复用但参数不对;3:基本复用;4:完整复用+FormData;5:复用+校验文件类型"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NewsEditor.vue中uploadImageFile复用/api/infra/file/upload接口，FormData上传"
+
+[[criterion]]
+name = "普通文本兼容"
+description = "[Implicit] 粘贴普通文本时不受影响。1:文本也被拦截;2:偶尔异常;3:基本兼容;4:类型判断区分;5:完全兼容+混合内容"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NewsEditor.vue中customPaste检测clipboardData.items中的image类型，非图片内容不拦截"
+
+[[criterion]]
+name = "代码改动精准度"
+description = "[Implicit] 改动集中在单文件，不引入多余修改。1:多文件;2:改动分散;3:单文件但冗余;4:精准单文件;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "仅修改NewsEditor.vue一个文件，添加uploadImageFile函数和customPaste配置，共5次工具调用"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>15次;2:10-15次;3:7-9次;4:4-6次;5:<=3次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共5次工具调用（Read*2+Edit*2+Agent），路径直接高效"

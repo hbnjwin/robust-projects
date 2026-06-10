@@ -1,0 +1,62 @@
+[[criterion]]
+name = "vuedraggable集成"
+description = "[Explicit] 正确引入vuedraggable@4.x并配置Vue3兼容。1:未引入;2:版本不对;3:基本引入;4:正确版本+import;5:版本+itemKey+过渡动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "package.json中添加vuedraggable@^4.1.0，CourseSections.vue中import VueDraggableNext并配置handle拖拽手柄"
+
+[[criterion]]
+name = "章节拖拽排序"
+description = "[Explicit] 实现章节之间的拖拽排序功能。1:未实现;2:有bug;3:基本拖拽;4:拖拽+排序更新;5:拖拽+handle+视觉反馈"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "CourseSections.vue中外层draggable v-model绑定sections，设置handle='.section-drag-handle'限制拖拽区域"
+
+[[criterion]]
+name = "资源跨章节拖动"
+description = "[Explicit] 支持资源在不同章节之间拖动转移。1:未实现;2:只能同章节;3:基本跨章节;4:group配置正确;5:group+数据同步+排序更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "CourseSections.vue中内层draggable设置group={name:'resources'}，资源可在章节间自由拖动并自动更新数据"
+
+[[criterion]]
+name = "后端接口调用"
+description = "[Explicit] 拖拽完成后自动调后端接口保存排序。1:未调用;2:调用但参数错;3:基本调用;4:章节+资源分别保存;5:防抖+错误处理+loading"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "CourseSections.vue中@change事件触发保存，章节排序和资源排序分别调用对应API"
+
+[[criterion]]
+name = "拖拽交互体验"
+description = "[Implicit] 拖拽过程中的视觉反馈和交互细节。1:无反馈;2:基本反馈;3:有拖拽样式;4:手柄图标+拖拽样式;5:手柄+动画+占位符"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "CourseSections.vue中设置handle限制拖拽区域，添加Rank图标作为拖拽手柄，交互明确"
+
+[[criterion]]
+name = "代码改动精准度"
+description = "[Implicit] 改动集中且不引入多余修改。1:多文件改动;2:改动分散;3:基本合理;4:精准2文件;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改CourseSections.vue+package.json共2个文件，改动精准集中"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>20次;2:15-20次;3:10-14次;4:5-9次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "共5次工具调用（Read*2+Agent+Edit+Write），极其高效"
