@@ -1,0 +1,62 @@
+[[criterion]]
+name = "请求取消"
+description = "[Explicit] 取消上传时HTTP请求的abort实现。1:未abort;2:仅设置flag;3:使用AbortController但signal未传递;4:AbortController+signal正确传递到axios;5:abort+超时保护+竞态处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "customUpload中使用AbortController创建cancel token，signal通过axios config传递，handleCancel调用cleanup()触发abort()"
+
+[[criterion]]
+name = "状态重置"
+description = "[Explicit] 弹窗关闭/重新打开时上传进度状态的重置。1:未重置;2:仅重置progress;3:重置progress+uploading;4:重置所有UI状态+进度状态;5:重置+防竞态+状态锁定"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "cleanup()函数统一重置abortController/currentFormData/uploading/progress，handleBeforeClose和handleCancel都调用cleanup()"
+
+[[criterion]]
+name = "内存清理"
+description = "[Explicit] FormData对象和文件引用的清理。1:未清理;2:仅清理FormData;3:FormData+文件引用;4:FormData+文件引用+controller;5:全链路清理+GC友好"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "cleanup()中将currentFormData设为null、abortController设为null，finally块中也做了清理，handleBeforeClose还调用uploadRef.clearFiles()清除文件引用"
+
+[[criterion]]
+name = "防重复打开"
+description = "[Explicit] 快速连续打开关闭弹窗时的内存泄漏防护。1:无防护;2:beforeClose有清理但不彻底;3:清理+防重入;4:清理+abort+clearFiles;5:完整生命周期管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "handleBeforeClose调用cleanup()完整清理所有状态并clearFiles()，customUpload开头也调用cleanup()防止残留，双重保障"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "保留t-upload组件结构，仅将action替换为request-method自定义上传，改动精准且保持了原有UI不变"
+
+[[criterion]]
+name = "多问题覆盖"
+description = "[Explicit] 四个问题(abort/状态残留/内存清理/重复打开)的修复覆盖度。1:只修了1个;2:修了2个;3:都涉及但不完整;4:都完整修复;5:统一方案解决+防回归"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "cleanup()统一解决abort/状态重置/内存清理三个问题，handleBeforeClose+customUpload开头双重调用防止残留，方案统一且防回归"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "直接识别问题并用request-method方案最小化改动，保留了t-upload组件的UI和交互"
