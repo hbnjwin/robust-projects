@@ -1,0 +1,53 @@
+[[criterion]]
+name = "列宽自适应"
+description = "[Explicit] 浏览器窗口缩放或F11全屏后表格列宽的重新计算。1:未处理;2:监听了resize但未触发重算;3:强制重挂载整表解决;4:局部refreshTable触发列宽重算;5:局部刷新+列宽缓存+平滑过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "expert-database/index.vue中添加table-layout=auto并用:key=tableKey递增强制t-table整体重新挂载，虽然解决了列宽问题但整表重挂载代价大"
+
+[[criterion]]
+name = "阴影恢复"
+description = "[Explicit] 固定列阴影在表格数据刷新后的恢复机制。1:未处理;2:手动滚动才恢复;3:数据刷新后延迟触发但不稳定;4:watch数据变化+dispatch scroll事件触发阴影重算;5:MutationObserver持续监听+自动恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过tableKey递增重挂载时TDesign会重新初始化阴影，但重挂载导致滚动位置丢失，用户体验不佳"
+
+[[criterion]]
+name = "debounce优化"
+description = "[Explicit] resize事件debounce时间从500ms降低以减少窗口拖拽时的布局跳动。1:未修改;2:改了但值不合理;3:降到合理范围但未考虑性能;4:降到150-200ms兼顾响应和性能;5:自适应debounce+requestAnimationFrame"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了debounce时间，Write整个文件难以精确判断具体降到了多少"
+
+[[criterion]]
+name = "渲染性能"
+description = "[Implicit] 修复方案对表格渲染性能的影响。1:严重性能退化;2:整表重新渲染;3:局部刷新但有多余DOM操作;4:最小化DOM操作的局部刷新;5:虚拟滚动+增量更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "每次窗口resize都通过tableKey++强制t-table完全卸载重挂载，100条数据时会造成明显的重渲染卡顿，用户滚动位置也会丢失"
+
+[[criterion]]
+name = "TDesign兼容"
+description = "[Implicit] 修复方案与TDesign表格组件API的兼容性。1:破坏组件功能;2:绕过组件API的hack;3:使用非文档API;4:正确使用组件暴露的方法;5:利用组件设计意图的最佳实践"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "table-layout=auto覆盖了TDesign的默认布局策略，可能影响组件内部对列宽的计算逻辑，属于半hack方案"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准，无冗余改动。1:大量无关修改;2:有明显冗余;3:基本精准有少量多余;4:精准修改;5:最小改动且完整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "10次工具调用，1次Write修改expert-database/index.vue，修改范围集中但Write整个文件而非精准Edit"
