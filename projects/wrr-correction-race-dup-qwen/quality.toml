@@ -1,0 +1,62 @@
+[[criterion]]
+name = "并发问题分析"
+description = "[Explicit] 分析两个老师同时发起批改导致重复记录的并发根因。1:未分析;2:表面描述;3:知道是并发问题;4:分析竞态窗口;5:分析竞态+状态卡死原因"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "CorrectionService中分析了并发创建导致重复记录的问题，但对任务状态卡在running的根因分析不够深入"
+
+[[criterion]]
+name = "分布式锁实现"
+description = "[Explicit] 使用Redis实现分布式锁序列化并发请求。1:无锁;2:锁实现有bug;3:基本SETNX;4:SETNX+过期+lockValue;5:SETNX+过期+Lua释放"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "CorrectionService中使用Redis SETNX实现分布式锁，key=correction:lock:{classId}:{homeworkId}，30秒过期，但释放方式用try-finally可能误删其他线程的锁"
+
+[[criterion]]
+name = "幂等检查设计"
+description = "[Explicit] 锁内查询是否已有running状态记录防止重复创建。1:无幂等;2:检查但有漏洞;3:基本幂等;4:锁内幂等+返回已有ID;5:幂等+状态机约束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "CorrectionService中加锁后查询(classId, homeworkId, status=running)是否已存在，存在则返回已有correctionId"
+
+[[criterion]]
+name = "锁安全释放"
+description = "[Implicit] 锁只能被持有者释放，防止误删。1:未释放;2:直接DELETE;3:try-finally释放;4:检查lockValue后释放;5:Lua脚本原子释放"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "CorrectionService中使用try-finally释放锁，直接DELETE不验证lockValue，锁过期后可能误删新持有者的锁"
+
+[[criterion]]
+name = "事务一致性"
+description = "[Implicit] correction和task记录创建在同一事务中。1:无事务;2:事务不完整;3:基本事务;4:@Transactional覆盖创建;5:事务+补偿机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "CorrectionService中createCorrection方法有@Transactional但覆盖范围需确认"
+
+[[criterion]]
+name = "异常处理"
+description = "[Implicit] 获锁失败、创建异常等场景有合理处理。1:无处理;2:仅catch;3:基本处理;4:获锁失败提示+异常释放锁;5:处理+日志+监控"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "CorrectionService中获锁失败时有基本的提示返回，但异常场景下锁的释放不够健壮"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>25次;2:20-25次;3:15-19次;4:8-14次;5:<=7次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共20次工具调用含15次Read，排查过程中文件读取较多"
