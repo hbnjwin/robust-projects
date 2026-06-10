@@ -1,0 +1,62 @@
+[[criterion]]
+name = "公共模块提取"
+description = "[Explicit] 提取ChatMessageVO和ChatConversationVO到shared目录。1:未提取;2:提取不完整;3:基本提取;4:类型+API工厂;5:类型+工厂+re-export"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "新建src/api/shared/chatMessage.ts，提取ChatMessageVO和ChatConversationVO接口定义+createChatMessageApi工厂函数"
+
+[[criterion]]
+name = "工厂函数设计"
+description = "[Explicit] 用工厂函数消除重复的API定义。1:仍然重复;2:部分消除;3:基本工厂;4:prefix参数化工厂;5:工厂+类型安全+错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "shared/chatMessage.ts中createChatMessageApi(prefix)工厂函数，通过prefix参数区分/ai和/student路径，包含所有公共API方法"
+
+[[criterion]]
+name = "类型定义统一"
+description = "[Explicit] ChatMessageVO接口只定义一份。1:仍两份;2:定义了但未清理旧的;3:统一了但有冗余;4:统一+旧定义清理;5:统一+清理+类型增强"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "shared/chatMessage.ts中唯一定义ChatMessageVO和ChatConversationVO，ai和student模块re-export"
+
+[[criterion]]
+name = "扩展方法保留"
+description = "[Explicit] 学生版独有的exportChatMessage和submitStatus方法正确保留。1:丢失;2:保留但位置不对;3:基本保留;4:在student模块扩展;5:扩展+类型安全"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "student/chatMessage.ts中调用工厂创建基础API后，追加exportChatMessage和submitStatus两个扩展方法"
+
+[[criterion]]
+name = "导入路径兼容"
+description = "[Implicit] 重构后现有import路径不受影响。1:大量import需改;2:部分需改;3:基本兼容;4:re-export保持兼容;5:完全兼容+path alias"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ai/chatMessage.ts和student/chatMessage.ts re-export所有公共类型和API，现有import路径完全兼容"
+
+[[criterion]]
+name = "代码精简度"
+description = "[Implicit] 重构后代码总量是否显著减少。1:反而增加;2:基本持平;3:略有减少;4:明显减少;5:大幅精简+消除所有重复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ai/chatMessage.ts精简为re-export+工厂调用，student/chatMessage.ts精简为工厂+2个扩展方法，代码量显著减少"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>25次;2:20-25次;3:15-19次;4:8-14次;5:<=7次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共15次工具调用含6次TaskUpdate、3次Write和3次TaskCreate，效率中等"
