@@ -1,0 +1,62 @@
+[[criterion]]
+name = "状态重置"
+description = "[Explicit] 路由切换时filterParams与请求参数的同步修复。1:未修复;2:部分重置;3:统一重置但时机不对;4:路由离开时正确重置所有筛选状态;5:重置+恢复+状态持久化策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在index.vue的onBeforeRouteLeave中精准重置filterParams和排序字段"
+
+[[criterion]]
+name = "排序修复"
+description = "[Explicit] 不存在字段排序导致后端500的修复。1:未修复;2:忽略错误;3:清除排序字段;4:清除+校验字段有效性;5:前端字段映射+后端容错"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在路由离开时将sortField和sortOrder重置为默认值，简洁有效"
+
+[[criterion]]
+name = "分页同步"
+description = "[Explicit] currentPage在路由切换后的同步问题修复。1:未修复;2:只重置页码;3:重置页码+总数;4:完整分页状态重置;5:重置+记住滚动位置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在index.vue中统一重置currentPage为1，保持分页组件不变"
+
+[[criterion]]
+name = "改动范围控制"
+description = "[Implicit] 修复范围是否合理控制在必要最小范围。1:创建新文件或大规模重构;2:跨多文件改动;3:2-3文件合理改动;4:精准修改1-2文件;5:单文件最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "仅修改expert-database/index.vue一个文件，改动精准"
+
+[[criterion]]
+name = "路由钩子"
+description = "[Explicit] 路由生命周期钩子的使用正确性。1:未使用;2:使用了但时机错误;3:正确使用onUnmounted;4:onBeforeRouteLeave+activated/deactivated;5:完整路由守卫+keep-alive策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用onBeforeRouteLeave确保路由切换时执行重置，不受keep-alive影响"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有明显冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "6次工具调用直达目标，Read后直接Edit修复"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "6次工具调用完成修复，Read到Glob到Edit的最简路径"

@@ -7,7 +7,7 @@
     </div>
     <t-table :data="checkResults" :columns="columns">
       <template #opinion="{ row }">
-        <div v-html="row.opinion"></div>
+        <div v-html="sanitize(row.opinion)"></div>
       </template>
       <template #status="{ row }">
         <t-tag :theme="getStatusTheme(row.status)">{{ row.status }}</t-tag>
@@ -17,12 +17,12 @@
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { ref, watch, computed } from 'vue'
 import { getTaskDetail } from '@/api/modules/ai-report-review'
+import DOMPurify from 'dompurify'
 
 const props = defineProps({ taskId: String })
 const visible = ref(false)
-const stats = ref({ pass: 0, warn: 0, fail: 0 })
 const checkResults = ref([])
 const columns = [
   { colKey: 'name', title: '检查项' },
@@ -30,12 +30,29 @@ const columns = [
   { colKey: 'status', title: '状态', cell: 'status' },
 ]
 
+const sanitize = (html) => DOMPurify.sanitize(html ?? '')
+
+const stats = computed(() => {
+  const counts = { pass: 0, warn: 0, fail: 0 }
+  checkResults.value.forEach(item => {
+    if (item.status in counts) {
+      counts[item.status]++
+    }
+  })
+  return counts
+})
+
 const getStatusTheme = (s) => ({ pass: 'success', warn: 'warning', fail: 'danger' }[s])
 
 watch(() => props.taskId, async (id) => {
   if (!id) return
   const res = await getTaskDetail(id)
-  stats.value = res.stats
-  checkResults.value = res.items
+  checkResults.value = (res.items || []).map(item => {
+    const cleaned = {}
+    for (const key in item) {
+      cleaned[key] = item[key] ?? ''
+    }
+    return cleaned
+  })
 })
 </script>
