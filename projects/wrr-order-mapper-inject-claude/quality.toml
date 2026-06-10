@@ -1,0 +1,62 @@
+[[criterion]]
+name = "架构问题理解"
+description = "[Explicit] 理解Controller直接注入Mapper跳过Service层的架构缺陷。1:未理解;2:表面理解;3:知道分层问题;4:分析事务+权限影响;5:完整分析三层架构价值"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "完整分析EduOrderController直接注入EduOrderMapper和PaymentRecordMapper导致@Transactional失效、数据权限拦截器被绕过的架构缺陷"
+
+[[criterion]]
+name = "Service层设计"
+description = "[Explicit] 新建Service类封装业务逻辑。1:未新建;2:设计不合理;3:基本Service;4:接口+实现分离;5:分离+职责清晰"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "新建EduOrderService和PaymentRecordService两个Service类，继承ServiceImpl，职责清晰"
+
+[[criterion]]
+name = "事务管理"
+description = "[Explicit] Service方法添加@Transactional确保数据一致性。1:无事务;2:事务位置错误;3:基本事务;4:写操作加事务;5:事务+rollbackFor配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "EduOrderService中写操作方法添加@Transactional，确保数据一致性"
+
+[[criterion]]
+name = "数据权限保护"
+description = "[Implicit] Service层实现数据权限校验，防止越权访问。1:无校验;2:部分校验;3:基本校验;4:查询+操作都校验;5:校验+注解驱动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Service层封装后数据权限拦截器正常生效，查询和操作都经过权限过滤"
+
+[[criterion]]
+name = "Mapper依赖消除"
+description = "[Explicit] Controller中不再直接依赖任何Mapper。1:仍有Mapper;2:部分消除;3:消除但引入新问题;4:完全消除;5:消除+Service间调用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "EduOrderController完全消除Mapper依赖，PaymentRecordService由EduOrderService内部调用，Controller仅依赖EduOrderService"
+
+[[criterion]]
+name = "代码分层合理性"
+description = "[Implicit] 重构后Controller→Service→Mapper三层职责清晰。1:职责混乱;2:部分清晰;3:基本清晰;4:三层职责明确;5:清晰+可扩展"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Controller负责参数接收和响应，Service负责业务逻辑和事务，Mapper负责数据访问，三层职责清晰"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>20次;2:15-20次;3:10-14次;4:5-9次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "共15次工具调用含TaskUpdate*6和TaskCreate*3，任务管理开销大"
