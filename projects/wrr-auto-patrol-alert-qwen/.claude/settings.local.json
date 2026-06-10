@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/work/github/robust/robust-projects/projects/wrr-auto-patrol-alert-claude/**)",
+      "Read(//d/work/github/robust/robust-projects/**)",
+      "Bash(find ../wrr-checkin-reward-qwen -type f -not -path */.git/*)",
+      "Bash(find ../wrr-cicd-cache-mirror-qwen -type f -not -path */.git/*)",
+      "Bash(python -c \"import ast; import sys; files=[''app/main.py'',''app/config/models.py'',''app/config/loader.py'',''app/checker/http_checker.py'',''app/checker/engine.py'',''app/alert/mute.py'',''app/alert/aggregator.py'',''app/alert/dingtalk.py'',''app/scheduler/job_manager.py'',''app/api/routes.py'']; errors=[]; [errors.append\\(f''{f}: {e}''\\) if not \\(lambda f: \\(ast.parse\\(open\\(f\\).read\\(\\)\\), True\\)[-1]\\)\\(f\\) else None for f in files]; print\\(''All files parse OK''\\) if not errors else [print\\(e\\) for e in errors]\")",
+      "Bash(python:*)",
+      "Bash(pip install:*)"
+    ]
+  }
+}
