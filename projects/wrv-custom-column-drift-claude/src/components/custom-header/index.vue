@@ -25,9 +25,33 @@ const drawerVisible = ref(false)
 const columnConfig = ref([])
 const sortableRef = ref(null)
 
+const mergeColumns = (cached, defaults) => {
+  const defaultKeySet = new Set(defaults.map(c => c.colKey))
+  const cachedKeySet = new Set(cached.map(c => c.colKey))
+  const defaultMap = Object.fromEntries(defaults.map(c => [c.colKey, c]))
+
+  // keep cached order, remove deleted columns, update title from defaults
+  const merged = cached
+    .filter(c => defaultKeySet.has(c.colKey))
+    .map(c => ({ ...c, title: defaultMap[c.colKey].title }))
+
+  // append new columns to the end
+  defaults.forEach(c => {
+    if (!cachedKeySet.has(c.colKey)) {
+      merged.push({ ...c, visible: true })
+    }
+  })
+
+  return merged
+}
+
 onMounted(() => {
   const cached = tableStore.tableStoreColumns[props.storageKey]
-  columnConfig.value = cached || props.defaultColumns.map(c => ({ ...c, visible: true }))
+  if (cached) {
+    columnConfig.value = mergeColumns(cached, props.defaultColumns)
+  } else {
+    columnConfig.value = props.defaultColumns.map(c => ({ ...c, visible: true }))
+  }
   if (sortableRef.value) {
     Sortable.create(sortableRef.value, { onEnd: () => {} })
   }
