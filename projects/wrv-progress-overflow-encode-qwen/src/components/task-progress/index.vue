@@ -18,10 +18,10 @@ onMounted(() => {
   ws = new WebSocket(`ws://localhost:8020/ws/task-progress/${props.type}/${props.taskId}`)
   ws.onmessage = (e) => {
     const data = JSON.parse(e.data)
-    // \xc8\xce\xce\xf1\xbd\xf8\xb6\xc8 (GBK encoded task progress)
-    percentage.value = data.completed / data.total * 100
-    info.value = `${data.completed}/${data.total} \xcd\xea\xb3\xc9`
-    if (data.status === 'completed') { percentage.value = 0; progressStatus.value = 'success'; percentage.value = 100 }
+    // 任务进度
+    percentage.value = Math.min(100, Math.round(data.completed / data.total * 100))
+    info.value = `${data.completed}/${data.total} 完成`
+    if (data.status === 'completed') { progressStatus.value = 'success'; percentage.value = 100 }
   }
 })
 
