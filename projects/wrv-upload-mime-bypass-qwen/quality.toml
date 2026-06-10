@@ -1,0 +1,62 @@
+[[criterion]]
+name = "MIME类型校验"
+description = "[Explicit] 文件上传时MIME类型校验的实现质量。1:未实现;2:仅校验后缀名;3:添加了MIME检查但类型映射不完整;4:完整MIME映射+后缀双重校验;5:MIME+后缀+文件头magic bytes三重校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Edit修改upload-dialog.vue添加了MIME类型检查，但对XLSX的application/vnd.openxmlformats-officedocument.spreadsheetml.sheet类型映射处理中有遗漏"
+
+[[criterion]]
+name = "防绕过设计"
+description = "[Explicit] 防止通过改后缀绕过上传限制的安全设计。1:可被绕过;2:简单校验易绕过;3:MIME+后缀但可通过伪造MIME绕过;4:双重校验+文件大小限制;5:三重校验+服务端二次验证提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "添加了MIME检查但未考虑浏览器对某些文件类型MIME检测不准确的情况，.exe改.docx在部分浏览器仍可能通过"
+
+[[criterion]]
+name = "错误反馈"
+description = "[Explicit] 后端OCR处理失败时前端错误提示的实现。1:无提示;2:控制台报错;3:有提示但信息模糊;4:明确的错误提示+区分校验/上传/处理错误;5:分级提示+重试建议+错误码映射"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "添加了上传错误的catch处理和Message提示，但未区分前端校验失败和后端处理失败的不同提示"
+
+[[criterion]]
+name = "文件类型覆盖"
+description = "[Explicit] 支持的文件类型(PDF/DOCX/XLSX/DOC)校验覆盖完整性。1:只覆盖1-2种;2:覆盖大部分但遗漏;3:全覆盖但MIME映射有误;4:全覆盖且MIME正确;5:全覆盖+可配置+扩展友好"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "4种文件类型的accept属性配置正确，但MIME校验中DOC格式(application/msword)的处理不够明确"
+
+[[criterion]]
+name = "用户体验"
+description = "[Implicit] 上传校验失败时的用户体验设计。1:无反馈;2:alert弹窗;3:组件内提示;4:友好提示+文件类型说明;5:实时校验+拖拽提示+文件预览"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用Message组件给出错误提示，但提示文案较简单，未说明支持的具体文件类型"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准，无冗余改动。1:大量无关修改;2:有明显冗余;3:基本精准有少量多余;4:精准修改;5:最小改动且完整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改集中在upload-dialog.vue但使用了6次Edit，部分Edit是对前次修改的调整修正，效率略低"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 完成修复的工具调用效率。1:大量无效操作;2:较多冗余;3:有一定探索但合理;4:高效;5:最优路径"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "18次工具调用含6次Edit(多次修正)、6次Read、2次Glob，存在较多迭代修改和冗余读取"
