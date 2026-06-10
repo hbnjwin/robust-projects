@@ -7,17 +7,22 @@ export class WebSocketManager {
     this.maxReconnectAttempts = 5
     this.heartbeatInterval = 30000
     this.listeners = {}
+    this.closed = false
   }
 
   connect() {
     this.ws = new WebSocket(this.url)
     this.ws.onopen = () => {
       console.log('WebSocket connected')
+      this.reconnectAttempts = 0
       this.startHeartbeat()
     }
     this.ws.onclose = () => {
       console.log('WebSocket closed')
-      this.reconnect()
+      this.stopHeartbeat()
+      if (!this.closed) {
+        this.reconnect()
+      }
     }
     this.ws.onmessage = (event) => {
       const data = JSON.parse(event.data)
@@ -30,11 +35,19 @@ export class WebSocketManager {
   }
 
   startHeartbeat() {
+    this.stopHeartbeat()
     this.heartbeatTimer = setInterval(() => {
       if (this.ws && this.ws.readyState === WebSocket.OPEN) {
         this.ws.send(JSON.stringify({ type: 'ping' }))
       }
     }, this.heartbeatInterval)
+  }
+
+  stopHeartbeat() {
+    if (this.heartbeatTimer) {
+      clearInterval(this.heartbeatTimer)
+      this.heartbeatTimer = null
+    }
   }
 
   reconnect() {
@@ -46,7 +59,16 @@ export class WebSocketManager {
 
   subscribe(event, callback) {
     if (!this.listeners[event]) this.listeners[event] = []
-    this.listeners[event].push(callback)
+    if (!this.listeners[event].includes(callback)) {
+      this.listeners[event].push(callback)
+    }
+  }
+
+  unsubscribe(event, callback) {
+    const cbs = this.listeners[event]
+    if (!cbs) return
+    const idx = cbs.indexOf(callback)
+    if (idx !== -1) cbs.splice(idx, 1)
   }
 
   emit(event, data) {
@@ -55,6 +77,11 @@ export class WebSocketManager {
   }
 
   close() {
-    if (this.ws) this.ws.close()
+    this.closed = true
+    this.stopHeartbeat()
+    if (this.ws) {
+      this.ws.close()
+      this.ws = null
+    }
   }
 }

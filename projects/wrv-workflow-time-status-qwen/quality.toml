@@ -1,0 +1,62 @@
+[[criterion]]
+name = "时间格式化"
+description = "[Explicit] UTC时间戳转本地时间显示的修复质量。1:未修复;2:简单字符串截取;3:new Date()转换;4:dayjs/date-fns格式化;5:国际化+时区配置+相对时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Edit修改index.vue添加了时间格式化，使用new Date().toLocaleString()转换，但格式不够统一"
+
+[[criterion]]
+name = "状态映射修复"
+description = "[Explicit] 工作流状态标签颜色映射错误的修复。1:未修复;2:修了但仍有错误;3:completed和warning颜色修正;4:全部状态颜色正确映射;5:状态+图标+动画完整设计"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修正了completed和warning的颜色交换，但对其他状态(如pending/cancelled)的颜色映射未做全面检查"
+
+[[criterion]]
+name = "动态状态展示"
+description = "[Explicit] 正在执行中的工作流状态实时更新展示。1:未处理;2:静态显示;3:轮询更新;4:轮询+loading动画;5:WebSocket实时+动画+进度"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "处理了执行中状态的显示但使用静态标签，未添加动态轮询或动画效果"
+
+[[criterion]]
+name = "国际化意识"
+description = "[Implicit] 时间和状态文本的国际化处理意识。1:硬编码中文;2:混合中英文;3:统一中文;4:中文+可配置;5:i18n方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "时间格式化使用toLocaleString()可能在不同浏览器显示不一致"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "8次工具调用含4次Edit迭代修改同一文件，部分修改是前次的调整"
+
+[[criterion]]
+name = "多问题协调"
+description = "[Explicit] 三个问题(时间/颜色/动态状态)的统一修复协调性。1:只修了1个;2:修了2个;3:都修了但不完整;4:都完整修复;5:统一方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "三个问题都修了但时间格式化方案不够统一，动态状态处理简单"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "8次工具调用中有1次Agent和4次Edit迭代，效率一般"
