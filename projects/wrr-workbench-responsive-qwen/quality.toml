@@ -1,0 +1,62 @@
+[[criterion]]
+name = "栅格布局方案"
+description = "[Explicit] 使用Element Plus Row/Col栅格或CSS Grid重新布局。1:未改布局;2:方案不当;3:基本栅格;4:Row/Col+断点响应;5:完整栅格+多断点"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Workbench.vue中使用el-row/el-col改造布局，但改造过程中15次Bash操作说明调试反复"
+
+[[criterion]]
+name = "统计卡片适配"
+description = "[Explicit] 统计卡片不再互相重叠。1:仍重叠;2:偶尔重叠;3:基本不重叠;4:栅格分列;5:栅格+卡片高度统一"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Workbench.vue中统计卡片改为栅格布局，移除固定280px宽度"
+
+[[criterion]]
+name = "快捷菜单适配"
+description = "[Explicit] 快捷菜单图标不被截断。1:仍截断;2:部分截断;3:基本正常;4:栅格分列;5:栅格+自适应图标大小"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Workbench.vue中快捷菜单改为栅格布局，移除固定100px宽度"
+
+[[criterion]]
+name = "课程列表适配"
+description = "[Explicit] 课程列表不溢出屏幕。1:仍溢出;2:偶尔溢出;3:基本不溢出;4:栅格+滚动;5:栅格+虚拟滚动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Workbench.vue中课程列表改为栅格布局，基本解决溢出问题"
+
+[[criterion]]
+name = "断点设计"
+description = "[Implicit] 响应式断点的选择是否合理覆盖iPad竖屏和13寸笔记本。1:无断点;2:断点不合理;3:单一断点;4:两级断点;5:三级断点(xs/sm/md)"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Workbench.vue中使用了栅格响应但断点层级的精细度不如直接配置md/sm/xs"
+
+[[criterion]]
+name = "代码改动精准度"
+description = "[Implicit] 改动集中在单文件，不引入多余修改。1:多文件;2:改动分散;3:单文件但冗余;4:精准单文件;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "仅修改Workbench.vue一个文件，但32次工具调用含15次Bash和EnterPlanMode，过程极其冗长反复"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>30次;2:20-30次;3:15-19次;4:5-14次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "共32次工具调用含15次Bash、EnterPlanMode、3次Glob、2次Agent，执行路径极度冗长"
