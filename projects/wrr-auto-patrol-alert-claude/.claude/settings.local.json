@@ -1,0 +1,12 @@
+{
+  "permissions": {
+    "allow": [
+      "WebSearch",
+      "Bash(python -m py_compile app/models/rule.py)",
+      "Bash(python -m py_compile app/models/result.py)",
+      "Bash(python -m py_compile app/models/alert.py)",
+      "Bash(python -m py_compile app/config.py)",
+      "Bash(python -m py_compile app/checks/base.py)"
+    ]
+  }
+}

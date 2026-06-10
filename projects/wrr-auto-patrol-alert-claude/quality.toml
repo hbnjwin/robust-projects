@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "rule_loader实现文件监控热加载，结合配置验证"
+rationale = "rule_loader实现文件监控热加载，结合配置验证，涉及__init__.py的修改"
 
 [[criterion]]
 name = "检查类型覆盖"
