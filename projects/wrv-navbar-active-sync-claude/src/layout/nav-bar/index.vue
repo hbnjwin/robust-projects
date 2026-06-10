@@ -17,13 +17,12 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, computed } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PlatformLogo from './components/platform-logo.vue'
 
 const router = useRouter()
 const route = useRoute()
-const activePath = ref('')
 const username = ref('Admin')
 const menuList = [
   { path: '/expert-database', title: '专家库' },
@@ -32,10 +31,13 @@ const menuList = [
 ]
 const userOptions = [{ content: '退出登录', value: 'logout' }]
 
-onMounted(() => { activePath.value = route.path })
+const activePath = computed(() => {
+  const currentPath = route.path
+  const matched = menuList.find(item => currentPath.startsWith(item.path))
+  return matched ? matched.path : ''
+})
 
 const handleMenuClick = (item) => {
-  activePath.value = item.path
   router.push(item.path)
 }
 const handleUserAction = (val) => {
