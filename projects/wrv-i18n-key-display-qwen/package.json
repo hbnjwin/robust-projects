@@ -20,7 +20,8 @@
     "vue-pdf-embed": "1.2.1",
     "docx-preview": "^0.3.2",
     "@vue-flow/core": "^1.42.1",
-    "dagre": "^0.8.5"
+    "dagre": "^0.8.5",
+    "vue-i18n": "^9.9.0"
   },
   "devDependencies": {
     "vite": "^5.0.11",
