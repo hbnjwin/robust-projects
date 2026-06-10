@@ -1,0 +1,62 @@
+[[criterion]]
+name = "ECharts集成"
+description = "[Explicit] 正确引入ECharts并初始化图表实例。1:未引入;2:引入但初始化错误;3:基本引入;4:引入+init+resize;5:引入+init+resize+dispose"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "package.json添加echarts@^5.5.0，StudentWorkList.vue中echarts.init初始化两个图表实例"
+
+[[criterion]]
+name = "柱状图实现"
+description = "[Explicit] 展示每个学生的AI对话次数、绘画作品数、音乐生成数的分组柱状图。1:未实现;2:单系列;3:基本分组柱状;4:分组+标签旋转;5:分组+标签+tooltip+legend"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "StudentWorkList.vue中实现分组柱状图，3个series对应AI对话/绘画/音乐，X轴学生姓名，包含tooltip和legend"
+
+[[criterion]]
+name = "折线图实现"
+description = "[Explicit] 全班使用趋势折线图按周统计。1:未实现;2:折线但非按周;3:基本按周折线;4:按周+平滑曲线;5:按周+平滑+面积填充"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "StudentWorkList.vue中实现按周统计折线图，smooth平滑曲线，3个系列分别展示趋势"
+
+[[criterion]]
+name = "视图切换"
+description = "[Explicit] 列表视图和统计视图之间切换。1:无切换;2:切换但有bug;3:基本切换;4:radio-group+v-show;5:切换+记忆+过渡动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "StudentWorkList.vue中el-radio-group切换视图模式，v-show控制显隐，切换到统计时触发图表渲染"
+
+[[criterion]]
+name = "API数据获取"
+description = "[Implicit] 正确调用后端接口获取统计数据。1:无API调用;2:调用但参数错;3:基本调用;4:两个API分别获取;5:API+loading+错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "StudentWorkList.vue中调用stats/by-student和stats/trend两个API获取数据"
+
+[[criterion]]
+name = "组件架构"
+description = "[Implicit] 统计面板的组件设计是否合理。1:混乱;2:耦合严重;3:独立组件但冗余;4:合理嵌入;5:独立组件+props通信"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "直接在StudentWorkList.vue中实现统计功能，用v-show切换视图，架构简洁"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>30次;2:20-30次;3:15-19次;4:8-14次;5:<=7次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共12次工具调用含4次TaskUpdate、3次Read，路径较直接"
