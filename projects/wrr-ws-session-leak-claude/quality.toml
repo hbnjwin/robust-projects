@@ -1,0 +1,62 @@
+[[criterion]]
+name = "泄漏根因分析"
+description = "[Explicit] 定位onClose回调未触发导致ConcurrentHashMap中session对象累积的根因。1:未定位;2:猜测;3:知道是session未清理;4:定位到onClose未触发+HashMap累积;5:分析浏览器关闭/网络断开等多种未触发场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析ClassroomSessionManager中学生关浏览器、网络断开等场景onClose回调可能不触发，session对象在ConcurrentHashMap中持续累积导致内存增长"
+
+[[criterion]]
+name = "心跳超时设计"
+description = "[Explicit] 实现定时扫描清理超时session的机制。1:未实现;2:方案不合理;3:基本定时清理;4:ScheduledExecutor+90s超时;5:清理+可配置超时+优雅停机"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "ClassroomSessionManager中使用ScheduledExecutorService每30秒扫描，超90秒未活跃的session主动关闭并移除，daemon线程不阻止JVM退出"
+
+[[criterion]]
+name = "Session清理完整性"
+description = "[Explicit] 超时/错误/断开等场景都能正确清理session。1:仅超时;2:超时+错误;3:三种场景;4:四种场景;5:全场景+日志"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ClassroomSessionManager中覆盖onMessage刷新+onError清理+broadcast检查+定时超时清理四种场景"
+
+[[criterion]]
+name = "onError/onMessage处理"
+description = "[Explicit] onMessage刷新活跃时间，onError主动清理session。1:均未处理;2:仅一个;3:都处理但有缺陷;4:正确处理;5:处理+异常隔离"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ClassroomSessionManager中onMessage刷新lastActiveTime，onError后调用removeSession移除并关闭连接"
+
+[[criterion]]
+name = "broadcast安全检查"
+description = "[Implicit] broadcastToClass发送前检查session.isOpen()。1:未检查;2:检查但不移除;3:检查+移除失效session;4:检查+移除+close;5:检查+移除+异常处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ClassroomSessionManager中broadcastToClass发送前检查isOpen()，已关闭的直接移除，IOException后移除并关闭"
+
+[[criterion]]
+name = "线程安全"
+description = "[Implicit] ConcurrentHashMap操作和定时清理的线程安全性。1:线程不安全;2:部分安全;3:基本安全;4:ConcurrentHashMap+安全遍历;5:安全+CAS操作"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ClassroomSessionManager中ConcurrentHashMap保证put/remove原子性，定时清理安全遍历并移除超时条目"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>20次;2:15-20次;3:10-14次;4:5-9次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共9次工具调用（Read*3+TaskUpdate*2+Bash+Glob+TaskCreate+Write），路径较直接"
