@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "实现了三级管道(去重→分组→抑制)，5分钟去重窗口和30分钟冷静期，但聚合参数硬编码较多"
+rationale = "实现了三级管道(去重→分组→抑制)，5分钟去重窗口和30分钟冷静期，但聚合参数硬编码较多，涉及requirements.txt的修改，涉及requirements.txt"
 
 [[criterion]]
 name = "静默时段实现"
@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "模块化结构(checker/alert/scheduler/api)，但缺少抽象基类和模型层"
+rationale = "模块化结构(checker/alert/scheduler/api)，但缺少抽象基类和模型层，涉及http_checker.py"
 
 [[criterion]]
 name = "通知渠道质量"
@@ -50,7 +50,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "实现钉钉Webhook发送Markdown格式告警，支持自动重试"
+rationale = "实现钉钉Webhook发送Markdown格式告警，支持自动重试，涉及engine.py"
 
 [[criterion]]
 name = "API与运维接口"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "实现5个REST端点覆盖基本运维需求"
+rationale = "实现5个REST端点覆盖基本运维需求，涉及mute.py"

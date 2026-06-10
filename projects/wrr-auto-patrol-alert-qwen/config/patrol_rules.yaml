@@ -1,0 +1,59 @@
+# Auto-Patrol Inspection Rules
+# This file supports hot-reload: changes are picked up automatically without restarting the service.
+
+global:
+  alert_webhook: "https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN_HERE"
+  default_interval_seconds: 60
+
+# Mute periods: alerts are suppressed during these times
+# Alerts during mute periods are buffered and sent as a summary when the mute ends.
+mute_periods:
+  - name: "夜间静默"
+    cron: "0 23 * * *"          # Every day at 23:00
+    duration_minutes: 480       # Lasts 8 hours (23:00 - 07:00)
+
+  # Example one-time maintenance window:
+  # - name: "维护窗口"
+  #   start: "2024-06-15 02:00"
+  #   end: "2024-06-15 04:00"
+
+# Alert aggregation settings
+aggregation:
+  dedup_window_seconds: 300         # Same alert within 5 min -> only first is sent
+  aggregate_window_seconds: 180     # Multiple alerts within 3 min -> merged into one message
+  group_by: "service"               # Group alerts by service name
+  suppress_after_count: 5           # After 5 consecutive failures -> enter suppression mode
+  suppress_interval_seconds: 1800   # During suppression, only send update every 30 min
+
+# Patrol rules: each defines a health check target
+rules:
+  - id: "user-svc"
+    name: "用户服务健康检查"
+    service: "user-service"
+    url: "http://localhost:8080/health"
+    method: GET
+    interval_seconds: 30
+    expect:
+      status_code: 200
+      timeout_ms: 3000
+
+  - id: "order-svc"
+    name: "订单服务健康检查"
+    service: "order-service"
+    url: "http://localhost:8081/health"
+    method: GET
+    interval_seconds: 30
+    expect:
+      status_code: 200
+      timeout_ms: 5000
+
+  - id: "gateway"
+    name: "API网关健康检查"
+    service: "api-gateway"
+    url: "http://localhost:8000/health"
+    method: GET
+    interval_seconds: 60
+    expect:
+      status_code: 200
+      timeout_ms: 3000
+      body_contains: "ok"
