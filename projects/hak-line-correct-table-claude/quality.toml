@@ -1,0 +1,44 @@
+[[criterion]]
+name = "RFC5987文件名解析"
+description = "[Explicit] Content-Disposition中filename*=UTF-8''编码格式的正确解析。1:直接显示乱码;2:识别了编码但解码错误;3:UTF-8解码正确但传统格式兼容有问题;4:双格式兼容(filename*优先);5:完整解析含特殊字符和空格处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "filename_encoding.py在服务端同时生成filename（ASCII fallback）和filename*（UTF-8编码）两个字段，前端download.py的parse_content_disposition完整处理了两种格式，31个测试覆盖了各种特殊字符组合"
+
+[[criterion]]
+name = "大文件流式下载"
+description = "[Explicit] 200MB+大文件下载不占用等量内存。1:Blob全量接收OOM;2:尝试流式但实现错误;3:流式下载基本可用;4:流式+进度条;5:流式+进度+断点续传"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "download.py使用requests.get(stream=True)流式读取+分块写入临时文件，前端通过SSE接收下载进度百分比，但未实现Range header断点续传"
+
+[[criterion]]
+name = "下载错误处理"
+description = "[Explicit] 下载过程中网络中断的检测和用户提示。1:无任何提示;2:控制台报错但用户无感知;3:有错误提示;4:错误提示+重试按钮;5:完整错误处理含断点续传恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "download.py在请求异常时抛出自定义DownloadError，前端catch后显示'下载失败，请重试'Toast提示，但未实现断点续传（重新下载从头开始）"
+
+[[criterion]]
+name = "下载进度显示"
+description = "[Implicit] 下载进度条基于Content-Length准确显示百分比。1:无进度显示;2:有进度但不准确;3:百分比基本准确;4:准确+预估剩余时间;5:精确进度+速度+剩余时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "下载进度通过SSE推送，百分比计算正确，但未显示下载速度和预估剩余时间"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 文件名解析和下载流程的测试。1:无测试;2:简单单测;3:覆盖主要场景;4:含边界场景;5:完整测试含大文件和网络异常"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "test_filename_encoding.py和test_download.py共31个测试，覆盖了编码生成、解析、流式下载、异常恢复、超时处理等全面场景"

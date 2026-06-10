@@ -1,0 +1,44 @@
+[[criterion]]
+name = "ResizeObserver方案"
+description = "[Explicit] ECharts resize事件从window.addEventListener改为ResizeObserver监听图表容器。1:仍用window事件;2:使用了ResizeObserver但实现有误;3:正确使用ResizeObserver;4:ResizeObserver+防抖;5:ResizeObserver+防抖+侧边栏动画联动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "useECharts.ts composable中使用ResizeObserver监听容器，resize回调用debounce.ts中200ms防抖函数包裹，侧边栏transition结束后才触发最终resize"
+
+[[criterion]]
+name = "keep-alive生命周期管理"
+description = "[Explicit] keep-alive的activated/deactivated正确管理ECharts实例（暂停/恢复，不重复创建）。1:每次activated都新建实例;2:activated恢复但deactivated未暂停;3:activated/deactivated对称处理;4:对称处理+dispose清理;5:完整生命周期含错误恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useECharts.ts统一管理：onActivated恢复ResizeObserver观察+触发resize，onDeactivated暂停观察+清除pending的防抖回调，onUnmounted调用chart.dispose()并disconnect Observer"
+
+[[criterion]]
+name = "内存泄漏修复验证"
+description = "[Explicit] 修复后反复切换页面内存占用稳定不持续增长。1:内存仍持续增长;2:增长减缓但仍有泄漏;3:内存基本稳定;4:内存稳定+有验证方案;5:HeapSnapshot对比验证+CI集成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useECharts.ts的onUnmounted确保dispose所有实例和Observer，同时提供了验证方法说明（Chrome DevTools HeapSnapshot对比切换前后ECharts实例数），chart.ts类型定义确保dispose后引用置null"
+
+[[criterion]]
+name = "侧边栏联动"
+description = "[Implicit] 侧边栏展开/收起动画结束后图表正确resize。1:侧边栏变化无响应;2:响应但动画中频繁resize;3:transitionend后resize;4:正确联动+防抖;5:完整方案含折叠按钮"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "useECharts.ts通过ResizeObserver自动感知容器宽度变化（侧边栏收起时容器变宽），debounce 200ms确保动画结束后才执行最终resize，无需手动监听transitionend"
+
+[[criterion]]
+name = "代码复用性"
+description = "[Implicit] 图表相关逻辑是否抽取为可复用的composable/hook。1:每个图表组件独立实现;2:部分复用;3:抽取composable但不通用;4:通用composable所有图表复用;5:通用composable+TypeScript泛型+配置化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "useECharts.ts作为统一composable，接受容器ref和options reactive对象，所有图表组件只需调用useECharts(chartRef, options)，chart.ts定义了完整的TypeScript类型约束"

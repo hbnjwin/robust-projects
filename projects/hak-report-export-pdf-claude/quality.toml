@@ -1,0 +1,44 @@
+[[criterion]]
+name = "Query参数保留"
+description = "[Explicit] 路由跳转后浏览器返回时query参数（筛选条件/分页）需完整保留。1:参数全丢;2:部分参数保留;3:参数保留但值不正确;4:参数完整保留;5:参数保留+恢复滚动位置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "router/index.ts中筛选状态完全由URL query驱动（useRouteQuery composable），跳转详情时query自动保留在history栈中，返回时Vue Router自动恢复，还配合scrollBehavior恢复滚动位置"
+
+[[criterion]]
+name = "刷新白屏修复"
+description = "[Explicit] 嵌套路由页面F5刷新后不白屏，store为空时正确加载数据。1:直接白屏;2:白屏但有错误提示;3:不白屏但数据加载不全;4:正确加载数据;5:优雅加载含loading状态"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "路由守卫beforeEnter中检测store.currentReport是否存在，不存在则await fetchReport(id)加载，组件用Suspense+AppLoading骨架屏包裹，15个单元测试覆盖了刷新恢复场景"
+
+[[criterion]]
+name = "动态路由加载闪烁"
+description = "[Explicit] 动态路由组件首次加载时消除白屏闪烁。1:白屏闪烁明显;2:有loading但样式差;3:skeleton骨架屏;4:平滑过渡;5:预加载+平滑过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "AppLoading.vue组件提供了和页面结构一致的骨架屏(skeleton)，Suspense的fallback使用AppLoading，加载完成后平滑过渡到实际内容"
+
+[[criterion]]
+name = "滚动位置恢复"
+description = "[Implicit] 从详情页返回列表页时恢复之前的滚动位置。1:每次回到顶部;2:尝试恢复但位置不准;3:基本恢复;4:精确恢复;5:精确恢复含过渡动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "router/index.ts配置了scrollBehavior: savedPosition回退时恢复滚动位置，前进时滚到顶部，keep-alive保证了列表数据和DOM状态完整保留"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 路由导航场景的测试覆盖。1:无测试;2:只有路由配置测试;3:覆盖跳转场景;4:覆盖跳转+刷新+返回;5:完整e2e测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "tests/unit/stores/report.spec.ts包含15个测试用例，覆盖了store数据加载、路由守卫拦截、刷新恢复、返回后数据保持等核心场景"

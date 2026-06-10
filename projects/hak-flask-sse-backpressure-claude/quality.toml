@@ -1,0 +1,35 @@
+[[criterion]]
+name = "editor实例生命周期"
+description = "[Explicit] keep-alive场景下WangEditor实例正确管理，不重复创建。1:每次activated都新建;2:有销毁但时机不对;3:activated复用/deactivated暂停;4:完整生命周期管理;5:生命周期+切换报告时内容更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReportEditor.vue中onActivated检查editor实例是否存在，存在则通过setHtml(props.content)更新内容而非销毁重建，onDeactivated中不销毁只暂停事件处理，onUnmounted中确保完全销毁"
+
+[[criterion]]
+name = "paste事件清理"
+description = "[Explicit] 全局paste事件监听在组件卸载时正确移除。1:事件未移除;2:尝试移除但引用不匹配;3:正确移除;4:移除+防止多次绑定;5:完整事件管理含其他全局事件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReportEditor.vue统一在setupPasteHandler/cleanupPasteHandler方法中管理，onMounted绑定+onUnmounted移除，使用WeakRef防止多次绑定同一handler"
+
+[[criterion]]
+name = "内存泄漏验证"
+description = "[Implicit] 修复后反复切换报告编辑页面内存不持续增长。1:内存仍增长;2:增长减缓;3:基本稳定;4:稳定+有验证说明;5:HeapSnapshot验证+自动化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReportEditor.spec.js中包含了内存泄漏验证的测试思路说明，建议使用Chrome DevTools对比mount/unmount前后的HeapSnapshot"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 编辑器生命周期和事件管理的测试。1:无测试;2:仅渲染测试;3:生命周期测试;4:含事件管理测试;5:完整测试含内存泄漏检测"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ReportEditor.spec.js包含编辑器挂载/销毁/内容更新的测试用例，验证了onUnmounted后editor实例被正确dispose"

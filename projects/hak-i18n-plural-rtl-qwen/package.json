@@ -1,0 +1,10 @@
+{
+  "name": "wind-report-review-web",
+  "version": "1.0.0",
+  "dependencies": {
+    "vue": "^3.4.0",
+    "vue-i18n": "^9.13.0",
+    "element-plus": "^2.8.0",
+    "dayjs": "^1.11.0"
+  }
+}

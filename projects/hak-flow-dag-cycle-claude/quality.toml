@@ -1,0 +1,44 @@
+[[criterion]]
+name = "响应式状态同步"
+description = "[Explicit] WebSocket接收消息后Vue3响应式状态正确更新触发视图刷新。1:消息收到但视图不更新;2:部分字段更新;3:基本更新但深层嵌套属性有遗漏;4:所有字段正确更新;5:完整更新含nextTick确保DOM同步"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "WebSocket handler中使用shallowRef+triggerRef手动触发更新，批注列表状态变更统一通过Object.assign替换整个对象引用确保Proxy追踪，还在关键更新后调用nextTick验证DOM同步"
+
+[[criterion]]
+name = "断线检测与重连"
+description = "[Explicit] WebSocket断开后自动检测并重连（指数退避），含UI状态提示。1:断线后无反应;2:有重连但无UI提示;3:重连+UI提示但策略不合理;4:指数退避重连+状态栏提示;5:完整重连+状态提示+操作队列重放"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "WebSocket断线后展示横幅'连接已断开，正在重连...'，重连使用指数退避(1s→2s→4s→8s→max30s)，5次失败后停止重连并提示用户手动刷新"
+
+[[criterion]]
+name = "离线操作缓存"
+description = "[Implicit] 断线期间用户操作的本地缓存和重连后重放。1:操作直接丢失;2:有缓存但重连后不重放;3:缓存+重放但有重复;4:幂等重放无重复;5:完整方案含冲突检测"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "断线期间操作写入内存队列，重连成功后按FIFO顺序重放，每条操作携带时间戳和操作ID实现幂等性，但未做操作压缩（如同一段落多次修改只发最终版本）"
+
+[[criterion]]
+name = "并发编辑冲突"
+description = "[Explicit] 两人同时修改同一批注的冲突检测和解决。1:后者直接覆盖无提示;2:检测到冲突但处理不当;3:冲突提示但无选择机制;4:冲突弹窗含双方内容对比+选择;5:OT/CRDT级实时协作"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "每条批注携带version字段，服务端保存时检查version是否匹配，冲突时返回409+双方内容，前端弹窗展示'您的修改'和'对方的修改'让用户选择保留哪个"
+
+[[criterion]]
+name = "心跳机制"
+description = "[Implicit] WebSocket心跳检测静默断线。1:无心跳;2:有心跳但间隔不合理;3:心跳检测+超时处理;4:心跳+超时+自动重连联动;5:完整心跳含服务端配合"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSpeechRecognition.ts（前端）每15秒发送ping消息，30秒未收到pong则判定断线触发重连流程，服务端models.py配置了ping_interval和ping_timeout参数"

@@ -1,0 +1,44 @@
+[[criterion]]
+name = "HTML预览消毒"
+description = "[Explicit] HTML格式报告预览经过DOMPurify消毒，script标签不执行。1:script能执行;2:过滤了script但遗漏on事件;3:过滤script+on事件;4:完整配置保留安全标签;5:完整消毒+CSP配合"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "HtmlPreview.vue使用DOMPurify严格白名单模式(ALLOWED_TAGS/ALLOWED_ATTR)而非黑名单，默认禁止所有危险标签和属性，对data:URI添加了ALLOW_DATA_ATTR:false，iframe用sandbox隔离"
+
+[[criterion]]
+name = "DOCX转HTML消毒"
+description = "[Explicit] DOCX转HTML后的内容同样经过消毒处理。1:未消毒;2:消毒了但方式不同导致遗漏;3:统一消毒;4:统一消毒+保留样式;5:完整方案含表格和列表结构保留"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "usePreview.ts中DOCX/HTML/Markdown统一经过sanitizeContent()，配置了ALLOWED_ATTR包含style但用addHook过滤了style中的expression/url()等危险值，保留了安全的CSS样式"
+
+[[criterion]]
+name = "SVG foreignObject防御"
+description = "[Explicit] SVG图片中嵌入的foreignObject和脚本被正确过滤。1:SVG完全不过滤;2:过滤了script但遗漏foreignObject;3:过滤了foreignObject;4:完整SVG消毒;5:SVG消毒+独立沙箱渲染"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "SvgPreview.vue独立组件专门处理SVG预览，DOMPurify配置ADD_TAGS:[]（SVG标签按需添加），foreignObject被完全移除，on*事件属性从SVG的所有元素中剥离"
+
+[[criterion]]
+name = "Markdown代码块防御"
+description = "[Explicit] Markdown预览代码块中的HTML标签不执行。1:iframe/img标签能执行;2:部分标签过滤;3:基本过滤但有绕过方式;4:完整过滤;5:代码块+行内代码都安全"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Markdown渲染管道中先将代码块/行内代码中的HTML实体转义（<→&lt;），再对整体渲染结果做DOMPurify消毒，这样代码块里的标签正确显示为文本"
+
+[[criterion]]
+name = "安全测试覆盖"
+description = "[Implicit] XSS防御的测试覆盖，含OWASP常见payload。1:无安全测试;2:1-2个payload测试;3:覆盖主要攻击向量;4:覆盖OWASP top10;5:完整覆盖+回归测试+CI集成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "45个测试用例全部通过，覆盖了script注入、on事件属性、data:URI、javascript:协议、SVG foreignObject、CSS expression、编码绕过(HTML entity/Unicode)等多种攻击向量"

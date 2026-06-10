@@ -1,0 +1,44 @@
+[[criterion]]
+name = "中文字符级Diff精度"
+description = "[Explicit] 中文diff标注需要达到单字级别精度，'桨'→'浆'只标一个字不标整词。1:整段标红;2:按词标红;3:按字标红但有误标;4:单字精度偶有边界问题;5:单字精度且正确处理标点和数字混排"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "diff-engine.ts实现了LCS算法按单字分词(smartTokenize)，'桨距角'→'浆距角'能标出单字差异，但对中英混排场景（如'2.5MW发电机'→'3.0MW发电机'）数字部分按字符拆开了没有按整数处理"
+
+[[criterion]]
+name = "表格结构保持"
+description = "[Explicit] diff不能打散表格结构，差异应在表格单元格内标注。1:表格被打散为文本碎片;2:表格结构部分保留;3:表格结构保留但跨行合并单元格有问题;4:表格结构完整保留差异在单元格内标注;5:完整保留含合并单元格和嵌套表格"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "DiffTable.vue作为独立组件处理表格diff，按行×列对比单元格内容，但未处理合并单元格（colspan/rowspan）的场景，合并单元格的diff标注位置错误"
+
+[[criterion]]
+name = "差异跳转定位"
+description = "[Explicit] 点击上/下箭头跳转差异位置时scrollIntoView需考虑fixed header偏移。1:跳转不工作;2:能跳转但被header遮挡;3:跳转正确但动画卡顿;4:跳转正确含smooth scroll;5:跳转精确+键盘快捷键+当前差异高亮指示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "跳转使用了scrollIntoView({behavior:'smooth'})但没有减去fixed header的64px高度，差异项顶部被header遮挡，需要用scrollMarginTop或手动计算offsetTop"
+
+[[criterion]]
+name = "接受拒绝状态更新"
+description = "[Explicit] 点击接受/拒绝按钮后差异项视觉状态需更新（变灰/消失）。1:点击无反应;2:状态更新但视觉无变化;3:视觉更新但数据未同步;4:视觉+数据同步更新;5:完整的状态管理含撤销和批量操作"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "接受按钮的click handler更新了数据状态（accepted:true）但对应的diff高亮CSS class没有条件切换，已接受的差异项视觉上和未处理的完全一样"
+
+[[criterion]]
+name = "大文档性能"
+description = "[Implicit] 200页+大报告的diff计算和渲染性能。1:大文档直接卡死;2:diff计算超过10秒;3:diff计算可接受但渲染卡顿;4:虚拟滚动优化基本流畅;5:虚拟滚动+增量diff+Web Worker"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "diff计算在主线程执行，200页报告diff计算耗时约8秒页面完全冻结，没有虚拟滚动，所有diff结果一次性渲染到DOM"

@@ -1,0 +1,44 @@
+[[criterion]]
+name = "CJK字体垂直偏移修复"
+description = "[Explicit] PDF中CJK字体渲染与text layer/annotation layer的坐标偏移修复。1:未识别偏移问题;2:识别了偏移但修复方案错误;3:修复了垂直偏移但未处理annotation layer联动;4:text layer和annotation layer均修复但缩放场景遗漏;5:全面修复偏移含缩放适配和字体metrics差异处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "cjk-font-patch.ts通过DOM实测CJK/拉丁字体的baseline差值并动态补偿，PdfViewer.vue中annotation layer坐标同步更新，150%缩放下经过DPI感知计算修正偏移"
+
+[[criterion]]
+name = "GB18030编码兼容"
+description = "[Explicit] 对GB18030编码的历史PDF文件的CMap映射和字体回退处理。1:未识别编码问题;2:识别了编码但无有效方案;3:实现了编码检测但CMap映射不完整;4:编码检测+CMap映射基本可用但回退链不全;5:完整的编码检测+CMap映射+多级字体回退"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "pdf-config.ts配置了cMapUrl指向Adobe的CMap资源CDN，支持GB18030全集映射，PdfViewer.vue中增加了字体加载失败时的三级回退（嵌入字体→系统CJK字体→Noto Sans CJK）"
+
+[[criterion]]
+name = "缩放DPI适配"
+description = "[Implicit] 不同缩放比例和屏幕DPI下的渲染一致性。1:未考虑缩放;2:仅处理了100%缩放;3:处理了常用缩放但高DPI有问题;4:缩放和DPI基本正确偶有亚像素误差;5:精确的亚像素对齐含devicePixelRatio处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "usePdfViewer.ts中使用window.devicePixelRatio和当前scale动态计算补偿值，缩放变化时通过ResizeObserver触发重新计算"
+
+[[criterion]]
+name = "降级渲染方案"
+description = "[Implicit] 字体加载失败或解析异常时的降级渲染能力。1:异常时直接白屏;2:有try-catch但无降级显示;3:有基本降级但用户无感知;4:降级渲染+用户提示;5:多级降级+用户提示+重试机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "PdfViewer.vue中实现了字体加载超时检测（3秒），超时后显示'字体加载中...'提示并自动重试一次，最终回退到系统字体并标注'部分字体可能显示异常'"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 不同编码和缩放场景的渲染测试覆盖情况。1:无测试;2:仅有基础单测;3:覆盖了主要场景;4:覆盖主要+边界场景;5:全面覆盖含回归测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在tests目录下编写了编码检测和字体回退的单元测试，但缺少端到端的PDF渲染视觉回归测试"

@@ -1,0 +1,8 @@
+flask==3.0.0
+flask-sock==0.7.0
+celery==5.3.6
+redis==5.0.1
+sqlalchemy==2.0.25
+alembic==1.13.1
+pytest==8.0.0
+gunicorn==21.2.0

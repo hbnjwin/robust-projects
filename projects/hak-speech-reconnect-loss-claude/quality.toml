@@ -1,0 +1,44 @@
+[[criterion]]
+name = "断线自动重连"
+description = "[Explicit] Speech SDK WebSocket断开后自动重连（指数退避，上限次数）。1:断线后完全不重连;2:重连但无退避策略;3:指数退避重连;4:退避+次数上限+UI提示;5:完整重连含session恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "speechService.ts中canceled事件检测ConnectionFailure/ServiceTimeout后触发重连，使用指数退避(1s→2s→4s→8s→max30s)，maxRetries=5次后停止并提示用户手动操作"
+
+[[criterion]]
+name = "中间结果保存"
+description = "[Explicit] 断线时已识别的中间结果（interim results）不丢失。1:断线后全部丢失;2:最终结果保留但中间结果丢;3:中间结果缓存到内存;4:缓存到内存+sessionStorage;5:缓存+重连后无缝拼接"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSpeechRecognition.ts中中间结果实时写入sessionStorage（key为当前批注ID），重连后从sessionStorage恢复已识别内容并拼接到新recognizer的结果前面"
+
+[[criterion]]
+name = "UI状态同步"
+description = "[Explicit] 按钮状态正确反映当前识别/断线/重连状态，不出现'正在识别'但实际已断的情况。1:状态不同步;2:部分状态同步;3:基本同步但过渡状态缺失;4:完整状态同步;5:状态机驱动含动画过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "SpeechAnnotation.vue使用speech.ts中定义的状态枚举(Idle/Listening/Reconnecting/Error/Offline)驱动UI，每种状态有对应的图标、颜色和提示文字"
+
+[[criterion]]
+name = "离线降级"
+description = "[Implicit] 完全无网络时的友好降级处理。1:无限重试刷屏;2:停止重试但无提示;3:提示'网络不可用';4:提示+建议手动输入;5:完整离线方案含已识别内容保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "speechService.ts重连失败达到上限后显示'网络不可用，请手动输入批注内容'提示，已识别的部分内容自动填入文本输入框，按钮变为手动输入模式"
+
+[[criterion]]
+name = "多浏览器兼容"
+description = "[Implicit] Speech SDK WebSocket在不同浏览器上的行为一致性。1:只在Chrome工作;2:Chrome+Edge;3:主流桌面浏览器;4:桌面+移动端Safari;5:全平台含降级方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "speechService.ts在初始化时检测navigator.mediaDevices.getUserMedia可用性，不支持时显示'当前浏览器不支持语音输入'提示并隐藏语音按钮"

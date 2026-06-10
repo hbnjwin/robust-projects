@@ -1,0 +1,44 @@
+[[criterion]]
+name = "Query参数保留"
+description = "[Explicit] 路由跳转后浏览器返回时query参数（筛选条件/分页）需完整保留。1:参数全丢;2:部分参数保留;3:参数保留但值不正确;4:参数完整保留;5:参数保留+恢复滚动位置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "router/index.js中跳转详情页时使用router.push({name:'detail',params:{id}})未携带query，返回列表页时query丢失，需要改为router.push({path:'/reports/'+id, query: route.query})保留当前query"
+
+[[criterion]]
+name = "刷新白屏修复"
+description = "[Explicit] 嵌套路由页面F5刷新后不白屏，store为空时正确加载数据。1:直接白屏;2:白屏但有错误提示;3:不白屏但数据加载不全;4:正确加载数据;5:优雅加载含loading状态"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportDetail.vue的setup中直接从store.currentReport取数据，刷新后store被清空导致currentReport为undefined，模板中访问currentReport.title抛出TypeError白屏"
+
+[[criterion]]
+name = "动态路由加载闪烁"
+description = "[Explicit] 动态路由组件首次加载时消除白屏闪烁。1:白屏闪烁明显;2:有loading但样式差;3:skeleton骨架屏;4:平滑过渡;5:预加载+平滑过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用了Suspense组件包裹异步路由，但fallback只是一个简单的'加载中...'文字，没有骨架屏效果，视觉上仍有明显的内容跳动"
+
+[[criterion]]
+name = "滚动位置恢复"
+description = "[Implicit] 从详情页返回列表页时恢复之前的滚动位置。1:每次回到顶部;2:尝试恢复但位置不准;3:基本恢复;4:精确恢复;5:精确恢复含过渡动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "router/index.js的scrollBehavior未配置，每次返回列表页都滚动到顶部，用户需要重新向下滚动找到之前查看的报告"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 路由导航场景的测试覆盖。1:无测试;2:只有路由配置测试;3:覆盖跳转场景;4:覆盖跳转+刷新+返回;5:完整e2e测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "无任何测试文件，路由配置、守卫逻辑、组件加载全部依赖手动验证"

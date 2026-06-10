@@ -1,0 +1,287 @@
+/**
+ * PDF 预览组件样式
+ *
+ * 解决以下渲染问题：
+ * 1. CJK 字体文本层垂直偏移 — 通过 line-height 和 transform 修正
+ * 2. 批注层与文本层对齐 — 统一坐标系和定位方式
+ * 3. 高缩放级别下的层偏移 — 使用 transform 替代 top/left 定位
+ * 4. 高 DPI 屏幕下的亚像素对齐 — 启用 will-change 和 translateZ
+ */
+
+/* ============================================
+ * 基础布局
+ * ============================================ */
+
+.pdf-preview-container {
+  position: relative;
+  overflow: auto;
+  background: #f0f0f0;
+  border: 1px solid #dcdfe6;
+  border-radius: 4px;
+}
+
+.pdf-preview-wrapper {
+  position: relative;
+  display: inline-block;
+  min-width: 100%;
+  text-align: center;
+}
+
+.pdf-page-wrapper {
+  position: relative;
+  display: inline-block;
+  margin: 16px auto;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  background: #fff;
+}
+
+/* ============================================
+ * 文本层（Text Layer）— CJK 偏移修正
+ * ============================================ */
+
+/*
+ * PDF.js 文本层使用绝对定位的 span 元素覆盖在 canvas 上。
+ * 每个 span 的 transform: matrix(a, b, c, d, e, f) 由 PDF.js 计算。
+ *
+ * CJK 字体问题：
+ * - PDF 内嵌的 ascent 值通常为 0.80-0.85
+ * - 浏览器渲染 CJK 字体时实际 ascent 约为 0.88
+ * - 差值导致文本视觉上向下偏移约 0.03-0.08 * fontSize 像素
+ *
+ * 修正策略：
+ * 1. 设置 line-height 与 ascent 匹配
+ * 2. 通过 JS 修正 transform matrix 的 f（translateY）分量
+ * 3. 使用 will-change 提示浏览器优化合成层
+ */
+
+.pdf-preview-container :deep(.textLayer),
+.pdf-preview-container :deep([class*="text-layer"]) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  opacity: 0.3;
+  line-height: 1;
+  /* 确保文本层与 canvas 层像素对齐 */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.pdf-preview-container :deep(.textLayer span),
+.pdf-preview-container :deep([class*="text-layer"] span) {
+  /* 修正 CJK 字体的行高导致的偏移 */
+  line-height: 1;
+  /* 防止 CJK 字体渲染时的额外间距 */
+  vertical-align: baseline;
+  /* 优化高缩放下的亚像素渲染 */
+  will-change: transform;
+  /* 确保 transform-origin 与 PDF.js 计算一致 */
+  transform-origin: 0 0;
+}
+
+/*
+ * 高缩放级别修正（>150%）
+ *
+ * 当缩放超过 150% 时，浮点精度误差在 transform matrix 中被放大，
+ * 导致文本层与 canvas 渲染层之间的像素偏移更加明显。
+ *
+ * 使用 translate3d 强制 GPU 合成层以获得更精确的亚像素定位。
+ */
+.pdf-preview-container[data-zoom-high="true"] :deep(.textLayer span),
+.pdf-preview-container[data-zoom-high="true"] :deep([class*="text-layer"] span) {
+  /* 强制 GPU 合成以提高亚像素精度 */
+  backface-visibility: hidden;
+  -webkit-backface-visibility: hidden;
+  /* 避免 transform 四舍五入到整像素 */
+  image-rendering: -webkit-optimize-contrast;
+}
+
+/* ============================================
+ * 批注层（Annotation Layer）— 对齐修正
+ * ============================================ */
+
+.pdf-preview-container :deep(.annotationLayer),
+.pdf-preview-container :deep([class*="annotation-layer"]) {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  /* 批注层需要在文本层之上以接收点击事件 */
+  z-index: 2;
+  /* 使用与文本层相同的坐标系 */
+  transform-origin: 0 0;
+}
+
+/* 批注高亮的基础样式 */
+.pdf-preview-container :deep(.annotationLayer section),
+.pdf-preview-container :deep([class*="annotation-layer"] section) {
+  position: absolute;
+  cursor: pointer;
+  /* 确保批注元素与文本层的坐标系统一致 */
+  transform-origin: 0 0;
+  will-change: transform;
+}
+
+/* 高亮批注 */
+.pdf-preview-container :deep(.annotationLayer .highlightAnnotation),
+.pdf-preview-container :deep(.annotationLayer .highlight) {
+  background-color: rgba(255, 255, 0, 0.3);
+  mix-blend-mode: multiply;
+  border-radius: 2px;
+}
+
+.pdf-preview-container :deep(.annotationLayer .highlightAnnotation:hover),
+.pdf-preview-container :deep(.annotationLayer .highlight:hover) {
+  background-color: rgba(255, 255, 0, 0.5);
+}
+
+/* 下划线批注 */
+.pdf-preview-container :deep(.annotationLayer .underlineAnnotation) {
+  border-bottom: 2px solid rgba(0, 255, 0, 0.5);
+}
+
+/* 波浪线批注 */
+.pdf-preview-container :deep(.annotationLayer .squigglyAnnotation) {
+  border-bottom: 2px wavy rgba(255, 0, 0, 0.5);
+}
+
+/* 删除线批注 */
+.pdf-preview-container :deep(.annotationLayer .strikeoutAnnotation) {
+  border-bottom: 2px solid rgba(255, 0, 0, 0.5);
+  text-decoration: line-through;
+}
+
+/* ============================================
+ * 自定义批注覆盖层
+ * ============================================ */
+
+.pdf-annotation-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  pointer-events: none;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.pdf-highlight-mark {
+  position: absolute;
+  pointer-events: auto;
+  cursor: pointer;
+  border-radius: 2px;
+  transition: background-color 0.2s ease, box-shadow 0.2s ease;
+  mix-blend-mode: multiply;
+}
+
+.pdf-highlight-mark:hover {
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.3);
+}
+
+/* 选中的批注高亮 */
+.pdf-highlight-mark.is-active {
+  box-shadow: 0 0 0 2px rgba(64, 158, 255, 0.8);
+  z-index: 1;
+}
+
+/* ============================================
+ * 加载状态
+ * ============================================ */
+
+.pdf-loading {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 300px;
+  color: #909399;
+  font-size: 14px;
+}
+
+/* ============================================
+ * 编码警告提示
+ * ============================================ */
+
+.pdf-encoding-warning {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 16px;
+  margin: 8px;
+  background: #fdf6ec;
+  border: 1px solid #faecd8;
+  border-radius: 4px;
+  color: #e6a23c;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.pdf-encoding-warning strong {
+  color: #e6a23c;
+}
+
+/* ============================================
+ * 工具栏
+ * ============================================ */
+
+.pdf-toolbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 8px 16px;
+  background: #fff;
+  border-bottom: 1px solid #ebeef5;
+  user-select: none;
+}
+
+.pdf-toolbar-left,
+.pdf-toolbar-center,
+.pdf-toolbar-right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pdf-page-info {
+  font-size: 13px;
+  color: #606266;
+  min-width: 80px;
+  text-align: center;
+}
+
+.pdf-zoom-info {
+  font-size: 13px;
+  color: #606266;
+  min-width: 50px;
+  text-align: center;
+}
+
+/* ============================================
+ * 响应式与打印
+ * ============================================ */
+
+@media print {
+  .pdf-preview-container {
+    overflow: visible;
+    border: none;
+  }
+
+  .pdf-toolbar,
+  .pdf-encoding-warning {
+    display: none;
+  }
+
+  .pdf-page-wrapper {
+    box-shadow: none;
+    margin: 0;
+  }
+
+  /* 打印时让文本层不可见 */
+  .pdf-preview-container :deep(.textLayer) {
+    opacity: 0;
+  }
+}

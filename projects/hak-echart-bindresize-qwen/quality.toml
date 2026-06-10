@@ -1,0 +1,44 @@
+[[criterion]]
+name = "ResizeObserver方案"
+description = "[Explicit] ECharts resize事件从window.addEventListener改为ResizeObserver监听图表容器。1:仍用window事件;2:使用了ResizeObserver但实现有误;3:正确使用ResizeObserver;4:ResizeObserver+防抖;5:ResizeObserver+防抖+侧边栏动画联动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "StatisticsPanel.vue中用ResizeObserver监听图表容器div的尺寸变化，替代了原来的window resize监听，但没有添加防抖，侧边栏动画过程中图表resize被频繁触发导致卡顿"
+
+[[criterion]]
+name = "keep-alive生命周期管理"
+description = "[Explicit] keep-alive的activated/deactivated正确管理ECharts实例（暂停/恢复，不重复创建）。1:每次activated都新建实例;2:activated恢复但deactivated未暂停;3:activated/deactivated对称处理;4:对称处理+dispose清理;5:完整生命周期含错误恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "PowerTrendChart.vue在activated中检查chart实例是否存在才调用resize而非重新init，deactivated中disconnect ResizeObserver，但FaultDistChart.vue没有做同样处理仍在activated中重复绑定"
+
+[[criterion]]
+name = "内存泄漏修复验证"
+description = "[Explicit] 修复后反复切换页面内存占用稳定不持续增长。1:内存仍持续增长;2:增长减缓但仍有泄漏;3:内存基本稳定;4:内存稳定+有验证方案;5:HeapSnapshot对比验证+CI集成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后手动测试切换10次内存不再飙升，但没有提供自动化验证方案或HeapSnapshot对比数据"
+
+[[criterion]]
+name = "侧边栏联动"
+description = "[Implicit] 侧边栏展开/收起动画结束后图表正确resize。1:侧边栏变化无响应;2:响应但动画中频繁resize;3:transitionend后resize;4:正确联动+防抖;5:完整方案含折叠按钮"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "StatisticsPanel.vue监听了侧边栏宽度变化但在transition动画过程中就开始resize，图表宽度在动画期间不断跳动"
+
+[[criterion]]
+name = "代码复用性"
+description = "[Implicit] 图表相关逻辑是否抽取为可复用的composable/hook。1:每个图表组件独立实现;2:部分复用;3:抽取composable但不通用;4:通用composable所有图表复用;5:通用composable+TypeScript泛型+配置化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "PowerTrendChart/FaultDistChart/ProgressBarChart各自独立实现了ECharts初始化和resize逻辑，存在大量重复代码"

@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报告审核协作系统</title>
+    <script src="https://unpkg.com/vue@3/dist/vue.global.prod.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, "PingFang SC", "Microsoft YaHei", sans-serif; background: #f5f7fa; color: #333; }
+        .app-header { background: #2c3e50; color: white; padding: 12px 24px; display: flex; justify-content: space-between; align-items: center; }
+        .app-header h1 { font-size: 18px; font-weight: 500; }
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .user-badge { background: #3498db; padding: 4px 12px; border-radius: 12px; font-size: 13px; }
+        .online-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+        .online-dot.on { background: #2ecc71; }
+        .online-dot.off { background: #e74c3c; }
+
+        /* 断线提示横幅 */
+        .connection-banner { padding: 10px 24px; text-align: center; font-size: 14px; font-weight: 500; transition: all 0.3s; }
+        .connection-banner.disconnected { background: #e74c3c; color: white; }
+        .connection-banner.reconnecting { background: #f39c12; color: white; }
+        .connection-banner.offline-ops { background: #e67e22; color: white; }
+
+        .main { max-width: 960px; margin: 20px auto; padding: 0 16px; }
+        .report-title { font-size: 22px; margin-bottom: 16px; color: #2c3e50; }
+
+        /* 段落卡片 */
+        .section-card { background: white; border-radius: 8px; margin-bottom: 16px; box-shadow: 0 1px 3px rgba(0,0,0,0.1); overflow: hidden; }
+        .section-header { display: flex; justify-content: space-between; align-items: center; padding: 12px 16px; border-bottom: 1px solid #eee; }
+        .section-content { padding: 16px; line-height: 1.6; }
+        .section-actions { display: flex; gap: 8px; align-items: center; }
+
+        .status-badge { padding: 4px 10px; border-radius: 4px; font-size: 12px; font-weight: 500; }
+        .status-badge.pending { background: #ffeaa7; color: #856404; }
+        .status-badge.approved { background: #d4edda; color: #155724; }
+        .status-badge.flagged { background: #f8d7da; color: #721c24; }
+
+        .btn { padding: 6px 14px; border: none; border-radius: 4px; cursor: pointer; font-size: 13px; transition: all 0.2s; }
+        .btn:disabled { opacity: 0.5; cursor: not-allowed; }
+        .btn-approve { background: #27ae60; color: white; }
+        .btn-approve:hover:not(:disabled) { background: #219a52; }
+        .btn-flag { background: #e74c3c; color: white; }
+        .btn-flag:hover:not(:disabled) { background: #c0392b; }
+
+        .reviewer-tag { font-size: 11px; color: #888; margin-left: 8px; }
+
+        /* 批注区域 */
+        .annotations { padding: 0 16px 16px; }
+        .annotations h4 { font-size: 13px; color: #666; margin-bottom: 8px; }
+        .annotation-item { background: #f8f9fa; border-left: 3px solid #3498db; padding: 8px 12px; margin-bottom: 8px; border-radius: 0 4px 4px 0; }
+        .annotation-meta { font-size: 11px; color: #888; margin-bottom: 4px; }
+        .annotation-content { font-size: 14px; }
+        .annotation-edit { width: 100%; padding: 8px; border: 1px solid #ddd; border-radius: 4px; font-size: 14px; resize: vertical; min-height: 60px; }
+        .annotation-actions { display: flex; gap: 6px; margin-top: 6px; }
+
+        .new-annotation { display: flex; gap: 8px; margin-top: 8px; }
+        .new-annotation input { flex: 1; padding: 8px; border: 1px solid #ddd; border-radius: 4px; }
+        .btn-small { padding: 4px 10px; font-size: 12px; }
+        .btn-primary { background: #3498db; color: white; }
+
+        /* 在线用户列表 */
+        .online-users { display: flex; gap: 6px; flex-wrap: wrap; }
+        .online-user { font-size: 12px; padding: 2px 8px; background: #e8f5e9; border-radius: 10px; color: #2e7d32; }
+
+        /* 冲突对话框 */
+        .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); display: flex; align-items: center; justify-content: center; z-index: 1000; }
+        .modal { background: white; border-radius: 8px; padding: 24px; width: 90%; max-width: 600px; max-height: 80vh; overflow-y: auto; }
+        .modal h3 { color: #e74c3c; margin-bottom: 16px; }
+        .conflict-versions { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .conflict-version { border: 2px solid #ddd; border-radius: 6px; padding: 12px; cursor: pointer; transition: border-color 0.2s; }
+        .conflict-version:hover { border-color: #3498db; }
+        .conflict-version.selected { border-color: #27ae60; background: #f0fff4; }
+        .conflict-version h4 { font-size: 14px; margin-bottom: 8px; }
+        .conflict-version p { font-size: 13px; color: #555; white-space: pre-wrap; }
+        .modal-actions { display: flex; justify-content: flex-end; gap: 8px; }
+        .btn-cancel { background: #95a5a6; color: white; }
+    </style>
+</head>
+<body>
+    <div id="app">
+        <!-- 顶栏 -->
+        <header class="app-header">
+            <h1>报告审核协作系统</h1>
+            <div class="user-info">
+                <div class="online-users">
+                    <span v-for="u in onlineUsers" :key="u" class="online-user">
+                        <span class="online-dot on"></span>{{ u }}
+                    </span>
+                </div>
+                <span class="user-badge">{{ userId }}</span>
+            </div>
+        </header>
+
+        <!-- 问题2修复：断线提示横幅 -->
+        <div v-if="connectionStatus !== 'connected'" class="connection-banner"
+             :class="connectionStatus">
+            <template v-if="connectionStatus === 'disconnected'">
+                <span class="online-dot off"></span>
+                连接已断开 — 您的操作将在重连后自动同步
+                <span v-if="pendingOps.length">({{ pendingOps.length }} 个待同步操作)</span>
+            </template>
+            <template v-if="connectionStatus === 'reconnecting'">
+                正在重新连接... (第 {{ reconnectAttempts }} 次尝试)
+            </template>
+        </div>
+
+        <div class="main">
+            <h2 class="report-title" v-if="report">{{ report.title }}</h2>
+
+            <!-- 段落列表 -->
+            <div v-for="section in sections" :key="section.id" class="section-card">
+                <div class="section-header">
+                    <span :class="['status-badge', section.review_status]">
+                        {{ statusLabel(section.review_status) }}
+                    </span>
+                    <div class="section-actions">
+                        <span v-if="section.reviewed_by" class="reviewer-tag">
+                            {{ section.reviewed_by }} 审核
+                        </span>
+                        <button class="btn btn-approve"
+                                :disabled="connectionStatus !== 'connected'"
+                                @click="setReviewStatus(section, 'approved')">
+                            通过
+                        </button>
+                        <button class="btn btn-flag"
+                                :disabled="connectionStatus !== 'connected'"
+                                @click="setReviewStatus(section, 'flagged')">
+                            有问题
+                        </button>
+                    </div>
+                </div>
+                <div class="section-content">{{ section.content }}</div>
+
+                <!-- 批注 -->
+                <div class="annotations">
+                    <h4>批注</h4>
+                    <div v-for="ann in section.annotations" :key="ann.id" class="annotation-item">
+                        <div class="annotation-meta">
+                            {{ ann.author }} · v{{ ann.version }}
+                            · {{ formatTime(ann.updated_at) }}
+                        </div>
+                        <template v-if="editingAnnotation === ann.id">
+                            <textarea class="annotation-edit" v-model="editContent"></textarea>
+                            <div class="annotation-actions">
+                                <button class="btn btn-small btn-primary"
+                                        :disabled="connectionStatus !== 'connected'"
+                                        @click="saveAnnotation(ann)">保存</button>
+                                <button class="btn btn-small btn-cancel"
+                                        @click="editingAnnotation = null">取消</button>
+                            </div>
+                        </template>
+                        <template v-else>
+                            <div class="annotation-content">{{ ann.content }}</div>
+                            <div class="annotation-actions">
+                                <button class="btn btn-small btn-primary"
+                                        @click="startEditAnnotation(ann)">编辑</button>
+                            </div>
+                        </template>
+                    </div>
+
+                    <div class="new-annotation">
+                        <input v-model="newAnnotationContent[section.id]"
+                               placeholder="添加批注..."
+                               @keyup.enter="addAnnotation(section)">
+                        <button class="btn btn-small btn-primary"
+                                :disabled="connectionStatus !== 'connected'"
+                                @click="addAnnotation(section)">添加</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 问题3修复：冲突解决对话框 -->
+        <div v-if="conflict" class="modal-overlay" @click.self="conflict = null">
+            <div class="modal">
+                <h3>检测到编辑冲突</h3>
+                <p style="margin-bottom:16px;color:#666;">
+                    另一位审核员（{{ conflict.serverAuthor }}）在您编辑期间也修改了此批注，请选择保留哪个版本：
+                </p>
+                <div class="conflict-versions">
+                    <div class="conflict-version"
+                         :class="{ selected: conflictChoice === 'mine' }"
+                         @click="conflictChoice = 'mine'">
+                        <h4>我的版本</h4>
+                        <p>{{ conflict.myContent }}</p>
+                    </div>
+                    <div class="conflict-version"
+                         :class="{ selected: conflictChoice === 'theirs' }"
+                         @click="conflictChoice = 'theirs'">
+                        <h4>{{ conflict.serverAuthor }} 的版本 (v{{ conflict.serverVersion }})</h4>
+                        <p>{{ conflict.serverContent }}</p>
+                    </div>
+                </div>
+                <div class="modal-actions">
+                    <button class="btn btn-cancel" @click="conflict = null">取消</button>
+                    <button class="btn btn-primary" :disabled="!conflictChoice"
+                            @click="resolveConflict">确认选择</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="/static/app.js"></script>
+</body>
+</html>

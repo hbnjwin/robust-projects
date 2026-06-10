@@ -1,0 +1,35 @@
+[[criterion]]
+name = "动态行高计算"
+description = "[Explicit] 虚拟滚动组件需根据每行实际高度动态计算而非固定行高。1:固定行高未修改;2:尝试动态但计算错误;3:动态计算基本正确但缓存机制有问题;4:动态计算+缓存+ResizeObserver;5:完整方案含骨架屏和平滑过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ReportList.vue中将RecycleScroller的item-size改为动态模式，通过onItemResize回调测量每行实际高度并缓存，但缓存key用的数组index而非报告ID，排序后缓存与数据错位"
+
+[[criterion]]
+name = "筛选后缓存重置"
+description = "[Explicit] 筛选条件变化后虚拟滚动的高度缓存和滚动位置需完全重置。1:未处理筛选;2:重置了数据但缓存残留;3:缓存重置但滚动位置未归零;4:缓存+滚动位置都重置;5:完整重置+过渡动画无闪烁"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在watch筛选条件变化时调用了列表组件的reset方法清空缓存，但scrollTo(0)在数据更新前调用导致闪烁——先滚到顶部显示旧数据，然后数据更新后又闪一下"
+
+[[criterion]]
+name = "快速滚动视觉优化"
+description = "[Implicit] 快速滚动时消除行间白色间隙闪烁。1:明显白色闪烁;2:闪烁减少但仍可见;3:大部分消除偶有闪烁;4:基本无闪烁;5:完全无闪烁含骨架屏占位"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "快速滚动时行间1-3px白色间隙非常明显，动态高度计算延迟大，新进入可视区的行使用固定估算高度与实际高度差异导致行间gap闪烁严重，没有骨架屏占位也没有任何视觉缓冲方案"
+
+[[criterion]]
+name = "工程化质量"
+description = "[Implicit] 测试覆盖和代码质量。1:无测试无类型;2:有TS类型但无测试;3:有基本测试;4:测试覆盖主要场景;5:完整测试+性能benchmark"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ReportList.test.ts覆盖了基本的列表渲染和筛选切换场景，StatusBadge.vue有独立的props测试"

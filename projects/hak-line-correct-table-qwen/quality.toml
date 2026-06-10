@@ -1,0 +1,44 @@
+[[criterion]]
+name = "RFC5987文件名解析"
+description = "[Explicit] Content-Disposition中filename*=UTF-8''编码格式的正确解析。1:直接显示乱码;2:识别了编码但解码错误;3:UTF-8解码正确但传统格式兼容有问题;4:双格式兼容(filename*优先);5:完整解析含特殊字符和空格处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "download.js中parseContentDispositionFilename函数优先解析filename*=UTF-8''格式并用decodeURIComponent解码，传统filename也能解析，但对文件名中包含引号或空格的情况处理不完整"
+
+[[criterion]]
+name = "大文件流式下载"
+description = "[Explicit] 200MB+大文件下载不占用等量内存。1:Blob全量接收OOM;2:尝试流式但实现错误;3:流式下载基本可用;4:流式+进度条;5:流式+进度+断点续传"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "download.js中将responseType从'blob'改为'arraybuffer'分块写入，但在低版本Safari上StreamSaver不可用时回退到Blob方案仍会OOM"
+
+[[criterion]]
+name = "下载错误处理"
+description = "[Explicit] 下载过程中网络中断的检测和用户提示。1:无任何提示;2:控制台报错但用户无感知;3:有错误提示;4:错误提示+重试按钮;5:完整错误处理含断点续传恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "download.js中axios请求的catch块只console.error了错误信息，前端UI上没有任何toast或弹窗提示用户下载失败"
+
+[[criterion]]
+name = "下载进度显示"
+description = "[Implicit] 下载进度条基于Content-Length准确显示百分比。1:无进度显示;2:有进度但不准确;3:百分比基本准确;4:准确+预估剩余时间;5:精确进度+速度+剩余时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "download.js中使用axios的onDownloadProgress回调计算百分比(loaded/total*100)，但当服务端未返回Content-Length时total为undefined，进度条显示NaN%"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 文件名解析和下载流程的测试。1:无测试;2:简单单测;3:覆盖主要场景;4:含边界场景;5:完整测试含大文件和网络异常"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "download.test.js包含18个测试用例，覆盖了RFC5987解析、传统格式解析、特殊字符文件名、下载进度回调、错误处理等场景"

@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>报告下载</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, "Microsoft YaHei", sans-serif; background: #f5f5f5; padding: 40px; }
+        .container { max-width: 600px; margin: 0 auto; background: #fff; border-radius: 8px; padding: 32px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+        h1 { font-size: 20px; margin-bottom: 24px; color: #333; }
+        .download-card { border: 1px solid #e8e8e8; border-radius: 6px; padding: 20px; margin-bottom: 16px; }
+        .download-card h3 { font-size: 15px; color: #333; margin-bottom: 8px; }
+        .download-card .meta { font-size: 13px; color: #999; margin-bottom: 16px; }
+        .btn { display: inline-block; padding: 8px 20px; background: #1890ff; color: #fff; border: none; border-radius: 4px; cursor: pointer; font-size: 14px; }
+        .btn:hover { background: #40a9ff; }
+        .btn:disabled { background: #d9d9d9; cursor: not-allowed; }
+        .progress-wrap { display: none; margin-top: 16px; }
+        .progress-bar { height: 8px; background: #f0f0f0; border-radius: 4px; overflow: hidden; }
+        .progress-fill { height: 100%; width: 0; background: #1890ff; border-radius: 4px; transition: width 0.2s; }
+        .progress-text { font-size: 12px; color: #666; margin-top: 6px; }
+        .error-msg { display: none; margin-top: 12px; padding: 10px 14px; background: #fff2f0; border: 1px solid #ffccc7; border-radius: 4px; color: #cf1322; font-size: 13px; }
+        .error-msg .retry-btn { margin-left: 8px; color: #1890ff; cursor: pointer; text-decoration: underline; border: none; background: none; font-size: 13px; }
+        .success-msg { display: none; margin-top: 12px; padding: 10px 14px; background: #f6ffed; border: 1px solid #b7eb8f; border-radius: 4px; color: #389e0d; font-size: 13px; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>检测报告下载</h1>
+        <div class="download-card" id="report-card">
+            <h3 id="report-name">哈尔滨风电场_检测报告.pdf</h3>
+            <div class="meta" id="report-meta">报告ID: 1</div>
+            <button class="btn" id="download-btn" onclick="startDownload()">下载报告</button>
+            <div class="progress-wrap" id="progress-wrap">
+                <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+                <div class="progress-text" id="progress-text">准备下载...</div>
+            </div>
+            <div class="error-msg" id="error-msg">
+                <span id="error-text"></span>
+                <button class="retry-btn" id="retry-btn" onclick="startDownload()" style="display:none;">重试</button>
+            </div>
+            <div class="success-msg" id="success-msg">下载完成！</div>
+        </div>
+    </div>
+
+    <script src="/static/js/download.js"></script>
+    <script>
+        var currentController = null;
+
+        function formatBytes(bytes) {
+            if (bytes === 0) return '0 B';
+            var units = ['B', 'KB', 'MB', 'GB'];
+            var i = Math.floor(Math.log(bytes) / Math.log(1024));
+            return (bytes / Math.pow(1024, i)).toFixed(1) + ' ' + units[i];
+        }
+
+        function startDownload() {
+            var btn = document.getElementById('download-btn');
+            var progressWrap = document.getElementById('progress-wrap');
+            var progressFill = document.getElementById('progress-fill');
+            var progressText = document.getElementById('progress-text');
+            var errorMsg = document.getElementById('error-msg');
+            var successMsg = document.getElementById('success-msg');
+
+            // 重置UI
+            btn.disabled = true;
+            btn.textContent = '下载中...';
+            progressWrap.style.display = 'block';
+            progressFill.style.width = '0%';
+            progressText.textContent = '准备下载...';
+            errorMsg.style.display = 'none';
+            successMsg.style.display = 'none';
+
+            currentController = downloadReport('/api/reports/1/download', {
+                onProgress: function (percent, loaded, total) {
+                    if (percent >= 0) {
+                        progressFill.style.width = percent + '%';
+                        progressText.textContent = percent + '% - ' + formatBytes(loaded) + ' / ' + formatBytes(total);
+                    } else {
+                        progressText.textContent = '已下载 ' + formatBytes(loaded);
+                    }
+                },
+                onError: function (error) {
+                    btn.disabled = false;
+                    btn.textContent = '下载报告';
+                    progressWrap.style.display = 'none';
+
+                    var errorTextEl = document.getElementById('error-text');
+                    var retryBtn = document.getElementById('retry-btn');
+                    errorTextEl.textContent = error.message;
+                    retryBtn.style.display = error.retryable ? 'inline' : 'none';
+                    errorMsg.style.display = 'block';
+                },
+                onComplete: function (filename) {
+                    btn.disabled = false;
+                    btn.textContent = '下载报告';
+                    progressFill.style.width = '100%';
+                    successMsg.style.display = 'block';
+                    successMsg.textContent = '下载完成！文件: ' + filename;
+                }
+            });
+        }
+    </script>
+</body>
+</html>

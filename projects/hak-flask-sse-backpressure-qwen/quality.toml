@@ -1,0 +1,35 @@
+[[criterion]]
+name = "editor实例生命周期"
+description = "[Explicit] keep-alive场景下WangEditor实例正确管理，不重复创建。1:每次activated都新建;2:有销毁但时机不对;3:activated复用/deactivated暂停;4:完整生命周期管理;5:生命周期+切换报告时内容更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "RichTextEditor.vue在destroyEditor()中调用editor.destroy()，onActivated中检查editorRef是否存在决定是否重新创建，但切换报告时（同一组件不同reportId）没有更新编辑器内容，显示的还是上一份报告的内容"
+
+[[criterion]]
+name = "paste事件清理"
+description = "[Explicit] 全局paste事件监听在组件卸载时正确移除。1:事件未移除;2:尝试移除但引用不匹配;3:正确移除;4:移除+防止多次绑定;5:完整事件管理含其他全局事件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "RichTextEditor.vue中paste监听使用了具名函数handlePaste，在destroyEditor中removeEventListener('paste', handlePaste)，但如果用户先切标签页(deactivated)再关闭(unmounted)，deactivated里没有移除paste监听"
+
+[[criterion]]
+name = "内存泄漏验证"
+description = "[Implicit] 修复后反复切换报告编辑页面内存不持续增长。1:内存仍增长;2:增长减缓;3:基本稳定;4:稳定+有验证说明;5:HeapSnapshot验证+自动化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复后没有提供任何内存泄漏验证方案或数据，只是描述了修复逻辑"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 编辑器生命周期和事件管理的测试。1:无测试;2:仅渲染测试;3:生命周期测试;4:含事件管理测试;5:完整测试含内存泄漏检测"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "无测试文件"

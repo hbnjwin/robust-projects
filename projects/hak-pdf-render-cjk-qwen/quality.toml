@@ -1,0 +1,44 @@
+[[criterion]]
+name = "CJK字体垂直偏移修复"
+description = "[Explicit] PDF中CJK字体渲染与text layer/annotation layer的坐标偏移修复。1:未识别偏移问题;2:识别了偏移但修复方案错误;3:修复了垂直偏移但未处理annotation layer联动;4:text layer和annotation layer均修复但缩放场景遗漏;5:全面修复偏移含缩放适配和字体metrics差异处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在textLayerFix.ts中通过修正transform matrix的ty偏移量来补偿CJK字体ascent差异(0.82→0.88)，但对annotation layer的坐标映射处理不够完整，高缩放比例下偏移仍有残留"
+
+[[criterion]]
+name = "GB18030编码兼容"
+description = "[Explicit] 对GB18030编码的历史PDF文件的CMap映射和字体回退处理。1:未识别编码问题;2:识别了编码但无有效方案;3:实现了编码检测但CMap映射不完整;4:编码检测+CMap映射基本可用但回退链不全;5:完整的编码检测+CMap映射+多级字体回退"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "encodingDetect.ts实现了基本的编码检测逻辑，但CMap表的GB18030映射只覆盖了常用区域，对扩展区B/C的四字节编码未处理，回退链只到系统默认字体"
+
+[[criterion]]
+name = "缩放DPI适配"
+description = "[Implicit] 不同缩放比例和屏幕DPI下的渲染一致性。1:未考虑缩放;2:仅处理了100%缩放;3:处理了常用缩放但高DPI有问题;4:缩放和DPI基本正确偶有亚像素误差;5:精确的亚像素对齐含devicePixelRatio处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "textLayerFix.ts的偏移补偿值是硬编码的固定px值，没有根据当前缩放比例和devicePixelRatio动态计算，150%以上缩放时偏移明显加剧"
+
+[[criterion]]
+name = "降级渲染方案"
+description = "[Implicit] 字体加载失败或解析异常时的降级渲染能力。1:异常时直接白屏;2:有try-catch但无降级显示;3:有基本降级但用户无感知;4:降级渲染+用户提示;5:多级降级+用户提示+重试机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "cjkFont.ts中字体加载失败时直接使用浏览器默认字体渲染，没有给用户任何提示，也没有重试机制"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] 不同编码和缩放场景的渲染测试覆盖情况。1:无测试;2:仅有基础单测;3:覆盖了主要场景;4:覆盖主要+边界场景;5:全面覆盖含回归测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "tests目录下有基本的单元测试但仅测试了UTF-8编码的正常渲染路径，GB18030和高缩放场景无测试"
