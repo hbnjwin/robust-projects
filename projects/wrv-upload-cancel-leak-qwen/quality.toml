@@ -1,62 +1,53 @@
 [[criterion]]
-name = "请求取消"
-description = "[Explicit] 取消上传时HTTP请求的abort实现。1:未abort;2:仅设置flag;3:使用AbortController但signal未传递;4:AbortController+signal正确传递到axios;5:abort+超时保护+竞态处理"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "使用AbortController创建cancel token，signal通过axios config传递，handleCancel调用abort()终止请求，finally中清理controller引用"
-
-[[criterion]]
-name = "状态重置"
-description = "[Explicit] 弹窗关闭/重新打开时上传进度状态的重置。1:未重置;2:仅重置progress;3:重置progress+uploading;4:重置所有UI状态+进度状态;5:重置+防竞态+状态锁定"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "resetState函数重置progress/uploading/progressStatus/errorMsg/selectedFile，handleBeforeClose调用后弹窗重新打开时状态干净"
-
-[[criterion]]
-name = "内存清理"
-description = "[Explicit] FormData对象和文件引用的清理。1:未清理;2:仅清理FormData;3:FormData+文件引用;4:FormData+文件引用+controller;5:全链路清理+GC友好"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "resetState中将formData设为null、selectedFile设为null、currentController设为null，上传成功和取消两个路径都有清理逻辑"
-
-[[criterion]]
-name = "防重复打开"
-description = "[Explicit] 快速连续打开关闭弹窗时的内存泄漏防护。1:无防护;2:beforeClose有清理但不彻底;3:清理+防重入;4:清理+abort+nullify;5:完整生命周期管理"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "handleBeforeClose调用resetState完整清理所有状态，on-close事件也触发清理，多次开关不会累积残留引用"
-
-[[criterion]]
-name = "代码精准度"
-description = "[Implicit] 修改精准度。1:大量无关;2:有冗余;3:基本精准;4:精准;5:最小改动"
+name = "请求中断机制"
+description = "[Explicit] 取消上传时对HTTP请求的中断实现。1:未处理abort;2:仅清理前端状态;3:用AbortController但信号传递不完整;4:AbortController+axios信号完整传递+abort回调;5:完整abort+断点续传支持"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "从t-upload内置上传改为axios手动上传以获得abort控制权，改动幅度适中，但引入了额外的UI变更(拖拽区、文件大小显示)"
+rationale = "upload-dialog.vue中弃用t-upload内置上传改为axios+AbortController手动上传，handleCancel调用abort()终止请求，但实现过程曲折，通过3次Write反复修改才完成，中间版本存在信号未正确绑定的问题"
+
+[[criterion]]
+name = "进度状态重置"
+description = "[Explicit] 重新打开上传弹窗时进度条和上传状态的清理。1:状态残留;2:部分清理;3:uploading和progress重置但时机不对;4:统一cleanup函数在取消和关闭时都调用;5:cleanup+动画过渡+状态机管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过resetState统一清理progress/errorMsg/selectedFile等状态，handleBeforeClose和on-close双重触发resetState，但双重触发设计存在重复调用风险"
+
+[[criterion]]
+name = "资源清理设计"
+description = "[Explicit] FormData对象和文件引用在弹窗关闭时的释放。1:未清理;2:仅清空文件列表;3:FormData置null但文件引用残留;4:FormData+文件引用+组件clearFiles全部清理;5:清理+WeakRef防止意外引用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "resetState中清理了formData和selectedFile，但clearFiles调用时机在状态重置之后，如果clearFiles触发了change回调可能导致状态再次被污染"
+
+[[criterion]]
+name = "内存泄漏修复"
+description = "[Explicit] 连续快速打开关闭弹窗时内存持续增长的修复。1:未处理;2:关闭时清理但打开时未重置;3:开关都处理但有泄漏路径;4:finally块+关闭回调双重保证引用释放;5:完整释放+内存快照验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "虽然resetState中将formData和selectedFile置null，但请求完成的finally回调中未清理引用，如果请求在弹窗关闭后才完成，FormData对象仍被axios闭包持有"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于bug修复，无冗余改动。1:大量无关修改;2:有明显冗余;3:基本精准有少量多余;4:精准修改;5:最小改动且完整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "51次工具调用中39次Bash操作，3次Write修改upload-dialog.vue外还生成了quality.toml等无关文件，修复过程中多次反复修改同一区域"
 
 [[criterion]]
 name = "多问题覆盖"
-description = "[Explicit] 四个问题(abort/状态残留/内存清理/重复打开)的修复覆盖度。1:只修了1个;2:修了2个;3:都涉及但不完整;4:都完整修复;5:统一方案解决+防回归"
+description = "[Explicit] 四个问题(abort/进度残留/资源清理/内存泄漏)的修复覆盖度。1:只修了1个;2:修了2个;3:修了3个但不完整;4:都修了;5:统一方案覆盖+防回归"
 type = "likert"
 points = 5
 weight = 1.0
-score = 4
-rationale = "AbortController解决请求取消，resetState统一处理状态重置和内存清理，handleBeforeClose+on-close双保险防止残留，四个问题均有覆盖"
-
-[[criterion]]
-name = "执行效率"
-description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "1次Read+1次Write完成修复，直接识别问题并实施解决方案，无冗余探索"
+score = 3
+rationale = "四个问题都有涉及但资源清理和内存泄漏的修复不够彻底，finally回调缺失导致特定时序下仍可能泄漏"
