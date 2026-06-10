@@ -30,10 +30,12 @@ const handleFileChange = async (uploadFile: any) => {
   if (!file) return
 
   uploading.value = true
-  statusText.value = '计算文件哈希...'
+  uploadProgress.value = 0
 
-  // BUG: 同步读取整个文件计算 MD5，大文件会阻塞主线程数秒
-  const fileHash = await calculateHash(file)
+  const fileHash = await calculateHash(file, (percent) => {
+    statusText.value = `计算文件哈希... ${percent}%`
+    uploadProgress.value = Math.round(percent * 0.3) // 哈希阶段占 30%
+  })
   statusText.value = '检查秒传...'
 
   // 检查是否可以秒传
@@ -48,25 +50,40 @@ const handleFileChange = async (uploadFile: any) => {
     return
   }
 
-  // 分片上传
+  // 分片上传（进度条从 30% 到 100%）
   await uploadChunks(file, fileHash, checkResult.data.uploadedChunks || [])
 }
 
-const calculateHash = (file: File): Promise<string> => {
+const HASH_CHUNK_SIZE = 2 * 1024 * 1024 // 2MB per hash chunk
+
+const calculateHash = (file: File, onProgress?: (percent: number) => void): Promise<string> => {
   return new Promise((resolve) => {
-    // BUG: FileReader 一次性读取整个文件到内存
-    // 对于 100MB+ 的视频文件，会导致页面冻结好几秒
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const spark = new SparkMD5.ArrayBuffer()
-      // BUG: 一次性把整个文件内容传给 spark-md5
-      // 这个操作在主线程上执行，阻塞 UI 渲染
-      spark.append(e.target!.result as ArrayBuffer)
-      resolve(spark.end())
+    const spark = new SparkMD5.ArrayBuffer()
+    const totalChunks = Math.ceil(file.size / HASH_CHUNK_SIZE)
+    let currentChunk = 0
+
+    const processNextChunk = () => {
+      const start = currentChunk * HASH_CHUNK_SIZE
+      const end = Math.min(start + HASH_CHUNK_SIZE, file.size)
+      const blob = file.slice(start, end)
+
+      const reader = new FileReader()
+      reader.onload = (e) => {
+        spark.append(e.target!.result as ArrayBuffer)
+        currentChunk++
+        onProgress?.(Math.round((currentChunk / totalChunks) * 100))
+
+        if (currentChunk < totalChunks) {
+          // 让出主线程，避免阻塞 UI 渲染
+          setTimeout(processNextChunk, 0)
+        } else {
+          resolve(spark.end())
+        }
+      }
+      reader.readAsArrayBuffer(blob)
     }
-    // BUG: readAsArrayBuffer 读取整个文件到内存
-    // 应该分片读取，或者用 Web Worker 在后台线程计算
-    reader.readAsArrayBuffer(file)
+
+    processNextChunk()
   })
 }
 
@@ -86,7 +103,8 @@ const uploadChunks = async (file: File, hash: string, uploadedChunks: number[]) 
 
     await axios.post('/api/infra/file/upload-chunk', formData)
     uploaded++
-    uploadProgress.value = Math.round((uploaded / totalChunks) * 100)
+    statusText.value = `上传中... ${Math.round((uploaded / totalChunks) * 100)}%`
+    uploadProgress.value = 30 + Math.round((uploaded / totalChunks) * 70)
   }
 
   await axios.post('/api/infra/file/merge', { hash, fileName: file.name, totalChunks })
