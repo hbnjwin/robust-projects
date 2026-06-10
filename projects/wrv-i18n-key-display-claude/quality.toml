@@ -1,0 +1,62 @@
+[[criterion]]
+name = "locale补全"
+description = "[Explicit] 中文locale从空对象补全为可用的翻译映射。1:仍为空;2:补了少量key;3:补了主要模块但key命名不规范;4:按模块完整补全且key与项目$t()调用匹配;5:完整补全+fallback机制+类型安全"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "zh-CN.js补全覆盖system/common等核心模块的翻译，key结构清晰分层，核心UI翻译准确覆盖项目中的$t()调用"
+
+[[criterion]]
+name = "多语言一致性"
+description = "[Explicit] 中英文locale文件的key结构对齐程度。1:完全不对齐;2:主要key对齐但有遗漏;3:key结构对齐但翻译质量一般;4:完全对齐且翻译准确;5:对齐+复数/插值/日期格式本地化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "en.js与zh-CN key完全对齐，翻译质量较好，模块划分一致"
+
+[[criterion]]
+name = "i18n配置修复"
+description = "[Explicit] vue-i18n初始化配置的正确性(createI18n/locale切换/依赖声明)。1:配置错误;2:基本配置但缺少依赖;3:配置+依赖但初始化方式有问题;4:正确配置+依赖声明+app.use注入;5:配置+懒加载+SSR兼容"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复lang/index.js配置，package.json补充vue-i18n ^9.9.1依赖，配置简洁正确"
+
+[[criterion]]
+name = "警告消除"
+description = "[Explicit] 控制台vue-i18n missing translation警告的消除。1:警告仍在;2:suppressWarnings但实际key仍缺;3:部分key补全减少警告;4:key补全+silentTranslationWarn配置;5:key补全+fallback链+开发环境保留警告"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "locale补全覆盖主要$t()调用路径，配合i18n配置中的静默选项有效消除控制台警告刷屏"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于i18n问题，无冗余改动。1:大量无关修改;2:有明显冗余;3:基本精准有少量多余;4:精准修改;5:最小改动且完整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "22次工具调用，修改集中在lang/index.js、zh-CN.js、en.js和package.json四个i18n相关文件"
+
+[[criterion]]
+name = "修复范围控制"
+description = "[Implicit] 是否在题目要求范围内修复，不过度工程。1:大幅超出范围;2:创建了不需要的文件;3:略有超出;4:严格在范围内;5:最小改动原则"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "严格聚焦在i18n配置和locale文件的修复，未创建额外组件或修改路由"
+
+[[criterion]]
+name = "组件规范统一"
+description = "[Explicit] 解决组件中$t()和中文硬编码混用的不统一问题。1:未处理;2:只处理了部分;3:统一了但方向不明确;4:明确选择一种方案并统一;5:统一+eslint规则+迁移脚本"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "补全locale后现有$t()调用能正确显示中文，但未处理硬编码中文组件的统一问题"

@@ -1,0 +1,62 @@
+[[criterion]]
+name = "locale补全"
+description = "[Explicit] 中文locale从空对象补全为可用的翻译映射。1:仍为空;2:补了少量key;3:补了主要模块但key命名不规范;4:按模块完整补全且key与项目$t()调用匹配;5:完整补全+fallback机制+类型安全"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "zh-CN.js从空对象补全为8个模块(system/dashboard/user/role/log/settings/validation/error)的翻译，key结构合理但部分key与项目中实际$t()调用路径不完全匹配"
+
+[[criterion]]
+name = "多语言一致性"
+description = "[Explicit] 中英文locale文件的key结构对齐程度。1:完全不对齐;2:主要key对齐但有遗漏;3:key结构对齐但翻译质量一般;4:完全对齐且翻译准确;5:对齐+复数/插值/日期格式本地化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "en.js与zh-CN完全对齐，8个模块key一一对应，但英文翻译部分用词较机械"
+
+[[criterion]]
+name = "i18n配置修复"
+description = "[Explicit] vue-i18n初始化配置的正确性(createI18n/locale切换/依赖声明)。1:配置错误;2:基本配置但缺少依赖;3:配置+依赖但初始化方式有问题;4:正确配置+依赖声明+app.use注入;5:配置+懒加载+SSR兼容"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了lang/index.js的createI18n配置，添加了main.js中app.use(i18n)注入，package.json补充vue-i18n依赖，但额外创建了main.js和App.vue等骨架外文件"
+
+[[criterion]]
+name = "警告消除"
+description = "[Explicit] 控制台vue-i18n missing translation警告的消除。1:警告仍在;2:suppressWarnings但实际key仍缺;3:部分key补全减少警告;4:key补全+silentTranslationWarn配置;5:key补全+fallback链+开发环境保留警告"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "通过补全locale减少了missing translation警告，但未配置silentTranslationWarn或missingWarn选项，项目中仍可能有未覆盖的$t()调用产生警告"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于i18n问题，无冗余改动。1:大量无关修改;2:有明显冗余;3:基本精准有少量多余;4:精准修改;5:最小改动且完整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "45次工具调用，13次Write，修改了router/index.js(不相关)，创建了DashboardView/LoginView/UserListView等多个Vue组件文件(题目未要求创建组件)"
+
+[[criterion]]
+name = "修复范围控制"
+description = "[Implicit] 是否在题目要求范围内修复，不过度工程。1:大幅超出范围;2:创建了不需要的文件;3:略有超出;4:严格在范围内;5:最小改动原则"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "超出题目范围创建了7个Vue组件文件(DashboardView.vue/LoginView.vue等)和修改路由配置，属于过度工程"
+
+[[criterion]]
+name = "组件规范统一"
+description = "[Explicit] 解决组件中$t()和中文硬编码混用的不统一问题。1:未处理;2:只处理了部分;3:统一了但方向不明确;4:明确选择一种方案并统一;5:统一+eslint规则+迁移脚本"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "创建的新组件中使用了$t()，但未修改项目中已有的硬编码中文组件，新旧组件仍然不统一"

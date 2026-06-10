@@ -7,7 +7,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import { debounce } from 'lodash'
 
 const tableRef = ref(null)
@@ -22,9 +22,24 @@ const columns = [
   { colKey: 'operation', title: '操作', fixed: 'right', width: 150 },
 ]
 
+const refreshTableLayout = () => {
+  nextTick(() => {
+    tableRef.value?.refreshTable?.()
+    const scrollEl = tableRef.value?.$el?.querySelector('.t-table__content')
+    if (scrollEl) {
+      scrollEl.dispatchEvent(new Event('scroll'))
+    }
+  })
+}
+
 const handleResize = debounce(() => {
   tableHeight.value = window.innerHeight - 200
-}, 500)
+  refreshTableLayout()
+}, 150)
+
+watch(tableData, () => {
+  refreshTableLayout()
+})
 
 onMounted(() => { window.addEventListener('resize', handleResize) })
 onUnmounted(() => { window.removeEventListener('resize', handleResize) })
