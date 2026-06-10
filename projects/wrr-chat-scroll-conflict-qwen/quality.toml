@@ -1,0 +1,62 @@
+[[criterion]]
+name = "滚动状态追踪设计"
+description = "[Explicit] 实现userScrolledUp状态追踪用户是否主动上滚。1:未实现;2:方案错误;3:基本实现;4:ref追踪+阈值判断;5:ref+阈值+自动恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "MessageList.vue中实现了userScrolledUp ref和isNearBottom()辅助函数，但自动恢复逻辑的边界处理不够细致"
+
+[[criterion]]
+name = "阈值判断逻辑"
+description = "[Explicit] 通过scrollHeight/scrollTop/clientHeight计算是否在底部附近。1:无阈值;2:阈值错误;3:基本正确;4:50px阈值+正确计算;5:自适应阈值"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "MessageList.vue中SCROLL_THRESHOLD=50，通过scrollHeight-scrollTop-clientHeight判断，逻辑正确"
+
+[[criterion]]
+name = "流式回复兼容"
+description = "[Explicit] 流式内容更新时respect用户滚动状态。1:强制滚动;2:部分兼容;3:基本兼容;4:watcher中检查状态;5:watcher+节流"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "流式内容watcher中增加了userScrolledUp守卫，但缺少对高频更新的节流处理"
+
+[[criterion]]
+name = "用户主动滚动检测"
+description = "[Explicit] 区分用户主动滚动和程序触发的滚动。1:未区分;2:误判多;3:基本区分;4:handleScroll事件驱动;5:含programmatic标记"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "MessageList.vue中handleScroll每次scroll事件更新userScrolledUp，但未区分程序触发的scrollToBottom"
+
+[[criterion]]
+name = "自动恢复机制"
+description = "[Implicit] 用户滚回底部后自动恢复跟随。1:无恢复;2:需手动;3:基本恢复;4:滚到底部自动恢复;5:恢复+用户发消息也恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "handleScroll中在底部附近时设userScrolledUp=false实现基本恢复"
+
+[[criterion]]
+name = "代码改动精准度"
+description = "[Implicit] 改动集中在MessageList.vue，不影响其他组件。1:多文件改动;2:改动分散;3:单文件但冗余;4:精准单文件;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "仅修改MessageList.vue，但改动中包含一些冗余的Read和Glob调用"
+
+[[criterion]]
+name = "交互体验还原"
+description = "[Explicit] 修复后用户浏览历史时不被打断。1:仍被打断;2:偶尔打断;3:基本不打断;4:不打断+自然恢复;5:含视觉提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "基本实现了不打断用户浏览历史的需求，但缺少新消息到达时的视觉提示"
