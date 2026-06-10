@@ -1,0 +1,62 @@
+[[criterion]]
+name = "NotifyTemplate集成"
+description = "[Explicit] 正确接入现有NotifyTemplate模块发送通知。1:未接入;2:接入但不完整;3:基本接入;4:Template+Message完整;5:完整集成+批量优化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "新建NotifyTemplateDO/NotifyMessageDO/NotifyTemplateMapper/NotifyMessageMapper/NotifyTemplateService共5个文件，修改CourseDistributeService集成通知逻辑"
+
+[[criterion]]
+name = "通知消息体设计"
+description = "[Explicit] 通知内容包含课程名称和链接。1:无课程信息;2:仅名称;3:名称+固定链接;4:模板变量替换;5:模板+动态链接+富文本"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NotifyTemplateService中使用模板code查找模板，将课程名称和链接替换到content中的占位符"
+
+[[criterion]]
+name = "批量发送实现"
+description = "[Explicit] 给目标班级所有学生批量发送通知。1:未实现批量;2:循环单发;3:基本批量;4:批量插入;5:批量+异步+失败重试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NotifyTemplateService中遍历目标学生列表创建消息记录，通过NotifyMessageMapper批量写入"
+
+[[criterion]]
+name = "分发触发集成"
+description = "[Explicit] 课程分发时自动触发通知发送。1:未触发;2:触发位置不对;3:基本触发;4:分发方法内调用通知;5:调用+事务一致性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "CourseDistributeService.distributeCourse()方法末尾调用NotifyTemplateService.sendCourseNotify()，在分发成功后触发通知"
+
+[[criterion]]
+name = "数据模型设计"
+description = "[Implicit] DO/Mapper的字段设计是否合理完整。1:字段缺失;2:设计不当;3:基本合理;4:字段完整+类型正确;5:字段+索引+约束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NotifyMessageDO和NotifyTemplateDO字段设计完整，继承BaseMapper规范"
+
+[[criterion]]
+name = "Service层职责"
+description = "[Implicit] NotifyTemplateService的职责是否清晰。1:职责混乱;2:过度耦合;3:基本清晰;4:模板查询+消息发送分离;5:清晰+可扩展"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NotifyTemplateService中sendCourseNotify方法封装了模板查找、变量替换、批量发送的完整流程"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>45次;2:35-45次;3:25-34次;4:15-24次;5:<=14次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共32次工具调用含8次TaskUpdate、6次Write、4次Agent和EnterPlanMode，效率中等"
