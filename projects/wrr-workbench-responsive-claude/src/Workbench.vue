@@ -1,45 +1,54 @@
 <template>
   <div class="workbench">
-    <!-- BUG: 使用固定像素布局，不响应屏幕尺寸变化 -->
-    <!-- 在 iPad 竖屏和 13 寸笔记本上会严重错乱 -->
-    <div class="stat-cards" style="display: flex; gap: 20px;">
-      <div class="stat-card" style="width: 280px; height: 120px;">
-        <h3>课程数量</h3>
-        <span class="value">{{ stats.courseCount }}</span>
-      </div>
-      <div class="stat-card" style="width: 280px; height: 120px;">
-        <h3>学生人数</h3>
-        <span class="value">{{ stats.studentCount }}</span>
-      </div>
-      <div class="stat-card" style="width: 280px; height: 120px;">
-        <h3>作业数量</h3>
-        <span class="value">{{ stats.homeworkCount }}</span>
-      </div>
-      <div class="stat-card" style="width: 280px; height: 120px;">
-        <h3>AI 使用次数</h3>
-        <span class="value">{{ stats.aiUsageCount }}</span>
-      </div>
-    </div>
+    <!-- 统计卡片：el-row/el-col 栅格适配各屏幕 -->
+    <el-row :gutter="20" class="stat-cards">
+      <el-col :xs="24" :sm="12" :md="6">
+        <div class="stat-card">
+          <h3>课程数量</h3>
+          <span class="value">{{ stats.courseCount }}</span>
+        </div>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
+        <div class="stat-card">
+          <h3>学生人数</h3>
+          <span class="value">{{ stats.studentCount }}</span>
+        </div>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
+        <div class="stat-card">
+          <h3>作业数量</h3>
+          <span class="value">{{ stats.homeworkCount }}</span>
+        </div>
+      </el-col>
+      <el-col :xs="24" :sm="12" :md="6">
+        <div class="stat-card">
+          <h3>AI 使用次数</h3>
+          <span class="value">{{ stats.aiUsageCount }}</span>
+        </div>
+      </el-col>
+    </el-row>
 
-    <!-- BUG: 快捷菜单也是固定宽度 -->
-    <div class="shortcuts" style="display: flex; gap: 16px; margin-top: 20px;">
-      <div v-for="item in shortcuts" :key="item.name"
-           class="shortcut-item" style="width: 100px; text-align: center;">
-        <el-icon :size="40"><component :is="item.icon" /></el-icon>
-        <p>{{ item.name }}</p>
-      </div>
-    </div>
+    <!-- 快捷菜单：el-row/el-col 栅格适配 -->
+    <el-row :gutter="16" class="shortcuts">
+      <el-col :xs="8" :sm="4" v-for="item in shortcuts" :key="item.name">
+        <div class="shortcut-item">
+          <el-icon :size="40"><component :is="item.icon" /></el-icon>
+          <p>{{ item.name }}</p>
+        </div>
+      </el-col>
+    </el-row>
 
-    <!-- BUG: 课程列表没有做响应式，宽度可能超出容器 -->
-    <div class="course-list" style="margin-top: 20px;">
+    <!-- 课程列表：el-row/el-col 栅格适配 -->
+    <div class="course-list">
       <h3>最近课程</h3>
-      <div style="display: flex; gap: 16px; flex-wrap: nowrap;">
-        <el-card v-for="course in recentCourses" :key="course.id"
-                 style="width: 320px; flex-shrink: 0;">
-          <h4>{{ course.name }}</h4>
-          <p>{{ course.description }}</p>
-        </el-card>
-      </div>
+      <el-row :gutter="16">
+        <el-col :xs="24" :sm="12" :md="8" v-for="course in recentCourses" :key="course.id">
+          <el-card>
+            <h4>{{ course.name }}</h4>
+            <p>{{ course.description }}</p>
+          </el-card>
+        </el-col>
+      </el-row>
     </div>
   </div>
 </template>
@@ -74,17 +83,56 @@ onMounted(async () => {
 </script>
 
 <style scoped>
-/* BUG: 没有响应式样式 */
-/* 应该使用 CSS Grid 或 Element Plus 的 Row/Col 栅格系统 */
-/* 应该添加 @media 查询适配不同屏幕尺寸 */
+.workbench {
+  padding: 20px;
+  overflow-x: hidden;
+}
+
 .stat-card {
   background: #f5f7fa;
   border-radius: 8px;
   padding: 20px;
+  min-height: 120px;
+  box-sizing: border-box;
+  margin-bottom: 20px;
 }
+
 .stat-card .value {
   font-size: 36px;
   font-weight: bold;
   color: #409eff;
+}
+
+.shortcuts {
+  margin-top: 4px;
+}
+
+.shortcut-item {
+  text-align: center;
+  padding: 12px 0;
+  cursor: pointer;
+}
+
+.shortcut-item p {
+  margin: 8px 0 0;
+  font-size: 14px;
+}
+
+.course-list {
+  margin-top: 20px;
+}
+
+.course-list .el-card {
+  margin-bottom: 16px;
+}
+
+@media (max-width: 768px) {
+  .stat-card .value {
+    font-size: 28px;
+  }
+
+  .shortcut-item :deep(.el-icon) {
+    font-size: 32px !important;
+  }
 }
 </style>
