@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, onActivated } from 'vue'
 import { EXPERT_DATABASE } from '@/api'
 import TablePagination from '@/components/table-pagination/index.vue'
 
@@ -34,12 +34,21 @@ const columns = [
   { colKey: 'createdAt', title: '上传时间', sortable: true },
 ]
 
+const resetState = () => {
+  filterParams.docType = ''
+  filterParams.keyword = ''
+  sortParams.value = {}
+  pagination.current = 1
+}
+
 const fetchList = async () => {
   loading.value = true
-  const res = await EXPERT_DATABASE.getDocumentList({
-    ...filterParams, ...pagination,
-    sortBy: sortParams.value.sortBy, order: sortParams.value.descending ? 'desc' : 'asc'
-  })
+  const params = { ...filterParams, ...pagination }
+  if (sortParams.value.sortBy) {
+    params.sortBy = sortParams.value.sortBy
+    params.order = sortParams.value.descending ? 'desc' : 'asc'
+  }
+  const res = await EXPERT_DATABASE.getDocumentList(params)
   tableData.value = res.list
   total.value = res.total
   loading.value = false
@@ -48,10 +57,14 @@ const fetchList = async () => {
 const onSortChange = (sort) => { sortParams.value = sort; fetchList() }
 const onPageChange = (p) => { Object.assign(pagination, p); fetchList() }
 const handleReset = () => {
-  filterParams.docType = ''
-  filterParams.keyword = ''
+  resetState()
   fetchList()
 }
 
 onMounted(fetchList)
+
+onActivated(() => {
+  resetState()
+  fetchList()
+})
 </script>
