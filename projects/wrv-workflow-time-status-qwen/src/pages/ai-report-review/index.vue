@@ -6,9 +6,9 @@
       </template>
       <template #workflow="{ row }">
         <div v-for="step in row.workflowHistory" :key="step.id">
-          <span>{{ step.timestamp }}</span>
+          <span>{{ formatTime(step.timestamp) }}</span>
           <t-tag :theme="statusThemeMap[step.status]">{{ step.stepName }}</t-tag>
-          <t-button size="small" @click="showStepDetail(step)">查看详情</t-button>
+          <t-button size="small" :disabled="step.status === 'started'" @click="showStepDetail(step)">查看详情</t-button>
         </div>
       </template>
     </t-table>
@@ -17,11 +17,14 @@
 
 <script setup>
 import { ref, onMounted } from 'vue'
+import dayjs from 'dayjs'
 import { getTaskList } from '@/api/modules/ai-report-review'
+
+const formatTime = (ts) => dayjs(ts).format('YYYY-MM-DD HH:mm:ss')
 
 const taskList = ref([])
 const loading = ref(false)
-const statusThemeMap = { queued: 'default', started: 'primary', completed: 'warning', failed: 'danger', warning: 'success' }
+const statusThemeMap = { queued: 'default', started: 'primary', completed: 'success', failed: 'danger', warning: 'warning' }
 const columns = [
   { colKey: 'name', title: '任务名称' },
   { colKey: 'status', title: '状态', cell: 'status' },

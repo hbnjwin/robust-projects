@@ -12,7 +12,7 @@
 import { reactive } from 'vue'
 import { useRouter } from 'vue-router'
 import { AUTH_CENTER, COMMON } from '@/api'
-import { setOauth } from '@/utils/oauth2'
+import { setOauth, getOauth } from '@/utils/oauth2'
 import CryptoJS from 'crypto-js'
 
 const router = useRouter()
@@ -22,9 +22,16 @@ const handleLogin = async () => {
   const pwd = CryptoJS.MD5(formData.password).toString()
   const res = await AUTH_CENTER.verifyUser({ username: formData.username, password: pwd })
   setOauth(res.token)
-  COMMON.getDepartmentTree()
-  COMMON.getFunctionList()
-  COMMON.getUserDetail()
+  // 回读验证 cookie 已写入，避免后续请求因 cookie 未就绪而 401
+  if (!getOauth()) {
+    console.error('登录失败：cookie 写入异常，请检查浏览器 cookie 设置')
+    return
+  }
+  await Promise.allSettled([
+    COMMON.getDepartmentTree(),
+    COMMON.getFunctionList(),
+    COMMON.getUserDetail(),
+  ])
   router.push('/expert-database')
 }
 </script>
