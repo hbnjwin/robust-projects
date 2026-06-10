@@ -21,10 +21,12 @@ const formData = reactive({ username: '', password: '' })
 const handleLogin = async () => {
   const pwd = CryptoJS.MD5(formData.password).toString()
   const res = await AUTH_CENTER.verifyUser({ username: formData.username, password: pwd })
-  setOauth(res.token)
-  COMMON.getDepartmentTree()
-  COMMON.getFunctionList()
-  COMMON.getUserDetail()
+  await setOauth(res.token)
+  await Promise.all([
+    COMMON.getDepartmentTree(),
+    COMMON.getFunctionList(),
+    COMMON.getUserDetail()
+  ])
   router.push('/expert-database')
 }
 </script>

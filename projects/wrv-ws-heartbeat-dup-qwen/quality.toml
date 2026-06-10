@@ -1,0 +1,62 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 心跳定时器重复挂载的根因分析能力。1:未找到问题;2:只看到表象;3:定位到heartbeat定时器但未分析重连逻辑;4:定位到重连时旧定时器未清理的根因;5:完整分析heartbeat+subscribe双重问题的因果链"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Read了websocket-manager.js但对heartbeat定时器的clearInterval调用时机分析不够完整，未明确指出reconnect()中缺少stopHeartbeat()的具体位置"
+
+[[criterion]]
+name = "定时器清理"
+description = "[Explicit] heartbeat定时器的清理修复质量。1:未修复;2:只在disconnect清理;3:在reconnect前清理旧定时器;4:reconnect+disconnect+异常场景都清理;5:完整清理+防御性编程(null检查+重置引用)"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Edit修改了websocket-manager.js添加了stopHeartbeat调用，但仅在reconnect路径处理，未覆盖异常断开场景"
+
+[[criterion]]
+name = "事件去重"
+description = "[Explicit] subscribe方法重连后重复注册的修复。1:未处理;2:简单去重但有遗漏;3:基于事件名去重;4:基于事件名+回调去重+重连恢复;5:完整的订阅管理含取消订阅+弱引用+内存安全"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Write重写了subscribe逻辑添加了listeners Map去重，但实现中对回调函数的引用比较可能导致内存问题"
+
+[[criterion]]
+name = "重连稳定性"
+description = "[Implicit] 断线重连后WebSocket连接的整体稳定性保障。1:重连后仍有问题;2:能重连但心跳不稳定;3:重连+心跳恢复正常;4:重连+心跳+订阅都正确恢复;5:含指数退避+最大重试+连接状态机"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "重连逻辑能工作但缺少对连接状态的精确管理，没有处理快速断连-重连的边界场景"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准匹配问题，无冗余改动。1:大量无关修改;2:有明显冗余;3:基本精准但有少量多余;4:精准修改目标文件;5:最小化改动且覆盖完整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了正确的文件(websocket-manager.js和index.vue)，但Write整个文件而非Edit精准修改特定行，增加了引入差异的风险"
+
+[[criterion]]
+name = "进度组件联动"
+description = "[Explicit] task-progress组件与WebSocket修复的联动正确性。1:未处理;2:组件能显示但闪烁;3:组件显示稳定不再跳动;4:显示稳定+异常态处理;5:稳定+异常+断线提示+自动恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修改了index.vue但对进度组件的数据更新去抖动处理不够，仍可能在快速数据推送时出现短暂闪烁"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 完成修复的工具调用效率和路径合理性。1:大量无效操作;2:较多冗余探索;3:有一定探索但基本合理;4:高效直达;5:最优路径零浪费"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用了11次工具调用完成修复，其中6次Read和2次Glob存在一定冗余探索"
