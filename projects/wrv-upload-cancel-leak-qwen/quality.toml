@@ -1,0 +1,62 @@
+[[criterion]]
+name = "请求取消"
+description = "[Explicit] 取消上传时HTTP请求的abort实现。1:未abort;2:仅设置flag;3:使用AbortController但signal未传递;4:AbortController+signal正确传递到axios;5:abort+超时保护+竞态处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用AbortController创建cancel token，signal通过axios config传递，handleCancel调用abort()终止请求，finally中清理controller引用"
+
+[[criterion]]
+name = "状态重置"
+description = "[Explicit] 弹窗关闭/重新打开时上传进度状态的重置。1:未重置;2:仅重置progress;3:重置progress+uploading;4:重置所有UI状态+进度状态;5:重置+防竞态+状态锁定"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "resetState函数重置progress/uploading/progressStatus/errorMsg/selectedFile，handleBeforeClose调用后弹窗重新打开时状态干净"
+
+[[criterion]]
+name = "内存清理"
+description = "[Explicit] FormData对象和文件引用的清理。1:未清理;2:仅清理FormData;3:FormData+文件引用;4:FormData+文件引用+controller;5:全链路清理+GC友好"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "resetState中将formData设为null、selectedFile设为null、currentController设为null，上传成功和取消两个路径都有清理逻辑"
+
+[[criterion]]
+name = "防重复打开"
+description = "[Explicit] 快速连续打开关闭弹窗时的内存泄漏防护。1:无防护;2:beforeClose有清理但不彻底;3:清理+防重入;4:清理+abort+nullify;5:完整生命周期管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "handleBeforeClose调用resetState完整清理所有状态，on-close事件也触发清理，多次开关不会累积残留引用"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "从t-upload内置上传改为axios手动上传以获得abort控制权，改动幅度适中，但引入了额外的UI变更(拖拽区、文件大小显示)"
+
+[[criterion]]
+name = "多问题覆盖"
+description = "[Explicit] 四个问题(abort/状态残留/内存清理/重复打开)的修复覆盖度。1:只修了1个;2:修了2个;3:都涉及但不完整;4:都完整修复;5:统一方案解决+防回归"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "AbortController解决请求取消，resetState统一处理状态重置和内存清理，handleBeforeClose+on-close双保险防止残留，四个问题均有覆盖"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "1次Read+1次Write完成修复，直接识别问题并实施解决方案，无冗余探索"
