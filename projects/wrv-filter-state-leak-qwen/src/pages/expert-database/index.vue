@@ -1,32 +1,56 @@
 <template>
   <div class="expert-database">
     <div class="filter-bar">
-      <t-select v-model="filterParams.docType" placeholder="文档类型" clearable>
+      <!--
+        filterDraft 绑定到 UI，@change 立即提交筛选。
+        select 是离散选择，用户期望立即刷新表格。
+      -->
+      <t-select
+        v-model="filterDraft.docType"
+        placeholder="文档类型"
+        clearable
+        @change="commitFilters"
+      >
         <t-option value="reviewed" label="已审报告" />
         <t-option value="feasibility" label="可研报告" />
         <t-option value="pending" label="待审文档" />
       </t-select>
-      <t-input v-model="filterParams.keyword" placeholder="搜索" @enter="fetchList" />
-      <t-button @click="handleReset">重置</t-button>
+
+      <!--
+        keyword 输入框 @enter 提交，避免逐字触发请求。
+      -->
+      <t-input
+        v-model="filterDraft.keyword"
+        placeholder="搜索"
+        @enter="commitFilters"
+      />
+
+      <t-button @click="resetAll">重置</t-button>
     </div>
-    <t-table :data="tableData" :columns="columns" :loading="loading"
-      :sort="sortParams" @sort-change="onSortChange" />
-    <table-pagination :total="total" :current="pagination.current"
-      :pageSize="pagination.pageSize" @change="onPageChange" />
+
+    <t-table
+      :data="tableData"
+      :columns="columns"
+      :loading="loading"
+      :sort="sort"
+      @sort-change="onSortChange"
+    />
+
+    <table-pagination
+      :total="total"
+      :current="pagination.current"
+      :pageSize="pagination.pageSize"
+      @change="onPageChange"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { onMounted, onActivated } from 'vue'
 import { EXPERT_DATABASE } from '@/api'
 import TablePagination from '@/components/table-pagination/index.vue'
+import { useTableState } from '@/composables/useTableState'
 
-const filterParams = reactive({ docType: '', keyword: '' })
-const sortParams = ref({})
-const pagination = reactive({ current: 1, pageSize: 20 })
-const tableData = ref([])
-const total = ref(0)
-const loading = ref(false)
 const columns = [
   { colKey: 'name', title: '文档名称', sortable: true },
   { colKey: 'type', title: '类型' },
@@ -34,24 +58,33 @@ const columns = [
   { colKey: 'createdAt', title: '上传时间', sortable: true },
 ]
 
-const fetchList = async () => {
-  loading.value = true
-  const res = await EXPERT_DATABASE.getDocumentList({
-    ...filterParams, ...pagination,
-    sortBy: sortParams.value.sortBy, order: sortParams.value.descending ? 'desc' : 'asc'
-  })
-  tableData.value = res.list
-  total.value = res.total
-  loading.value = false
-}
+const {
+  filterDraft,
+  sort,
+  pagination,
+  tableData,
+  total,
+  loading,
+  commitFilters,
+  fetchData,
+  onSortChange,
+  onPageChange,
+  resetAll,
+} = useTableState(
+  (params) => EXPERT_DATABASE.getDocumentList(params),
+  {
+    defaultFilters: { docType: '', keyword: '' },
+    sortableFields: ['name', 'createdAt'],
+    defaultPageSize: 20,
+  }
+)
 
-const onSortChange = (sort) => { sortParams.value = sort; fetchList() }
-const onPageChange = (p) => { Object.assign(pagination, p); fetchList() }
-const handleReset = () => {
-  filterParams.docType = ''
-  filterParams.keyword = ''
-  fetchList()
-}
+// 首次挂载时获取数据
+onMounted(fetchData)
 
-onMounted(fetchList)
+// keep-alive 重新激活时重新获取数据。
+// 这是修复 Bug #1 和 Bug #3 的关键：
+// 没有这个钩子，切走再切回时表格数据会保持旧值，
+// 而 Vue 可能已经重置了 v-model 绑定，导致 UI 与数据不一致。
+onActivated(fetchData)
 </script>

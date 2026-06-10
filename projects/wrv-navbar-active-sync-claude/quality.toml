@@ -1,0 +1,62 @@
+[[criterion]]
+name = "hash变化处理"
+description = "[Explicit] Dialog组件触发路由hash变化导致菜单高亮丢失的修复。1:未修复;2:禁用hash变化;3:过滤hash变化事件;4:监听hash忽略非路由级变化;5:完整路由变化分级处理策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在路由watch中区分path级变化和hash级变化，仅在path变化时更新菜单active状态"
+
+[[criterion]]
+name = "前进后退同步"
+description = "[Explicit] 浏览器前进后退按钮操作时菜单高亮的同步更新。1:未处理;2:popstate但不稳定;3:watch route.path更新;4:watch+nextTick确保DOM同步;5:完整历史导航+过渡动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "watch route.path使用immediate:true确保首次加载和前进后退都正确更新active状态"
+
+[[criterion]]
+name = "弹窗兼容"
+description = "[Explicit] 弹窗操作不影响菜单高亮状态的隔离性。1:弹窗仍影响;2:部分隔离;3:弹窗期间冻结active;4:基于路由path而非fullPath判断active;5:完整的UI状态隔离策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将菜单active状态的计算基准从route.fullPath改为route.path，彻底隔离hash变化的影响"
+
+[[criterion]]
+name = "路由监听"
+description = "[Implicit] 路由变化监听方式的正确性和性能。1:错误的监听方式;2:addEventListener hashchange;3:Vue Router watch;4:watch+计算属性缓存;5:watch+防抖+性能优化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "精准watch route.path而非整个route对象，减少不必要的重新计算"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "1次Edit精准修改nav-bar/index.vue中的active计算和watch逻辑"
+
+[[criterion]]
+name = "边界处理"
+description = "[Implicit] 嵌套路由、重定向等边界场景的菜单高亮正确性。1:边界场景错误;2:部分正确;3:主要路由正确;4:嵌套+重定向都正确;5:完整路由匹配策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用startsWith匹配路由前缀，嵌套路由正确匹配到父菜单项"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "6次工具调用高效完成修复"

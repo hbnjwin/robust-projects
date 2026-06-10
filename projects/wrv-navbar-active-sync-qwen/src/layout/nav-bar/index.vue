@@ -17,7 +17,7 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, watch } from 'vue'
 import { useRouter, useRoute } from 'vue-router'
 import PlatformLogo from './components/platform-logo.vue'
 
@@ -32,7 +32,24 @@ const menuList = [
 ]
 const userOptions = [{ content: '退出登录', value: 'logout' }]
 
-onMounted(() => { activePath.value = route.path })
+// Keep activePath in sync with the route.
+// immediate: true ensures the initial path is set on mount.
+// The startsWith check makes the highlight resilient to transient hash/path
+// changes caused by Dialog components — when the route temporarily shifts
+// to a path that doesn't match any menu item, the previous highlight is
+// preserved instead of being cleared.
+watch(
+  () => route.path,
+  (newPath) => {
+    const matched = menuList.find(item =>
+      newPath === item.path || newPath.startsWith(item.path + '/')
+    )
+    if (matched) {
+      activePath.value = matched.path
+    }
+  },
+  { immediate: true }
+)
 
 const handleMenuClick = (item) => {
   activePath.value = item.path
