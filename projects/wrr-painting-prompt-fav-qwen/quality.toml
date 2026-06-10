@@ -1,0 +1,62 @@
+[[criterion]]
+name = "收藏功能"
+description = "[Explicit] 支持收藏当前提示词到本地存储。1:未实现;2:实现但有bug;3:基本收藏;4:收藏+标签提取;5:收藏+标签+去重提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "PaintingPanel.vue中通过usePromptManager.ts composable实现收藏功能，支持增删查，但标签提取和去重逻辑分散在两个文件中"
+
+[[criterion]]
+name = "历史记录"
+description = "[Explicit] 查看和复用历史提示词。1:未实现;2:仅记录;3:记录+查看;4:记录+查看+复用;5:记录+查看+复用+上限管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "usePromptManager.ts中实现历史记录存储于painting-prompt-history，最多保留50条，但历史记录的展示和复用需要PaintingPanel.vue配合"
+
+[[criterion]]
+name = "快速填入"
+description = "[Explicit] 从收藏列表快速填入提示词到输入框。1:未实现;2:填入但不清除旧内容;3:基本填入;4:填入+关闭弹窗;5:填入+关闭+可编辑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "PaintingPanel.vue中收藏列表和历史列表都有'使用/复用'按钮，点击后填入输入框"
+
+[[criterion]]
+name = "localStorage持久化"
+description = "[Explicit] 收藏和历史数据正确存储在localStorage。1:未持久化;2:存储格式有问题;3:基本存储;4:分key存储+JSON序列化;5:存储+版本管理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "usePromptManager.ts中使用painting-prompt-favorites和painting-prompt-history两个key分别存储，JSON序列化"
+
+[[criterion]]
+name = "UI交互设计"
+description = "[Implicit] 收藏和历史管理的界面交互是否友好。1:无UI;2:基本展示;3:弹窗管理;4:弹窗+操作按钮;5:弹窗+分类+搜索"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "PaintingPanel.vue中通过usePromptManager composable提供数据，但弹窗和列表的交互细节依赖模板实现"
+
+[[criterion]]
+name = "代码组织"
+description = "[Implicit] 功能代码的组织结构是否清晰。1:混乱;2:耦合严重;3:功能分离但冗余;4:composable抽取;5:最小改动完成功能"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "新建usePromptManager.ts composable抽取逻辑，PaintingPanel.vue中引用，职责分离清晰"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>15次;2:10-15次;3:7-9次;4:4-6次;5:<=3次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共11次工具调用含4次Bash和4次Read，有构建验证等冗余操作"
