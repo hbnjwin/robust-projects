@@ -1,0 +1,62 @@
+[[criterion]]
+name = "精度问题根因"
+description = "[Explicit] 定位Double浮点精度导致99.9显示为99.89999的根因。1:未定位;2:猜测;3:知道是Double问题;4:定位到具体字段;5:定位字段+计算链路"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "精准定位EduOrderDO三个金额字段Double类型+EduOrderController中double乘法导致99.9*1.0=99.89999的完整链路"
+
+[[criterion]]
+name = "类型迁移完整性"
+description = "[Explicit] Double→BigDecimal迁移覆盖DO/Req/Controller所有涉及金额的字段。1:仅改DO;2:改DO+部分;3:改了大部分;4:DO+Req+Controller;5:全量+测试验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改了EduOrderDO(3字段)+CreateOrderReq(2字段)+EduOrderController(3处计算)，覆盖全部金额路径"
+
+[[criterion]]
+name = "计算逻辑正确性"
+description = "[Explicit] BigDecimal运算替代double算术，结果精确。1:计算错误;2:部分正确;3:基本正确;4:multiply+setScale正确;5:运算链完整+边界验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "EduOrderController中折扣价和实付价计算使用multiply().setScale(2, HALF_UP)，运算精确"
+
+[[criterion]]
+name = "舍入策略选择"
+description = "[Implicit] 使用HALF_UP银行家舍入法处理金额。1:未设舍入;2:策略不当;3:有舍入但不统一;4:统一HALF_UP;5:HALF_UP+精度2位"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "EduOrderController中统一使用setScale(2, RoundingMode.HALF_UP)，金融场景标准做法"
+
+[[criterion]]
+name = "金额校验"
+description = "[Implicit] 对金额输入做合法性校验（非负、精度等）。1:无校验;2:部分校验;3:基本校验;4:非负+精度校验;5:校验+错误提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "CreateOrderReq中BigDecimal类型自带精度约束，Controller中有基本的业务校验"
+
+[[criterion]]
+name = "代码改动精准度"
+description = "[Implicit] 改动范围合理，不引入多余修改。1:大范围;2:改动过多;3:基本合理;4:精准3文件;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改3个文件共13次工具调用，改动精准覆盖所有金额路径"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>20次;2:15-20次;3:10-14次;4:5-9次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共13次工具调用含6次Read和6次Edit，效率中等"

@@ -1,0 +1,62 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 定位video.js dispose与Vue生命周期时序冲突的根因。1:未找到;2:猜测;3:部分定位;4:定位到onUnmounted时DOM已移除;5:完整分析Vue卸载流程+dispose内部DOM依赖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "精准分析VideoPlayer.vue中onUnmounted触发时DOM已被移除，video.js dispose()内部需要访问DOM节点做事件清理导致null错误"
+
+[[criterion]]
+name = "生命周期时序修复"
+description = "[Explicit] 将onUnmounted改为onBeforeUnmount确保DOM可用时执行dispose。1:未修改;2:方案错误;3:改了但不完整;4:正确替换;5:替换+理解Vue3 unmount流程"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在VideoPlayer.vue第8、46行精准替换onUnmounted为onBeforeUnmount，确保DOM移除前完成video.js清理"
+
+[[criterion]]
+name = "第三方库销毁兼容"
+description = "[Implicit] dispose调用方式与video.js API兼容。1:调用错误;2:有兼容问题;3:基本兼容;4:正确dispose;5:dispose+资源完整释放"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "dispose()在DOM存在时调用，video.js能正常移除事件监听器、销毁子元素"
+
+[[criterion]]
+name = "防御性编程"
+description = "[Implicit] 增加异常场景的防御检查。1:无任何防御;2:最基础检查;3:关键路径有检查;4:player存在性+el()检查;5:全面防御+错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "VideoPlayer.vue中仅做了player存在性检查，未添加el()级别的防御"
+
+[[criterion]]
+name = "路由切换场景覆盖"
+description = "[Explicit] 播放完切换章节时不再报错白屏。1:未修复;2:部分修复;3:主路径修复;4:主路径+边界;5:含快速连续切换场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "onBeforeUnmount确保每次路由切换前都完成清理，覆盖正常和快速切换场景"
+
+[[criterion]]
+name = "代码简洁度"
+description = "[Implicit] 改动简洁不引入多余代码或流程。1:大量冗余;2:较多冗余;3:有些冗余;4:简洁;5:最简改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "VideoPlayer.vue仅修改生命周期钩子名称，最简改动解决问题"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>20次调用;2:15-20次;3:10-14次;4:5-9次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共8次工具调用（Read*5+Edit*2+Glob），路径直接高效"

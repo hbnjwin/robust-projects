@@ -1,0 +1,62 @@
+[[criterion]]
+name = "漏洞识别"
+description = "[Explicit] 识别HomeworkController中@PreAuthorize被替换为@PermitAll的安全漏洞。1:未识别;2:仅看到注释;3:识别部分接口;4:识别3个漏洞接口;5:识别全部+影响分析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "识别到HomeworkController中publish/grade/delete三个接口的@PermitAll问题"
+
+[[criterion]]
+name = "权限码恢复正确性"
+description = "[Explicit] 恢复正确的权限码：create/grade/delete。1:权限码错误;2:部分正确;3:基本正确;4:3个接口权限码正确;5:正确+与现有list/query一致"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "恢复了edu:homework:create/grade/delete三个权限码，但与已有接口权限码的一致性验证不足"
+
+[[criterion]]
+name = "PermitAll清理"
+description = "[Explicit] 移除@PermitAll注解及其import。1:未清理;2:仅移除注解;3:注解+import;4:完整清理+BUG注释;5:清理+代码审查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "移除了@PermitAll注解和jakarta.annotation.security.PermitAll的import"
+
+[[criterion]]
+name = "接口覆盖完整性"
+description = "[Explicit] 确认所有5个接口都有正确的权限保护。1:遗漏多个;2:遗漏1-2个;3:修复了3个;4:5个接口全部确认;5:确认+测试验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了3个有问题的接口，对已正确配置的list和student-submissions未做显式确认"
+
+[[criterion]]
+name = "安全审计意识"
+description = "[Implicit] 检查是否有其他类似的权限绕过问题。1:未检查;2:仅看当前文件;3:扫描了Controller;4:扫描+Grep验证;5:全项目扫描"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "仅修复了HomeworkController中的问题，未扫描其他Controller是否存在类似漏洞"
+
+[[criterion]]
+name = "代码规范"
+description = "[Implicit] 注解格式、import顺序等符合项目规范。1:格式混乱;2:基本正确;3:符合规范;4:规范+无冗余;5:规范+checkstyle通过"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "HomeworkController.java中@PreAuthorize格式正确，import清理干净"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>15次;2:10-15次;3:7-9次;4:4-6次;5:<=3次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共7次工具调用（Edit*4+Read*2+Agent），路径较直接"

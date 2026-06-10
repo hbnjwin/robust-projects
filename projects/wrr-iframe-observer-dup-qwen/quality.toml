@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Observer累积问题定位"
+description = "[Explicit] 定位MutationObserver在keep-alive activated时重复创建的根因。1:未定位;2:猜测;3:部分定位;4:定位到setupObserver未清理旧实例;5:完整分析累积+内存泄漏链"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "IframeContainer.vue中定位到setupObserver重复创建问题，但对累积导致的内存和性能影响分析不足"
+
+[[criterion]]
+name = "清理逻辑实现"
+description = "[Explicit] setupObserver开头先disconnect旧observer再创建新的。1:未实现;2:实现但有遗漏;3:基本清理;4:cleanupObserver()+重建;5:清理+null置空+错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "IframeContainer.vue中在setupObserver开头加了observer.disconnect()+null置空"
+
+[[criterion]]
+name = "keep-alive生命周期对齐"
+description = "[Explicit] observer生命周期与activated/deactivated对齐。1:未对齐;2:仅一端;3:基本对齐;4:activated创建+deactivated销毁;5:对齐+unmounted兜底"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "IframeContainer.vue中activated重建observer，但deactivated清理逻辑取消注释后的完整性有待验证"
+
+[[criterion]]
+name = "Symbol竞态修复"
+description = "[Explicit] 修复instanceId的typeof symbol检查永远为false的竞态问题。1:未修复;2:方案错误;3:基本修复;4:改为真值判断;5:改为真值判断+理解prop类型"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "IframeContainer.vue中将typeof===symbol改为props.instanceId真值判断，基本修复"
+
+[[criterion]]
+name = "deactivated清理"
+description = "[Explicit] 切离标签页时主动disconnect observer。1:未清理;2:清理不完整;3:取消注释基本清理;4:disconnect+null置空;5:disconnect+高度重置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "IframeContainer.vue中取消了onDeactivated中observer.disconnect()的注释"
+
+[[criterion]]
+name = "代码改动精准度"
+description = "[Implicit] 改动集中在IframeContainer.vue，不影响其他组件。1:多文件;2:改动分散;3:单文件但冗余;4:精准单文件;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "仅修改IframeContainer.vue，但通过PlanMode和18次调用过程冗长"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>20次;2:15-20次;3:10-14次;4:5-9次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "共18次工具调用含EnterPlanMode/ExitPlanMode和大量Read，排查路径冗长"

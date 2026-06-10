@@ -1,0 +1,62 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 定位v-hasPermi指令在v-for场景失效的根本原因。1:未找到根因;2:仅猜测;3:找到部分原因;4:定位到removeChild与vdom冲突;5:完整分析removeChild+mounted不重触发的双重机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在hasPermi.ts中定位到removeChild会破坏Vue虚拟DOM追踪，但对mounted不重触发的机制描述较模糊，缺少v-for patch流程的深入分析"
+
+[[criterion]]
+name = "DOM操作修复"
+description = "[Explicit] 将removeChild替换为不破坏虚拟DOM的隐藏方式。1:未修改;2:方案不正确;3:改了但有副作用;4:用display:none替代;5:display:none+保留DOM结构完整性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了hasPermi.ts中的removeChild逻辑，但替代方案的DOM结构保持能力不够完善"
+
+[[criterion]]
+name = "生命周期钩子补全"
+description = "[Implicit] 为自定义指令添加updated钩子处理v-for复用场景。1:未添加;2:添加但逻辑错误;3:添加了基本的updated;4:updated+权限重检查;5:updated+权限重检查+性能考虑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "hasPermi.ts中未添加updated钩子，依赖mounted处理所有场景，v-for复用时权限检查无法重新执行"
+
+[[criterion]]
+name = "v-for场景覆盖"
+description = "[Explicit] 修复后v-for动态渲染按钮的权限控制恢复正常。1:未覆盖;2:部分场景;3:基本覆盖;4:覆盖主要场景;5:覆盖含列表增删改场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了基本的v-for渲染场景，但对列表动态增删后的权限重新判断覆盖不足"
+
+[[criterion]]
+name = "代码改动精准度"
+description = "[Implicit] 修改范围最小化，不引入多余改动。1:大范围改动;2:改动过多;3:基本精准;4:精准改动;5:最小改动且无副作用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "仅修改hasPermi.ts一个文件，但改动中包含一些冗余代码"
+
+[[criterion]]
+name = "副作用控制"
+description = "[Implicit] 修复不影响静态按钮的已有权限功能。1:破坏已有功能;2:有明显副作用;3:基本无副作用;4:无副作用;5:无副作用+向后兼容"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改后静态按钮的权限判断不受影响，未引入新的副作用"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>15次调用;2:10-15次;3:7-9次;4:4-6次;5:<=3次精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共4次工具调用（Read*2+Agent+Edit），路径较直接"
