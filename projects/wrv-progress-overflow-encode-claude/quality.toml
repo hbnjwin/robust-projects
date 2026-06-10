@@ -1,0 +1,62 @@
+[[criterion]]
+name = "精度修复"
+description = "[Explicit] 进度百分比浮点精度导致101%的修复质量。1:未修复;2:parseInt截断;3:Math.min(100)限制上限;4:Math.min+Math.round双重保护;5:精确计算+边界检查+类型安全"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用Math.min(100, Math.round(completed/total*100))双重保护，同时处理了total为0时的除零边界"
+
+[[criterion]]
+name = "编码修复"
+description = "[Explicit] GBK编码问题导致中文注释乱码的修复。1:未处理;2:删除乱码注释;3:修复编码显示;4:修复+统一UTF-8;5:修复+编码检测+构建配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "识别出GBK编码的中文注释问题，将相关注释重写为UTF-8编码，确保构建后不出现乱码"
+
+[[criterion]]
+name = "动画流畅度"
+description = "[Explicit] 进度值快速变化时的过渡动画处理。1:无动画直接跳变;2:CSS transition但卡顿;3:平滑过渡;4:过渡+缓动函数;5:requestAnimationFrame级别流畅"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "添加了CSS transition和watch监听，进度变化时平滑过渡"
+
+[[criterion]]
+name = "TDesign兼容"
+description = "[Explicit] 修复后与TDesign Progress组件的props验证兼容性。1:仍报错;2:不报错但显示异常;3:正常显示;4:正常+主题适配;5:正常+无障碍+自适应"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "确保percentage始终在0-100整数范围内，完全符合TDesign Progress的props定义"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "精准修改index.vue中的百分比计算和编码问题部分"
+
+[[criterion]]
+name = "多问题覆盖"
+description = "[Explicit] 三个问题(精度/编码/动画)的修复覆盖度。1:只修了1个;2:修了2个;3:都涉及但不完整;4:都完整修复;5:统一方案解决+防回归"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "三个问题在同一组Edit中都得到处理：Math.min修复精度、UTF-8重写修复编码、transition修复动画"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 执行效率。1:大量无效;2:较多冗余;3:有探索;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "10次调用含TaskCreate/TaskUpdate管理，实际编码操作高效"
