@@ -16,7 +16,6 @@
 
 <script setup lang="ts">
 import { ref } from 'vue'
-import SparkMD5 from 'spark-md5'
 import axios from 'axios'
 
 const CHUNK_SIZE = 5 * 1024 * 1024 // 5MB per chunk
@@ -32,7 +31,7 @@ const handleFileChange = async (uploadFile: any) => {
   uploading.value = true
   statusText.value = '计算文件哈希...'
 
-  // BUG: 同步读取整个文件计算 MD5，大文件会阻塞主线程数秒
+  // 使用 Web Worker 分片计算 MD5，不阻塞主线程
   const fileHash = await calculateHash(file)
   statusText.value = '检查秒传...'
 
@@ -53,20 +52,25 @@ const handleFileChange = async (uploadFile: any) => {
 }
 
 const calculateHash = (file: File): Promise<string> => {
-  return new Promise((resolve) => {
-    // BUG: FileReader 一次性读取整个文件到内存
-    // 对于 100MB+ 的视频文件，会导致页面冻结好几秒
-    const reader = new FileReader()
-    reader.onload = (e) => {
-      const spark = new SparkMD5.ArrayBuffer()
-      // BUG: 一次性把整个文件内容传给 spark-md5
-      // 这个操作在主线程上执行，阻塞 UI 渲染
-      spark.append(e.target!.result as ArrayBuffer)
-      resolve(spark.end())
+  return new Promise((resolve, reject) => {
+    const worker = new Worker(new URL('./hashWorker.ts', import.meta.url), { type: 'module' })
+    worker.onmessage = (e) => {
+      const { type, hash, progress, error } = e.data
+      if (type === 'progress') {
+        statusText.value = `计算文件哈希... ${progress}%`
+      } else if (type === 'done') {
+        worker.terminate()
+        resolve(hash)
+      } else if (type === 'error') {
+        worker.terminate()
+        reject(new Error(error))
+      }
     }
-    // BUG: readAsArrayBuffer 读取整个文件到内存
-    // 应该分片读取，或者用 Web Worker 在后台线程计算
-    reader.readAsArrayBuffer(file)
+    worker.onerror = (err) => {
+      worker.terminate()
+      reject(err)
+    }
+    worker.postMessage({ file })
   })
 }
 
