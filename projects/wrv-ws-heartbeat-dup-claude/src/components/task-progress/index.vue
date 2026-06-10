@@ -16,18 +16,23 @@ const status = ref('active')
 
 let wsManager = null
 
+const onProgress = (data) => {
+  if (data.taskId === props.taskId) {
+    percentage.value = data.current / data.total * 100
+    progressText.value = `${data.current}/${data.total}`
+  }
+}
+
 onMounted(() => {
   wsManager = new WebSocketManager(`ws://localhost:8020/ws/task-progress`)
   wsManager.connect()
-  wsManager.subscribe('progress', (data) => {
-    if (data.taskId === props.taskId) {
-      percentage.value = data.current / data.total * 100
-      progressText.value = `${data.current}/${data.total}`
-    }
-  })
+  wsManager.subscribe('progress', onProgress)
 })
 
 onUnmounted(() => {
-  if (wsManager) wsManager.close()
+  if (wsManager) {
+    wsManager.unsubscribe('progress', onProgress)
+    wsManager.close()
+  }
 })
 </script>
