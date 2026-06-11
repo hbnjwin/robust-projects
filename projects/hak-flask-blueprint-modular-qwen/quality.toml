@@ -1,0 +1,62 @@
+[[criterion]]
+name = "请求去重防抖"
+description = "[Explicit] 快速滚动触发多次IntersectionObserver回调时是否防止重复loadMore请求。1:每次回调都请求;2:loading标志但有竞态;3:loading互斥锁;4:loading锁+requestId双重防护;5:锁+防抖+节流+取消队列。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useInfiniteScroll.ts中loadMore函数开头检查if(loading.value||noMore.value) return作为互斥锁。但IntersectionObserver回调是异步的，在loading.value设为true之前的微任务间隙可能有多个回调通过检查并同时进入loadMore。快速滚动到底部时仍偶现两个并发请求加载同一页数据。"
+
+[[criterion]]
+name = "竞态条件处理"
+description = "[Explicit] 修改筛选条件时飞行中的旧页面请求是否被正确取消或忽略。1:旧请求覆盖新数据;2:版本号但实现有bug;3:AbortController但未全覆盖;4:AbortController取消+版本号校验;5:取消+版本+请求队列管理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useInfiniteScroll.ts中修改筛选条件触发watch重置page=1并调用loadMore加载新的第1页。但之前飞行中的第4页请求（fetchReports(4, oldFilter)）未被取消，其响应晚于第1页到达后通过reports.value=[...reports.value, ...data]将旧数据追加到新筛选结果后面，用户看到的列表变成了筛选后的第1页数据混入了旧筛选的第4页数据。"
+
+[[criterion]]
+name = "数据去重合并"
+description = "[Explicit] 多次请求返回的数据中存在重复记录时是否去重。1:直接concat导致重复;2:去重但顺序打乱;3:基于ID去重保持顺序;4:Map去重+顺序保持+新增标记;5:去重+diff更新+虚拟列表同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useInfiniteScroll.ts中loadMore将新数据通过reports.value.push(...data)追加到列表。当两个并发请求返回相同页面数据时，同一条报告记录出现两次。用户看到列表中相邻的两条是同一份报告，造成困惑。ReportList.vue的v-for使用index作为key而非report.id，重复数据的DOM更新也不正确。"
+
+[[criterion]]
+name = "IntersectionObserver配置"
+description = "[Implicit] IntersectionObserver的threshold、rootMargin等参数配置质量。1:默认配置;2:调整了threshold;3:threshold+rootMargin预加载;4:自适应配置+disconnect管理;5:动态调整+性能监控+降级方案。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useInfiniteScroll.ts中IntersectionObserver使用{threshold:0}默认配置，触底元素进入视口1px即触发回调。未设置rootMargin提前触发距离，用户必须精确滚动到底部才开始加载，体验上有明显的等待间隙。组件卸载时通过onUnmounted调用observer.disconnect()清理。"
+
+[[criterion]]
+name = "composable封装质量"
+description = "[Implicit] useInfiniteScroll composable的API设计和配置灵活性。1:硬编码在组件中;2:基本composable;3:可配置但接口混乱;4:完整composable+配置项+响应式状态;5:通用composable+泛型+插件扩展。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useInfiniteScroll.ts导出useInfiniteScroll(fetchFn)接收一个加载函数参数，内部管理page、loading、noMore、reports状态。但pageSize硬编码为20，sentinel元素的ref需要外部手动绑定，加载失败的错误状态未暴露。返回值中reports是扁平数组无法支持分组或分页查看模式。"
+
+[[criterion]]
+name = "筛选重置逻辑"
+description = "[Implicit] 筛选条件变化后列表数据是否正确重置并重新加载。1:筛选后数据不变;2:重置但有残留;3:重置page+清空列表;4:重置+取消请求+重新加载+滚动回顶;5:重置+动画过渡+骨架屏。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportFilter.vue中筛选条件变化通过emit通知ReportList.vue，ReportList.vue在watch中重置page=1并调用loadMore。但未清空现有reports数组——新筛选结果追加到旧列表后面而非替换。也未取消飞行中的旧请求，可能出现旧数据覆盖新筛选结果的竞态问题。列表滚动位置未重置回顶部。"
+
+[[criterion]]
+name = "错误恢复机制"
+description = "[Implicit] 加载失败后的错误展示和重试入口。1:静默失败;2:console.error;3:错误提示;4:错误状态+重试按钮+部分数据保留;5:错误+自动重试+降级+离线缓存。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useInfiniteScroll.ts中loadMore的catch仅执行console.error(err)记录错误，未将错误状态暴露给UI层。loading.value在catch中重置为false，但用户无法知道加载失败了——底部loading动画消失后列表没有新数据，用户以为已经全部加载完毕。无重试按钮或下拉刷新入口。"
