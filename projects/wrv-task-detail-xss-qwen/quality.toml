@@ -1,0 +1,62 @@
+[[criterion]]
+name = "XSS防护"
+description = "[Explicit] v-html渲染XSS漏洞的修复质量。1:未修复;2:简单转义但不完整;3:替换v-html为v-text;4:DOMPurify或自定义sanitize+白名单;5:完整sanitize+CSP策略建议+安全审计"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Edit修改task-detail-dialog.vue将v-html替换为v-text，但对需要保留的安全HTML标签(如换行br)的处理方式过于粗暴"
+
+[[criterion]]
+name = "null值处理"
+description = "[Explicit] 检查结果字段null显示为字符串的修复。1:未处理;2:只处理了部分字段;3:统一null转空串;4:null/undefined/空串统一处理+默认值;5:完整空值处理+占位符UI设计"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在模板中添加了||空串的null处理，但只覆盖了部分字段，遗漏了嵌套对象属性的null情况"
+
+[[criterion]]
+name = "内容折叠"
+description = "[Explicit] 长文本检查结果的折叠展开功能实现。1:未实现;2:CSS截断无展开;3:简单展开折叠;4:展开折叠+动画+字数提示;5:虚拟滚动+分段加载+展开折叠"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "添加了CSS的text-overflow和max-height截断，但缺少展开按钮的交互实现"
+
+[[criterion]]
+name = "安全意识"
+description = "[Implicit] 整体安全编码意识和防御深度。1:无安全意识;2:修了但引入新问题;3:修了当前问题;4:修复+相关风险排查;5:修复+排查+安全规范建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了v-html问题但使用plan mode消耗较多时间，对其他组件是否有类似XSS风险未做排查"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围精准度。1:大量无关;2:有明显冗余;3:基本精准;4:精准修改;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了task-detail-dialog.vue和创建了plan文件，plan文件属于冗余产物"
+
+[[criterion]]
+name = "多问题协调"
+description = "[Explicit] 三个问题(XSS/null/折叠)的统一修复协调性。1:只修了1个;2:修了2个;3:都修了但有冲突;4:都修了且协调一致;5:统一设计模式解决三个问题"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "三个问题都有涉及但修复方式独立，XSS用v-text后影响了需要渲染HTML的场景"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 完成修复的效率。1:大量无效;2:较多冗余;3:有探索但合理;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "12次工具调用含EnterPlanMode和Agent，plan mode对这个修复任务显得过度，直接修改更合适"

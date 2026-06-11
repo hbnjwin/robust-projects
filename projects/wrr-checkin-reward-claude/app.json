@@ -1,0 +1,10 @@
+{
+  "pages": [
+    "pages/index/index",
+    "pages/checkin/checkin",
+    "pages/profile/profile"
+  ],
+  "window": {
+    "navigationBarTitleText": "Mini App"
+  }
+}

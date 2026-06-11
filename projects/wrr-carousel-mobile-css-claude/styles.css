@@ -1,0 +1,7 @@
+.carousel { position: relative; overflow: hidden; width: 100%; height: 400px; }
+.slides { display: flex; /* BUG: no transition */ }
+.slide { min-width: 100%; display: none; }
+.slide.active { display: block; }
+.cta-section { text-align: center; padding: 40px; }
+.cta-button { /* BUG: no responsive sizing, gets cut off on small screens */
+  font-size: 18px; padding: 12px 48px; }

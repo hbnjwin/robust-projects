@@ -1,0 +1,62 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] Vue2表单弹窗数据残留的根因定位。1:未分析;2:方向错误;3:找到部分原因;4:找到handleClose为空导致数据未清理;5:找到根因并分析Vue响应式机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "找到handleClose为空的问题"
+
+[[criterion]]
+name = "修复完整性"
+description = "[Explicit] 修复的完整性。1:未修复;2:只修了一处;3:修了主要问题但有遗漏;4:修复完整覆盖关闭和打开两个环节;5:修复完整含边界处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "只修了handleClose，未处理open方法中可能的字段缺失"
+
+[[criterion]]
+name = "Vue响应式理解"
+description = "[Explicit] 对Vue2响应式和ElementUI表单的理解。1:不理解;2:基本了解;3:理解resetFields的作用;4:理解表单校验状态和数据重置的区别;5:深度理解含$nextTick时机"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "使用了$nextTick+clearValidate但对Vue2响应式理解一般"
+
+[[criterion]]
+name = "修复正确性"
+description = "[Explicit] 修复代码正确性。1:错误;2:部分正确;3:基本正确;4:正确;5:正确且健壮"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复正确，关闭时重置form和校验状态"
+
+[[criterion]]
+name = "代码探索效率"
+description = "[Explicit] 代码探索深度。1:未探索;2:表面;3:读了相关文件;4:理解组件关系;5:深度理解数据流"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "只用3次工具调用，探索不够深入"
+
+[[criterion]]
+name = "执行效率"
+description = "[Explicit] 执行效率。1:大量浪费;2:效率低;3:一般;4:高效;5:最优"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "3次工具调用，路径简洁"
+
+[[criterion]]
+name = "修复说明质量"
+description = "[Explicit] 修复说明质量。1:无;2:简略;3:基本;4:清晰;5:专业深度"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "基本说明了改动内容和$nextTick用途"

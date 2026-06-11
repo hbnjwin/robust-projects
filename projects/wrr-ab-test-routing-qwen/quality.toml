@@ -1,0 +1,62 @@
+[[criterion]]
+name = "用户特征路由"
+description = "[Explicit] 是否实现按用户特征分流——新用户走A、老用户走B，而非简单随机分流。需要有用户特征识别和规则匹配机制。1: 未实现特征分流或仅随机分流；2: 有特征概念但规则匹配逻辑错误；3: 实现了特征分流但方案过度复杂或未基于现有代码；4: 特征分流正确，规则引擎合理；5: 特征分流精准，基于现有代码最小改动实现targeting_rules规则引擎"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "实现了新/老用户特征分流+MD5确定性哈希，功能正确，但创建全新abtest_service/目录未基于原有代码"
+
+[[criterion]]
+name = "动态流量无停机调整"
+description = "[Explicit] 实验组和对照组的流量是否能动态调整且不停服务。需要支持运行时修改流量比例的API或机制。1: 无动态调整能力或需重启服务；2: 有调整接口但实现有并发安全问题；3: 实现了热更新但过度复杂化或有冗余机制；4: 动态调整正确，API简洁，不停服务；5: 动态调整精准，线程安全，API设计合理，无冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现热更新和线程安全机制，但方案过度复杂化，14个文件的架构中动态调整逻辑分散"
+
+[[criterion]]
+name = "统计显著性检验"
+description = "[Explicit] 实验数据是否能自动统计显著性——需要实现统计检验方法（如z-test/t-test/chi-square）并自动计算p值。1: 未实现统计检验；2: 有统计概念但方法或实现错误；3: 实现了统计检验但方法选择不够合理或缺少置信度参数；4: 统计检验方法正确，z-test/t-test实现合理；5: 统计检验方法正确完整，支持参数化置信度，实现健壮"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "z-test显著性检验实现完整，统计逻辑正确，支持p值计算"
+
+[[criterion]]
+name = "样本量自动结论"
+description = "[Explicit] 跑够样本量是否自动出结论——需要有样本量阈值判断和自动结论生成机制。1: 未实现自动结论；2: 有阈值但结论逻辑错误；3: 实现了但过度复杂或结论逻辑不够清晰；4: 样本量达标自动出结论，逻辑清晰；5: 自动结论机制完整，包含样本量检查、显著性判断、胜出方判定，逻辑严密"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "自动结论引擎功能实现但过度复杂化，分散在多个文件中"
+
+[[criterion]]
+name = "已有代码集成"
+description = "[Implicit] 是否基于现有项目代码结构（app/main.py）进行修改，而非新建独立项目。1: 完全忽略现有代码，新建独立目录结构，甚至写入错误路径；2: 部分参考现有代码但主要新建文件；3: 基于现有代码但改动范围偏大；4: 基本遵守现有结构，少量新增文件；5: 严格基于现有app/main.py修改，仅改必要文件（如requirements.txt），完美遵守项目结构"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "完全忽略原有app/main.py，新建整个abtest_service/目录（14个文件），还写入wt.home/错误路径"
+
+[[criterion]]
+name = "代码架构与工程质量"
+description = "[Implicit] 代码架构是否清晰合理，文件组织是否得当，是否有过度工程化。1: 文件数量过多（10+），写入无关路径，架构混乱；2: 文件较多（6-10），有冗余目录结构；3: 文件数量适中（3-5），架构基本合理；4: 文件精简（2-3），架构清晰；5: 代码精简在最少必要文件内，架构清晰无冗余"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "14个文件过度工程化，写入.claude/plans和wt.home/等无关路径，目录结构不符合项目要求"
+
+[[criterion]]
+name = "测试与运行验证"
+description = "[Implicit] 是否对实现进行了测试或运行验证。1: 无测试无验证；2: 无测试但有Bash运行尝试或代码防御性设计；3: 有测试文件但未运行或覆盖不足；4: 有测试且部分通过，或有实际Bash运行验证；5: 测试全面且全部通过，有实际运行验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建test_abtest.py且10/10测试通过，有Bash实际运行验证"

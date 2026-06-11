@@ -1,0 +1,62 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] Flutter下拉刷新跳动和白屏的根因分析。1:未分析;2:方向错误;3:找到部分原因;4:准确识别key缺失和scroll状态问题;5:深度分析含Flutter渲染机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确找到4处问题包括缺少ValueKey和ScrollController"
+
+[[criterion]]
+name = "修复正确性"
+description = "[Explicit] 修复代码的正确性。1:修复错误;2:部分正确;3:核心修复正确但有瑕疵;4:修复正确;5:修复正确且考虑边界"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "4处修复均正确"
+
+[[criterion]]
+name = "修复范围适当性"
+description = "[Explicit] 修复范围是否恰当，不过度也不遗漏。1:完全不相关的改动;2:过度修改引入不必要复杂度;3:略有过度但可接受;4:恰当的修复范围;5:最小化精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "4处改动中保存scrollOffset和动画效果可能超出bug修复范围，属于过度工程"
+
+[[criterion]]
+name = "代码探索效率"
+description = "[Explicit] 对Flutter代码的探索程度。1:未探索;2:表面浏览;3:读了主要文件;4:理解了widget结构和状态管理;5:深度理解含生命周期"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "读了main.dart但直接重写整个文件"
+
+[[criterion]]
+name = "修复说明质量"
+description = "[Explicit] 修复说明质量。1:无说明;2:简略;3:基本说明;4:清晰含原理;5:专业深度含Flutter机制分析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "详细解释了4处修复的原理包括Flutter diff机制"
+
+[[criterion]]
+name = "执行效率"
+description = "[Explicit] 执行效率。1:大量无效操作;2:效率偏低;3:一般;4:高效;5:最优路径"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "使用Write重写整个文件而非Edit局部修改，效率较低"
+
+[[criterion]]
+name = "任务完成度"
+description = "[Explicit] 任务完成度。1:未完成;2:部分完成;3:核心完成;4:完全完成;5:完成且有验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复了跳动和白屏问题"

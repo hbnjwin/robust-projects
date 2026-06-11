@@ -1,0 +1,62 @@
+[[criterion]]
+name = "防作弊机制"
+description = "[Explicit] 防改时间作弊的机制设计。1:完全信任客户端时间;2:概念上使用服务端时间但仅Mock实现;3:有服务端时间但缺少其他防护;4:服务端时间+数据库去重;5:服务端时间+不接受客户端参数+数据库唯一索引+身份自动注入+前端防连点"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Mock层getServerDate()概念上使用服务端时间，有防作弊意识但缺少数据库级防护"
+
+[[criterion]]
+name = "服务端架构"
+description = "[Explicit] 服务端架构的真实可用性。1:无服务端;2:仅Mock/模拟层;3:有后端但功能不完整;4:完整后端含多个接口可部署;5:云原生/Serverless架构+完整CRUD+错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "完整Mock API层含签到/查询/记录CRUD接口，基本可用但需替换为真实后端"
+
+[[criterion]]
+name = "连续奖励设计"
+description = "[Explicit] 连续签到奖励机制设计。1:无奖励;2:固定奖励无阶梯;3:阶梯奖励但规则简单;4:多级阶梯+里程碑奖励+UI反馈;5:完整奖励体系含积分商城/兑换/排行榜"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "阶梯积分：每天+10基础，3天额外+20，7天额外奖励，规则清晰"
+
+[[criterion]]
+name = "日历视图实现"
+description = "[Explicit] 签到日历视图实现质量。1:无日历;2:简单列表展示;3:基本月度日历有签到标记;4:月度日历+今日高亮+签到状态区分+月份切换;5:日历组件含统计摘要+连续签到条纹+动画+数据懒加载"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "profile页面实现日历展示签到记录"
+
+[[criterion]]
+name = "页面结构完整性"
+description = "[Explicit] 小程序页面结构完整性。1:仅1个页面;2:2个基本页面;3:核心页面完整含签到+个人中心;4:签到+个人中心+首页/入口页;5:完整页面体系含引导页+签到+排行+个人中心+设置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "checkin签到页+profile个人中心，tabBar配置完整"
+
+[[criterion]]
+name = "并发与防重复保护"
+description = "[Explicit] 并发和重复签到防护。1:无防护;2:仅前端防护;3:前端+简单后端去重;4:数据库唯一索引+前端loading状态;5:数据库事务+唯一索引+前端防连点+幂等性设计"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Mock层内存去重+前端isChecking防重复提交，属于前端+简单后端去重"
+
+[[criterion]]
+name = "代码可部署性"
+description = "[Explicit] 代码的可部署程度。1:概念代码无法运行;2:需大量修改才能部署;3:基本可用但需替换核心模块;4:开通平台服务即可部署;5:一键部署含CI/CD配置和环境说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "完整小程序代码但需替换Mock API为真实后端，提供了__setServerTimeOffset测试方法"

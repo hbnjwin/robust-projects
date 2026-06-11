@@ -1,0 +1,62 @@
+[[criterion]]
+name = "泄漏根因分析"
+description = "[Explicit] 定位onClose回调未触发导致ConcurrentHashMap中session对象累积的根因。1:未定位;2:猜测;3:知道是session未清理;4:定位到onClose未触发+HashMap累积;5:分析浏览器关闭/网络断开等多种未触发场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ClassroomSessionManager中定位到onClose偶尔未触发导致session对象留在ConcurrentHashMap中，但对未触发的具体场景分析不足"
+
+[[criterion]]
+name = "心跳超时设计"
+description = "[Explicit] 实现定时扫描清理超时session的机制。1:未实现;2:方案不合理;3:基本定时清理;4:ScheduledExecutor+90s超时;5:清理+可配置超时+优雅停机"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ClassroomSessionManager中使用@Scheduled(fixedDelay=30000)每30秒扫描超时session+setMaxIdleTimeout(90s)双重保护"
+
+[[criterion]]
+name = "Session清理完整性"
+description = "[Explicit] 超时/错误/断开等场景都能正确清理session。1:仅超时;2:超时+错误;3:三种场景;4:四种场景;5:全场景+日志"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ClassroomSessionManager中覆盖了onClose+onError+定时清理三种场景"
+
+[[criterion]]
+name = "onError/onMessage处理"
+description = "[Explicit] onMessage刷新活跃时间，onError主动清理session。1:均未处理;2:仅一个;3:都处理但有缺陷;4:正确处理;5:处理+异常隔离"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ClassroomSessionManager中onMessage更新lastActiveTime，onError中sessions.remove()+session.close()，但close失败的处理不够健壮"
+
+[[criterion]]
+name = "broadcast安全检查"
+description = "[Implicit] broadcastToClass发送前检查session.isOpen()。1:未检查;2:检查但不移除;3:检查+移除失效session;4:检查+移除+close;5:检查+移除+异常处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ClassroomSessionManager中broadcastToClass增加isOpen()检查，发送失败时移除session"
+
+[[criterion]]
+name = "线程安全"
+description = "[Implicit] ConcurrentHashMap操作和定时清理的线程安全性。1:线程不安全;2:部分安全;3:基本安全;4:ConcurrentHashMap+安全遍历;5:安全+CAS操作"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ClassroomSessionManager中使用ConcurrentHashMap存储session，定时清理中的遍历和移除操作基本线程安全"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>20次;2:15-20次;3:10-14次;4:5-9次;5:<=4次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共13次工具调用含6次Read和4次Bash，过程中有编译验证的冗余操作"

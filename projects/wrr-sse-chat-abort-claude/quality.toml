@@ -1,0 +1,62 @@
+[[criterion]]
+name = "AbortController清理"
+description = "[Explicit] fetchEventSource中AbortController的清理是否正确。1:未识别AbortController相关问题;2:识别了abort但未正确清理controller实例;3:清理了controller但未处理信号传播;4:正确清理controller并处理了abort信号传播;5:完整清理controller、信号传播，并考虑了并发abort场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在ChatPanel.vue中准确定位AbortController.abort()后signal传播机制，正确在stopStreaming中先调abort再置null"
+
+[[criterion]]
+name = "流式状态标志重置"
+description = "[Explicit] isStreaming标志位在各场景下是否正确重置。1:未识别isStreaming状态残留问题;2:识别了问题但修复不完整;3:修复了正常结束场景但遗漏abort场景;4:同时修复了正常结束和abort两种场景的状态重置;5:全面覆盖正常结束、abort、异常三种场景的状态重置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在ChatPanel.vue中使用try-finally统一处理，确保sendMessage无论正常结束还是abort都重置isStreaming为false"
+
+[[criterion]]
+name = "EventSource生命周期"
+description = "[Explicit] fetchEventSource连接的生命周期管理是否完整。1:未处理连接生命周期;2:仅处理了打开或关闭的一端;3:处理了open和close但未处理error回调;4:完整处理open/close/error三个回调的状态同步;5:完整生命周期管理并防止连接泄漏"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在fetchEventSource的onclose和onerror回调中都正确重置了isStreaming，防止连接异常时状态残留"
+
+[[criterion]]
+name = "并发发送阻止"
+description = "[Explicit] 快速连续发送消息时的并发控制。1:未考虑并发发送问题;2:识别了并发但方案有缺陷;3:通过isStreaming判断阻止了并发但存在竞态窗口;4:正确实现了基于标志位的并发阻止;5:完善的并发控制含用户反馈提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "sendMessage入口立即设置isStreaming=true，消除了竞态窗口"
+
+[[criterion]]
+name = "停止按钮交互"
+description = "[Explicit] 停止按钮交互逻辑的正确性。1:停止按钮功能完全失效;2:停止后仍可发送但状态异常;3:停止功能基本可用但偶尔卡住;4:停止后正确恢复到可发送状态;5:停止后状态完全正确且有即时UI反馈"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "stopStreaming中同步调用abort+重置isStreaming，用户点击停止后立即恢复可发送状态"
+
+[[criterion]]
+name = "代码探索效率"
+description = "[Explicit] 排查路径是否高效，工具使用是否合理。1:超过15次工具调用且多数无效;2:10-15次调用含多次冗余读取;3:5-10次调用有部分冗余;4:5次以内调用路径清晰;5:3次以内调用精准直达目标"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共5次工具调用，Read ChatPanel.vue后直接Edit修复，路径清晰高效"
+
+[[criterion]]
+name = "修复说明质量"
+description = "[Explicit] 最终修复说明是否清晰准确。1:无说明或说明与实际修改不符;2:简单描述了改动但未解释原因;3:说明了根因和修复方式但缺少技术细节;4:清晰说明了根因、修复方式和影响范围;5:完整说明含根因分析、修复原理、边界场景覆盖和验证建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "清晰说明了stopStreaming中abort→isStreaming重置的执行顺序及其必要性"

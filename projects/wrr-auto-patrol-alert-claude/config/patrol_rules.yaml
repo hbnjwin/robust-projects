@@ -1,0 +1,48 @@
+rules:
+  - rule_id: "user-api-health"
+    service_name: "User API"
+    check_type: "http"
+    target: "https://api.example.com/health"
+    interval_seconds: 30
+    timeout_seconds: 5
+    consecutive_failures_threshold: 3
+    expected_status: 200
+    alert_channels:
+      - channel_type: "dingtalk"
+        webhook_url: "https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN"
+    silent_windows:
+      - start: "00:00"
+        end: "08:00"
+    tags:
+      env: "production"
+      team: "backend"
+
+  - rule_id: "redis-port"
+    service_name: "Redis Primary"
+    check_type: "tcp"
+    target: "redis.internal:6379"
+    interval_seconds: 60
+    timeout_seconds: 5
+    consecutive_failures_threshold: 5
+    alert_channels:
+      - channel_type: "dingtalk"
+        webhook_url: "https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN"
+
+  - rule_id: "order-svc-cpu"
+    service_name: "Order Service CPU"
+    check_type: "metric"
+    target: "http://order-svc.internal/metrics"
+    interval_seconds: 120
+    timeout_seconds: 10
+    metric_path: "data.cpu_usage_percent"
+    metric_operator: ">"
+    metric_threshold: 90.0
+    alert_channels:
+      - channel_type: "dingtalk"
+        webhook_url: "https://oapi.dingtalk.com/robot/send?access_token=YOUR_TOKEN"
+    silent_windows:
+      - start: "23:00"
+        end: "07:00"
+      - start: "12:00"
+        end: "13:00"
+        days: [0, 1, 2, 3, 4]

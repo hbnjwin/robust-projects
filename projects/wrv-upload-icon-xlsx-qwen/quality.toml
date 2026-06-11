@@ -1,0 +1,44 @@
+[[criterion]]
+name = "图标映射修复"
+description = "[Explicit] 为xlsx文件类型添加正确的图标映射。1:仍为破图;2:添加了但图标路径错误;3:xlsx映射正确但其他格式遗漏;4:xlsx映射正确且与现有格式一致;5:全格式覆盖+动态图标加载"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "upload-dialog.vue中在fileTypeToImage映射对象中添加了xlsx键值，但修复过程中5次Edit说明有反复调整"
+
+[[criterion]]
+name = "文件类型覆盖"
+description = "[Explicit] 图标映射覆盖所有accept允许的文件类型(PDF/DOCX/XLSX/DOC)。1:只覆盖部分;2:覆盖大部分;3:全覆盖但映射有误;4:全覆盖且映射正确;5:全覆盖+可配置+新类型自动适配"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复集中于xlsx的添加，对现有映射(pdf/docx/doc/xls)未做全面检查确认"
+
+[[criterion]]
+name = "后缀解析修复"
+description = "[Explicit] 文件后缀名提取逻辑对多点文件名(如report.v2.xlsx)的正确处理。1:解析错误;2:split('.')取最后但不可靠;3:lastIndexOf方案;4:lastIndexOf+toLowerCase标准化;5:标准化+MIME类型双重判断"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "沿用原有的split('.').pop()后缀提取逻辑，未改进对特殊文件名的处理"
+
+[[criterion]]
+name = "组件一致性"
+description = "[Implicit] upload-dialog.vue和index.vue两处文件图标逻辑的统一。1:两处不一致;2:只改了一处;3:都改了但方式不同;4:统一的图标映射逻辑;5:统一+抽取公共函数"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修改了upload-dialog.vue的fileTypeToImage但index.vue中可能仍存在不一致的映射，未做全局统一"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和效率。1:大量无关修改;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "23次工具调用(10次Read+5次Edit+4次TaskUpdate+2次TaskCreate)，修改3个文件，复用了common-function.js的fileTypeIcon是好的设计决策"

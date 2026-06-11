@@ -1,0 +1,62 @@
+[[criterion]]
+name = "路由重复根因"
+description = "[Explicit] 动态路由重复添加的根因定位。1:未识别路由重复问题;2:知道有重复但定位到错误位置;3:定位到generateRoutes但未发现缺少resetRoutes调用;4:准确识别generateRoutes未调用resetRoutes导致addRoute重复;5:精准定位根因并分析了Vue Router命名路由唯一性约束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确定位到permissionStore.ts的generateRoutes方法未先调用resetRoutes，导致角色切换时addRoute重复注册同名路由"
+
+[[criterion]]
+name = "路由清理逻辑"
+description = "[Explicit] 路由清理逻辑是否在添加前正确执行。1:未实现清理;2:清理位置错误（在添加之后）;3:清理了但使用了不恰当的方法;4:在generateRoutes开头正确调用resetRoutes;5:完整的清理含removeRoute逐一移除和routes数组重置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在generateRoutes方法开头调用resetRoutes，先清理旧路由再添加新路由，时序正确"
+
+[[criterion]]
+name = "角色切换状态管理"
+description = "[Explicit] 角色切换时permissionStore状态的完整重置。1:角色切换后状态混乱;2:路由清理了但routes数组未同步;3:routes数组用push导致追加而非替换;4:routes数组正确替换且addedRoutes清空;5:完整的状态重置含路由、权限、菜单三部分"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在generateRoutes中先清空routes数组再push新路由，确保角色切换后菜单只显示当前角色权限"
+
+[[criterion]]
+name = "白屏问题修复"
+description = "[Explicit] 角色切换后白屏问题是否解决。1:白屏问题仍然存在;2:首次切换正常但二次切换白屏;3:切换基本正常但偶尔闪白;4:完全消除白屏含router.replace刷新当前页;5:消除白屏且切换过渡平滑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "准确修复了用户描述的路由重复警告和白屏问题，角色切换后页面正确渲染"
+
+[[criterion]]
+name = "Vue Router动态API"
+description = "[Explicit] 对Vue Router动态路由API的理解和使用。1:不了解addRoute/removeRoute;2:基本了解但使用方式错误;3:正确使用addRoute但removeRoute调用不完整;4:正确使用addRoute/removeRoute配对管理路由;5:深度理解命名路由唯一性和路由匹配优先级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "理解Vue Router命名路由的唯一性约束和addRoute/removeRoute的配对使用"
+
+[[criterion]]
+name = "排查路径效率"
+description = "[Explicit] 排查路径是否高效。1:超过15次工具调用且方向混乱;2:10-15次调用有明显绕路;3:5-10次基本合理;4:5次以内路径清晰;5:3次以内精准定位"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共5次调用，Read permissionStore.ts后直接定位generateRoutes方法并Edit修复"
+
+[[criterion]]
+name = "回归场景覆盖"
+description = "[Explicit] 修复是否覆盖了角色切换和页面刷新两种场景。1:两种场景都未验证;2:只处理了角色切换;3:两种场景都处理了但有边界遗漏;4:角色切换和F5刷新两种场景都正确处理;5:全面覆盖含前进后退、history模式和hash模式"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复覆盖了角色切换和页面刷新两种场景，resetRoutes后重新addRoute确保一致性"

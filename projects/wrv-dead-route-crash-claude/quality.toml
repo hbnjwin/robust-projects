@@ -1,0 +1,44 @@
+[[criterion]]
+name = "死路由识别"
+description = "[Explicit] 正确识别home.js和auth-center.js为引用不存在组件的死路由文件。1:未识别;2:只识别了一个;3:识别了但分析不够充分;4:两个都识别并分析了引用的不存在组件;5:识别+依赖图分析+影响评估"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取home.js和auth-center.js内容，快速确认两个文件中所有路由引用的组件路径均不存在"
+
+[[criterion]]
+name = "文件清理"
+description = "[Explicit] 删除死路由文件和相关空目录的清理。1:未删除;2:只删了一个;3:删了文件但留空目录;4:文件+空目录都清理;5:清理+git rm+提交说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Bash rm删除了home.js和auth-center.js，但未清理可能残留的空目录"
+
+[[criterion]]
+name = "路由引用验证"
+description = "[Explicit] 验证router/index.js只导入了实际存在的路由模块。1:未验证;2:验证了但结论错误;3:验证了但处理方式有风险;4:完整验证并正确处理;5:验证+自动化检查脚本"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "读取router/index.js确认它只导入了login/expert-database/ai-report-review/system四个模块且home.js和auth-center.js从未被导入，正确判断index.js无需修改"
+
+[[criterion]]
+name = "影响范围控制"
+description = "[Implicit] 修复操作是否限制在安全范围内，不影响正常功能。1:破坏了正常功能;2:修改了不该改的文件;3:小范围越界;4:精准控制在死路由范围;5:控制+回归测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "仅删除了两个确认为死路由的文件，未修改router/index.js中任何有效import，保护了正常路由功能"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 工具调用效率和修改精准度。1:大量无效操作;2:有明显冗余;3:基本高效;4:精准高效;5:最小操作完成任务"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "6次工具调用(3次Read+2次Glob+1次Bash)快速定位并清理，无多余操作"

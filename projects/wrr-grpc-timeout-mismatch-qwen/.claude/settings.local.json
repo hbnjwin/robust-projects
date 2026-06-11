@@ -1,0 +1,11 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//home/user/repos/**)",
+      "Read(//home/**)",
+      "Read(//d//**)",
+      "Bash(go build:*)",
+      "Bash(python:*)"
+    ]
+  }
+}

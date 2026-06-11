@@ -1,0 +1,21 @@
+{
+  "name": "wrr-editor-paste-upload-bug-fix",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "vue": "^3.5.12",
+    "element-plus": "^2.11.1",
+    "@wangeditor/editor": "^5.1.23",
+    "@wangeditor/editor-for-vue": "^5.1.12",
+    "axios": "^1.6.0"
+  },
+  "devDependencies": {
+    "vite": "^5.1.4",
+    "vitest": "^1.0.0",
+    "@vitejs/plugin-vue": "^5.0.0"
+  }
+}

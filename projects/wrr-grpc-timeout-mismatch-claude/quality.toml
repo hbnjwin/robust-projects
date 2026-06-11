@@ -1,0 +1,62 @@
+[[criterion]]
+name = "超时根因分析"
+description = "[Explicit] gRPC超时问题的根因定位。1:未找到超时原因;2:知道超时但归因到网络延迟;3:找到了clientCtx的deadline未传递到下游;4:准确定位context.WithTimeout创建的deadline未在gRPC调用链中传播;5:精准定位并分析了gRPC的deadline propagation机制和metadata携带"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确定位service.go中handler函数收到的ctx含deadline但调用下游时用了新的context.Background()丢失了deadline"
+
+[[criterion]]
+name = "Deadline传播修复"
+description = "[Explicit] gRPC deadline传播链的修复质量。1:未修复传播问题;2:修复了但context传递方式错误;3:修复了clientCtx传递但未处理级联超时场景;4:正确使用ctx传递deadline并处理了上下游超时链;5:完善的deadline传播含metadata携带剩余时间和超时预算分配"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在service.go的handler中将接收到的ctx直接传递给下游client.Call()，确保deadline在整个调用链中传播"
+
+[[criterion]]
+name = "错误处理改进"
+description = "[Explicit] gRPC错误处理的改进质量。1:错误被静默吞掉;2:有日志但未返回正确的gRPC status;3:修复了grpc.Dial连接错误的处理;4:完整的错误处理含status.Error返回和日志记录;5:分层错误处理含重试策略和优雅降级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在client.go中grpc.Dial错误正确返回status.Internal，handler中deadline超时返回status.DeadlineExceeded"
+
+[[criterion]]
+name = "超时值校准"
+description = "[Explicit] 超时值设置的合理性。1:未设置超时或设置不合理;2:硬编码单一超时值;3:设置了6s但裕度较小仅覆盖服务端3-5s;4:基于服务端最大处理时间合理设置含充足裕度;5:可配置的超时策略含不同接口差异化超时"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "设置8s超时为服务端最大5s的1.6倍，留有充足裕度应对网络抖动"
+
+[[criterion]]
+name = "测试验证"
+description = "[Explicit] 修复后的测试验证充分性。1:无任何验证;2:仅检查服务能启动;3:有基本的RPC连通性测试;4:有超时场景的专项测试用例验证;5:完整的正常+超时+错误场景对比测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "进行了基本验证但未专门编写超时场景的测试用例"
+
+[[criterion]]
+name = "排查执行效率"
+description = "[Explicit] 排查路径效率。1:超过40次工具调用严重低效;2:30-40次大量Bash试错;3:20-30次有明显冗余;4:10-20次基本合理;5:10次以内精准高效"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共12次工具调用路径基本清晰，Read service.go → 分析ctx传递 → Edit修复"
+
+[[criterion]]
+name = "修复完整性"
+description = "[Explicit] 修复的完整性和正确性。1:核心超时问题仍存在;2:修复了部分问题但主要bug仍在;3:修复了3个bug但超时值设置保守;4:完整修复所有已知问题;5:完整修复含监控和告警建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "完整修复了deadline传播、错误处理和超时配置三个方面的问题"

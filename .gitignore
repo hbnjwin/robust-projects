@@ -40,4 +40,11 @@
 *.log
 log.ini
 
-projects
+projects/*/node_modules
+projects/*/.venv
+projects/*/__pycache__
+projects/*/dist
+projects/*/build
+projects/*/target
+projects/*/.gradle
+projects/*/.idea

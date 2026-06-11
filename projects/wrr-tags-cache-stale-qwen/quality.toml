@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Keep-alive缓存与URL同步"
+description = "[Explicit] keep-alive缓存的组件状态与URL query参数不同步的根因定位。1:未识别缓存与URL的不同步;2:知道筛选不一致但归因错误;3:定位到onActivated但未关联route.query;4:准确分析keep-alive恢复缓存状态但未从route.query重新同步queryParams;5:精准定位并提出了onActivated中从route.query恢复参数的方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "在UserList.vue中花了大量时间探索但根因分析效率极低，41次工具调用含25次Bash"
+
+[[criterion]]
+name = "Activated参数恢复"
+description = "[Explicit] onActivated中是否从route.query恢复queryParams。1:未处理参数恢复;2:恢复了但覆盖不完整;3:恢复了主要参数但遗漏了分页;4:完整恢复queryParams后调用刷新列表;5:恢复参数并对比是否有变化，只在变化时刷新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复方案不够直接，onActivated中的参数恢复逻辑不完整"
+
+[[criterion]]
+name = "筛选表格一致性"
+description = "[Explicit] 筛选表单与表格数据是否一致。1:筛选和表格完全不一致;2:首次加载一致但切换后不一致;3:标签页切换后基本一致但偶有不同步;4:标签页切换后筛选和表格完全同步;5:全场景一致含浏览器前进后退"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了部分问题但onActivated的参数恢复逻辑不完整，切换后可能仍有不一致"
+
+[[criterion]]
+name = "路由参数双向同步"
+description = "[Explicit] 路由query参数与组件状态的双向同步。1:未实现同步;2:只实现了组件→URL的单向;3:实现了双向但有竞态;4:正确实现双向同步：筛选变化→更新URL，标签切入→从URL恢复;5:完善的双向同步含debounce防抖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "代码组织有改进空间，路由参数同步逻辑不够健壮"
+
+[[criterion]]
+name = "重置筛选处理"
+description = "[Explicit] 重置筛选按钮的行为是否正确。1:重置后筛选和数据仍不一致;2:重置了表单但URL未更新;3:重置了表单和URL但表格未刷新;4:重置表单→清空URL query→刷新列表三步完整;5:完整重置含分页重置回第1页"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了部分问题但重置按钮的queryParams清空和URL同步不完整"
+
+[[criterion]]
+name = "排查修复效率"
+description = "[Explicit] 代码探索和修复的效率。1:超过30次工具调用严重低效;2:20-30次含大量Bash试错;3:10-20次有冗余;4:5-10次路径清晰;5:5次以内精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "共41次工具调用含25次Bash命令，严重低效，可能在大量试错和反复搜索"
+
+[[criterion]]
+name = "标签切换场景覆盖"
+description = "[Explicit] 是否覆盖了筛选、重置、标签页切换三种场景。1:三种场景都未覆盖;2:只处理了一种;3:处理了两种但遗漏一种;4:三种场景全部正确处理;5:全部覆盖含极端场景如快速连续切换"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了部分问题但onActivated的参数恢复逻辑不完整，标签页切换场景有遗漏"

@@ -1,0 +1,62 @@
+[[criterion]]
+name = "白名单匹配策略"
+description = "[Explicit] 路由守卫白名单匹配策略的根因定位。1:未识别白名单匹配问题;2:知道被重定向但未关联到匹配策略;3:定位到whiteList但未分析includes的精确匹配限制;4:准确识别whiteList.includes()是精确匹配而非前缀匹配;5:精准定位并对比了includes/startsWith/正则三种匹配策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "直接定位到permissionStore.ts中whiteList用Array.includes()做精确匹配，/portal在名单中但/portal/courses/123不匹配"
+
+[[criterion]]
+name = "路径前缀匹配修复"
+description = "[Explicit] 是否改用前缀匹配替代精确匹配。1:未修改匹配逻辑;2:修改了但方案有安全风险;3:改用startsWith但硬编码了路径;4:改用startsWith(/portal)匹配所有门户子路由;5:采用灵活的匹配策略如正则或路由元信息meta.public"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "改用whiteList.some(path => to.path.startsWith(path))，/portal前缀匹配所有门户子路由"
+
+[[criterion]]
+name = "子路由访问控制"
+description = "[Explicit] 门户子路由(/portal/courses/123等)的免登录访问是否正确。1:子路由仍然被重定向;2:部分子路由可访问但动态参数路由不行;3:一级子路由可以但嵌套子路由不行;4:所有/portal/**子路由均可免登录访问;5:免登录且正确设置了页面元信息"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用startsWith前缀匹配确保/portal下的所有层级子路由都可免登录访问"
+
+[[criterion]]
+name = "路由守卫理解"
+description = "[Explicit] 对Vue Router beforeEach全局守卫的理解。1:不了解路由守卫;2:基本了解但逻辑错误;3:理解守卫执行流程但对next()调用理解不够;4:正确理解守卫中token检查→白名单判断→重定向的流程;5:深度理解含守卫执行顺序和异步守卫的处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "理解beforeEach中先检查token→无token时判断白名单→不在白名单则重定向到login的完整流程"
+
+[[criterion]]
+name = "安全性考虑"
+description = "[Explicit] 白名单放宽后的安全性考虑。1:未考虑安全影响;2:放宽了所有路由;3:只放宽了/portal但未验证有无敏感子路由;4:验证了/portal下均为公开页面无需鉴权;5:添加了路由元信息meta.requireAuth细粒度控制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "确认/portal下的courses、about等页面均为公开内容，放宽匹配不会暴露需要鉴权的接口"
+
+[[criterion]]
+name = "排查路径效率"
+description = "[Explicit] 排查路径效率。1:超过30次调用极度低效;2:20-30次含大量Bash;3:10-20次有冗余;4:5-10次路径清晰;5:5次以内精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共7次调用路径清晰：Read permissionStore.ts → 定位whiteList → Edit匹配策略"
+
+[[criterion]]
+name = "匹配逻辑健壮性"
+description = "[Explicit] 白名单匹配逻辑的健壮性和可扩展性。1:匹配逻辑不正确;2:正确但太脆弱;3:正确但不易扩展;4:匹配逻辑简洁健壮;5:设计了可配置的匹配策略支持精确/前缀/正则"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "匹配逻辑简洁健壮，使用startsWith可自然覆盖新增的/portal子路由无需修改白名单"

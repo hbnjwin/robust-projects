@@ -1,0 +1,62 @@
+[[criterion]]
+name = "超时根因分析"
+description = "[Explicit] gRPC超时问题的根因定位。1:未找到超时原因;2:知道超时但归因到网络延迟;3:找到了clientCtx的deadline未传递到下游;4:准确定位context.WithTimeout创建的deadline未在gRPC调用链中传播;5:精准定位并分析了gRPC的deadline propagation机制和metadata携带"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在service.go中找到了超时根因：clientCtx的deadline未传递给下游RPC调用，但排查过程冗长使用了42次Bash调用"
+
+[[criterion]]
+name = "Deadline传播修复"
+description = "[Explicit] gRPC deadline传播链的修复质量。1:未修复传播问题;2:修复了但context传递方式错误;3:修复了clientCtx传递但未处理级联超时场景;4:正确使用ctx传递deadline并处理了上下游超时链;5:完善的deadline传播含metadata携带剩余时间和超时预算分配"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在service.go中修复了ctx传递问题，但对多级gRPC调用的级联超时处理不够完善"
+
+[[criterion]]
+name = "错误处理改进"
+description = "[Explicit] gRPC错误处理的改进质量。1:错误被静默吞掉;2:有日志但未返回正确的gRPC status;3:修复了grpc.Dial连接错误的处理;4:完整的错误处理含status.Error返回和日志记录;5:分层错误处理含重试策略和优雅降级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了grpc.Dial返回错误被忽略的问题，添加了错误检查和日志"
+
+[[criterion]]
+name = "超时值校准"
+description = "[Explicit] 超时值设置的合理性。1:未设置超时或设置不合理;2:硬编码单一超时值;3:设置了6s但裕度较小仅覆盖服务端3-5s;4:基于服务端最大处理时间合理设置含充足裕度;5:可配置的超时策略含不同接口差异化超时"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "设置了6s超时，刚好覆盖服务端最大处理时间5s，裕度仅1s略显保守"
+
+[[criterion]]
+name = "测试验证"
+description = "[Explicit] 修复后的测试验证充分性。1:无任何验证;2:仅检查服务能启动;3:有基本的RPC连通性测试;4:有超时场景的专项测试用例验证;5:完整的正常+超时+错误场景对比测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "运行了测试验证修复效果，包含超时场景的测试"
+
+[[criterion]]
+name = "排查执行效率"
+description = "[Explicit] 排查路径效率。1:超过40次工具调用严重低效;2:30-40次大量Bash试错;3:20-30次有明显冗余;4:10-20次基本合理;5:10次以内精准高效"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "共51次工具调用其中42次Bash命令，在多个Go文件之间反复grep和cat，排查路径冗长低效"
+
+[[criterion]]
+name = "修复完整性"
+description = "[Explicit] 修复的完整性和正确性。1:核心超时问题仍存在;2:修复了部分问题但主要bug仍在;3:修复了3个bug但超时值设置保守;4:完整修复所有已知问题;5:完整修复含监控和告警建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了ctx传递、grpc.Dial错误处理、超时设置三个问题，但超时值6s裕度较小"

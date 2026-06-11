@@ -1,0 +1,62 @@
+[[criterion]]
+name = "血缘图引擎设计"
+description = "[Explicit] 血缘图引擎的设计质量。1:未实现图数据结构;2:仅实现了简单的父子关系映射;3:基于networkx的有向图支持基本的上下游查询;4:支持多层上下游追溯的有向图引擎含节点属性;5:支持增量更新、版本化和环检测的图引擎"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在lineage_engine.py中使用networkx.DiGraph构建有向图，支持upstream/downstream多层追溯"
+
+[[criterion]]
+name = "SQL解析能力"
+description = "[Explicit] SQL解析提取表依赖关系的能力。1:未实现SQL解析;2:仅用正则匹配FROM后的表名;3:独立parser.py实现基本的SELECT/FROM解析;4:支持JOIN、子查询、INSERT INTO...SELECT的依赖提取;5:支持DDL+DML+CTE的完整SQL血缘解析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在parser.py中实现了独立的SQL解析器，提取FROM和JOIN中的表名建立依赖关系"
+
+[[criterion]]
+name = "API设计完整性"
+description = "[Explicit] REST API端点设计的完整性。1:少于3个端点功能残缺;2:3-5个基本CRUD端点;3:8-10个端点含血缘查询和表管理;4:完整的REST端点含分页搜索和批量操作;5:RESTful设计含版本控制、文档和错误码规范"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "设计了10个REST端点覆盖表管理、血缘注册、上下游查询等功能"
+
+[[criterion]]
+name = "可视化丰富度"
+description = "[Explicit] 血缘关系可视化功能的丰富度。1:无可视化纯文本输出;2:静态HTML图表;3:D3.js基本力导向图可拖拽;4:交互式力导向图含缩放、拖拽和节点详情tooltip;5:多种布局切换+路径高亮+搜索定位+图例说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用D3.js实现了力导向图的基本交互，支持节点拖拽"
+
+[[criterion]]
+name = "代码模块化"
+description = "[Explicit] 代码模块化程度。1:所有代码在一个文件中;2:拆分为2-3个文件;3:按功能拆分为4-6个文件含router/service/model;4:清晰的分层架构含接口定义;5:分层+依赖注入+可替换组件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "拆分为6个文件：main.py、router.py、service.py、models.py、parser.py、engine.py，层次基本清晰"
+
+[[criterion]]
+name = "排查执行效率"
+description = "[Explicit] 功能开发效率。1:超过30次工具调用大量试错;2:20-30次含冗余;3:15-20次有部分冗余;4:10-15次基本合理;5:10次以内高效"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "共22次工具调用含10次Bash命令，在多个文件之间有较多冗余操作"
+
+[[criterion]]
+name = "演示数据可用性"
+description = "[Explicit] 演示数据和系统可用性。1:无演示数据无法运行;2:硬编码示例数据;3:有示例数据的seed脚本可运行演示;4:示例数据覆盖典型场景含ETL和报表血缘;5:含完整文档、启动指南和示例查询"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "提供了seed_data.py填充示例血缘关系，系统可运行演示"

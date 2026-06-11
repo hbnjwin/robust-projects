@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Schema漂移检测"
+description = "[Explicit] ETL中Schema漂移的检测能力。1:未检测到Schema变化导致KeyError;2:仅捕获了KeyError但未分析原因;3:检测到缺失字段并WARNING提示新增字段;4:完整检测缺失字段、新增字段和类型变化;5:自动化Schema变更追踪含版本对比"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在transform.py中实现了complete schema检测：缺失字段抛SchemaValidationError、新增字段WARNING日志、含expected vs actual字段集对比"
+
+[[criterion]]
+name = "字段验证机制"
+description = "[Explicit] 字段验证机制的设计质量。1:无验证逻辑;2:简单的if key in dict检查;3:定义REQUIRED_FIELDS常量+SchemaValidationError自定义异常;4:分层验证含字段存在性和类型检查;5:声明式Schema验证框架支持规则配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在transform.py中实现了结构化的验证：REQUIRED_FIELDS定义、validate_schema函数、SchemaValidationError含详细的缺失字段信息"
+
+[[criterion]]
+name = "安全字段访问"
+description = "[Explicit] 安全字段访问的实现方式。1:直接dict[key]导致KeyError;2:try-except包裹整个transform;3:safe_output列表推导使用dict.get避免KeyError;4:统一使用dict.get(key, default)含合理默认值;5:TypedDict或dataclass强类型访问"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "同样使用dict.get()安全访问，但对默认值的选择不够精细（部分字段用None可能导致下游问题）"
+
+[[criterion]]
+name = "错误消息质量"
+description = "[Explicit] 错误消息对问题诊断的帮助程度。1:无错误消息仅原始KeyError;2:简单的字段缺失提示;3:SchemaValidationError包含缺失字段列表;4:包含期望字段集和实际字段集的对比信息;5:包含修复建议和字段映射提示的诊断信息"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "SchemaValidationError包含missing_fields和extra_fields两个列表，含expected和actual的对比方便快速诊断"
+
+[[criterion]]
+name = "代码修改精确度"
+description = "[Explicit] 代码修改的精确度和影响范围。1:Write重写了整个不相关的文件;2:Write覆盖了整个transform.py;3:修改针对性但影响范围较大;4:精确修改仅涉及Schema验证相关逻辑;5:最小化修改仅在原有代码基础上添加验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用Edit工具精确修改transform.py中的transform函数，仅添加了validate_schema调用和安全字段访问"
+
+[[criterion]]
+name = "常量提取维护性"
+description = "[Explicit] 常量提取和可维护性。1:字段名硬编码散落在代码各处;2:部分字段提取为常量;3:REQUIRED_FIELDS和OUTPUT_FIELDS提取为模块级常量;4:常量集中管理含注释说明;5:可配置的Schema定义支持外部加载"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "常量定义清晰含注释说明每个字段的用途，方便后续Schema变更时修改"
+
+[[criterion]]
+name = "排查执行效率"
+description = "[Explicit] 排查和修复效率。1:超过15次工具调用;2:10-15次含冗余;3:7-10次有部分冗余;4:5-7次路径清晰;5:5次以内精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共5次工具调用路径清晰：Read → 分析schema → Edit添加验证 → 验证"

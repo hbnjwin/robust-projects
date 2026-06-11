@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: rbac-system
+  cache:
+    type: caffeine
+    caffeine:
+      spec: maximumSize=10000,expireAfterWrite=30m
+
+server:
+  port: 8080
+
+# Spring Security 默认用户（演示用，生产环境请替换为用户体系）
+  security:
+    user:
+      name: admin
+      password: admin

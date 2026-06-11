@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Web Worker架构设计"
+description = "[Explicit] 将MD5计算从主线程迁移到Web Worker。1:仍在主线程;2:架构错误;3:基本Worker实现;4:独立Worker文件+消息通信;5:Worker+优雅降级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "FileUploader.vue中修改了计算逻辑但未创建独立Worker文件，Worker架构不够清晰"
+
+[[criterion]]
+name = "分片计算实现"
+description = "[Explicit] 按2MB分片增量计算MD5避免一次性读取整个文件。1:仍一次性读取;2:分片但有bug;3:基本分片;4:分片+增量append;5:分片+增量+内存优化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "FileUploader.vue中实现了分片读取但分片策略和增量append的配合不够紧密"
+
+[[criterion]]
+name = "进度反馈机制"
+description = "[Implicit] 计算过程中向UI反馈进度百分比。1:无反馈;2:仅开始/结束;3:基本进度;4:百分比进度;5:进度+预估剩余时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "FileUploader.vue中有基本的计算状态提示但缺少百分比进度显示"
+
+[[criterion]]
+name = "Worker生命周期管理"
+description = "[Implicit] Worker完成/出错后正确terminate释放资源。1:未管理;2:仅完成时释放;3:完成+错误释放;4:terminate+错误处理;5:terminate+超时保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "FileUploader.vue中Worker使用后未显式terminate，可能导致资源泄漏"
+
+[[criterion]]
+name = "依赖管理"
+description = "[Explicit] 补充spark-md5依赖到package.json。1:未补充;2:版本不当;3:补充但位置不对;4:正确补充;5:补充+锁定版本"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "package.json中补充了spark-md5依赖"
+
+[[criterion]]
+name = "主线程非阻塞验证"
+description = "[Explicit] 修复后上传100MB+文件时页面不卡顿。1:仍卡顿;2:偶尔卡顿;3:基本不卡;4:完全不卡;5:不卡+可取消"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "FileUploader.vue中的修改减轻了主线程负担但未完全消除阻塞风险"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>25次;2:20-25次;3:15-19次;4:8-14次;5:<=7次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "共31次工具调用含17次Bash调用，执行路径冗长低效"

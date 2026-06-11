@@ -1,0 +1,62 @@
+[[criterion]]
+name = "编码问题根因分析"
+description = "[Explicit] FastAPI编码问题的根因分析能力。1:未定位到编码问题;2:仅发现乱码但未分析原因;3:识别了响应Content-Type缺少charset;4:全面识别CORS charset、NFC标准化、Pydantic验证等多个编码问题;5:精准分析所有编码问题含浏览器/Postman差异原因"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在main.py中识别了7个编码相关问题：响应缺charset、CORS缺少、NFC未标准化等"
+
+[[criterion]]
+name = "CORS浏览器兼容"
+description = "[Explicit] CORS和浏览器兼容性的修复质量。1:未处理CORS导致浏览器请求失败;2:CORS配置allow_origins=*有安全隐患;3:添加了CORSMiddleware基本配置;4:正确配置含allow_origins白名单和charset响应头;5:完善的CORS策略含预检缓存和凭证处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在main.py中添加了CORSMiddleware但origins配置为通配符，未做白名单限制"
+
+[[criterion]]
+name = "输入验证与错误处理"
+description = "[Explicit] 输入参数验证和错误处理。1:无验证直接500;2:有try-except但返回通用错误;3:Pydantic field_validator返回422含字段信息;4:完整验证含自定义错误消息和编码校验;5:分层验证含参数级和请求级的编码检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用Pydantic的field_validator对中文参数做编码验证，返回422状态码"
+
+[[criterion]]
+name = "文件上传编码修复"
+description = "[Explicit] 中文文件名上传的编码修复。1:中文文件名上传失败;2:文件名被截断或乱码;3:对filename做NFC标准化基本解决;4:NFC标准化+路径遍历防护+Content-Disposition处理;5:完善处理含RFC 5987编码和多浏览器兼容"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在upload路由中对filename做unicodedata.normalize(NFC)标准化，并添加了os.path.basename防路径遍历"
+
+[[criterion]]
+name = "测试验证"
+description = "[Explicit] 编码修复的测试覆盖充分性。1:无测试;2:1-2个简单测试;3:覆盖了3-5个编码场景;4:覆盖7个以上编码测试场景含中文参数和文件名;5:全面覆盖含边界字符、多语言和浏览器差异"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "编写了7个测试场景覆盖中文参数、文件上传、CORS预检等，全部通过"
+
+[[criterion]]
+name = "排查执行效率"
+description = "[Explicit] 排查路径效率。1:超过20次工具调用;2:15-20次含冗余;3:10-15次有部分冗余;4:5-10次路径清晰;5:5次以内精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共12次工具调用，在main.py和models.py之间有部分冗余的读取"
+
+[[criterion]]
+name = "方案架构质量"
+description = "[Explicit] 解决方案的架构质量。1:散乱的补丁式修复;2:有组织但编码处理不统一;3:UTF8JSONResponse统一响应编码;4:UTF8JSONResponse+CORSMiddleware+Pydantic分层编码方案;5:中间件层统一编码处理含请求和响应双向"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了UTF8JSONResponse类统一响应编码，配合CORSMiddleware和Pydantic验证，方案基本完整"

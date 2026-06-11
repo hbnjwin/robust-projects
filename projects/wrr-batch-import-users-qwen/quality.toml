@@ -1,0 +1,62 @@
+[[criterion]]
+name = "脏数据处理"
+description = "[Explicit] 脏数据容错处理。1:无容错;2:简单过滤;3:基本清洗;4:列映射+格式清理+去重;5:智能识别+多策略清洗+异常报告"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现了列别名检测和数据清洗"
+
+[[criterion]]
+name = "进度条实现"
+description = "[Explicit] 导入进度条实现。1:无进度;2:假进度;3:简单百分比;4:实时进度含分批处理;5:精确进度含速率和剩余时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现了进度条"
+
+[[criterion]]
+name = "导入报告设计"
+description = "[Explicit] 导入报告设计。1:无报告;2:简单成功失败数;3:分类统计;4:详细报告含每行结果;5:可视化报告含导出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "有导入报告功能"
+
+[[criterion]]
+name = "列映射智能化"
+description = "[Explicit] 列映射智能度。1:固定列顺序;2:简单列名匹配;3:多别名匹配;4:中英文别名+手动调整;5:ML级别自动映射"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现了10+种别名匹配"
+
+[[criterion]]
+name = "任务规划"
+description = "[Explicit] 任务规划。1:无规划;2:无显式规划;3:简单规划;4:使用任务管理;5:精细规划"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "无任务规划直接开始编写"
+
+[[criterion]]
+name = "执行正确性"
+description = "[Explicit] 执行正确性，是否在正确的目录和环境中操作。1:写入错误目录;2:部分操作错误;3:基本正确;4:完全正确;5:正确且有验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "将代码写入了claude目录而非qwen目录，严重错误"
+
+[[criterion]]
+name = "交付完整性"
+description = "[Explicit] 交付完整性。1:未完成;2:部分功能;3:核心功能完成;4:全部功能完成;5:完成含构建验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "功能基本完成但目录错误影响交付"

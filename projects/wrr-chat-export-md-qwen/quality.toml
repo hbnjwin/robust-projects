@@ -1,0 +1,62 @@
+[[criterion]]
+name = "导出入口集成"
+description = "[Explicit] 在现有导出下拉菜单中增加Markdown选项。1:未添加;2:位置不对;3:添加了菜单项;4:菜单项+switch路由;5:菜单项+路由+图标"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ChatExport.vue第11行添加菜单项和第38-40行switch路由，但实现过程中调用Agent做了冗余的代码分析"
+
+[[criterion]]
+name = "Markdown格式转换"
+description = "[Explicit] 对话内容正确转换为Markdown语法。1:纯文本输出;2:基本格式;3:标题+分隔;4:标题+角色+时间戳;5:完整格式+元数据"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ChatExport.vue中exportAsMarkdown()用#一级标题+##二级标题区分对话，斜体时间戳，但msg.content直接嵌入未做HTML到Markdown的转换"
+
+[[criterion]]
+name = "代码块保留"
+description = "[Explicit] AI回复中的代码块保留语言标识和格式。1:代码块丢失;2:保留但无语言标识;3:基本保留;4:完整保留语言标识;5:保留+语法高亮提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ChatExport.vue中直接嵌入msg.content，如果AI回复本身包含Markdown代码块则能保留，但未显式处理HTML格式的代码块转换"
+
+[[criterion]]
+name = "列表和标题层级"
+description = "[Explicit] AI回复中的列表、标题层级正确转为Markdown。1:层级丢失;2:部分保留;3:基本保留;4:完整保留;5:保留+嵌套列表"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ChatExport.vue中msg.content直接嵌入，依赖原始内容格式，未做HTML列表到Markdown列表的主动转换"
+
+[[criterion]]
+name = "文件下载实现"
+description = "[Explicit] 导出后直接下载.md文件。1:未实现下载;2:下载但格式错;3:基本下载;4:Blob+URL.createObjectURL;5:下载+文件名含对话标题"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ChatExport.vue中使用Blob创建.md文件并通过a标签触发下载，但文件名未包含对话标题导致辨识度不足"
+
+[[criterion]]
+name = "消息遍历完整性"
+description = "[Implicit] 正确遍历所有消息并区分角色。1:遗漏消息;2:角色混乱;3:基本遍历;4:完整遍历+角色区分;5:遍历+系统消息处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ChatExport.vue中遍历messages数组，通过msg.role区分'用户'和'AI助手'"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 工具调用合理，排查路径高效。1:>15次;2:10-15次;3:7-9次;4:4-6次;5:<=3次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "共6次工具调用（Edit*3+Read*2+Agent），路径直接高效"

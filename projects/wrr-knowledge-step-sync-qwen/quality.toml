@@ -1,0 +1,62 @@
+[[criterion]]
+name = "步骤滞后根因"
+description = "[Explicit] 前端步骤状态滞后于后端实际进度的根因分析。1:未识别前后端状态不同步;2:识别了但归因错误;3:定位到activeStep更新时机但分析不完整;4:准确分析了API返回值不能实时反映后端异步任务进度;5:精准定位并提出了轮询后端状态接口的解决方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在KnowledgeUpload.vue中识别了步骤状态更新时机问题，但对异步任务完成延迟的分析不够深入"
+
+[[criterion]]
+name = "轮询机制设计"
+description = "[Explicit] 状态轮询机制的设计质量。1:未实现轮询;2:实现了但间隔不合理;3:基本轮询但缺少停止条件;4:合理的轮询间隔+完成/失败停止条件;5:完善的轮询含指数退避和超时保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "调整了activeStep更新位置但未实现后端状态轮询，只依赖API返回值"
+
+[[criterion]]
+name = "步骤组件状态绑定"
+description = "[Explicit] Element Plus el-steps组件与数据状态的绑定是否正确。1:步骤显示与实际进度完全不符;2:步骤显示滞后严重;3:基本同步但切换时有短暂不一致;4:步骤状态与后端进度实时同步;5:步骤状态同步且包含进度百分比显示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "activeStep更新逻辑部分修复但缺少轮询兜底，步骤显示可能滞后"
+
+[[criterion]]
+name = "上传分片向量化流程"
+description = "[Explicit] 对上传→分片→向量化三步异步流程的理解。1:不理解三步流程;2:理解单步但不了解串行关系;3:理解串行流程但对每步完成通知机制不清楚;4:正确理解三步串行及各步完成的状态判断;5:深度理解含失败重试和断点续传的场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "对Vue组件状态与异步API回调的同步机制理解尚可，但对三步串行流程的细节把握不足"
+
+[[criterion]]
+name = "失败错误处理"
+description = "[Explicit] 上传/处理失败时步骤状态的错误处理。1:失败后步骤状态混乱;2:失败检测了但UI未更新;3:显示了失败但缺少重试入口;4:失败后正确显示错误状态并提供重试;5:完善的错误处理含错误详情和分步重试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "异步状态管理不够健壮，失败场景的步骤状态显示不够清晰"
+
+[[criterion]]
+name = "代码探索效率"
+description = "[Explicit] 排查路径是否高效。1:超过20次工具调用;2:15-20次;3:10-15次有部分冗余;4:5-10次路径清晰;5:5次以内精准修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "共11次调用有部分冗余的文件读取"
+
+[[criterion]]
+name = "组件卸载清理"
+description = "[Explicit] 组件卸载时轮询定时器的清理。1:未清理定时器;2:onUnmounted中清理但onDeactivated遗漏;3:基本清理但存在泄漏场景;4:onUnmounted和onDeactivated都正确清理;5:完善的清理含AbortController取消pending请求"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "核心同步问题部分修复但缺少组件卸载时的轮询清理"

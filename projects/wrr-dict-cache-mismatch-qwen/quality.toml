@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Map方括号访问检测"
+description = "[Explicit] Map对象使用[]方括号访问的根因定位。1:未识别Map与Object的访问差异;2:知道Map应该用get但未找全所有位置;3:找到了主要的[]访问位置但遗漏了部分;4:找全了dictStore.ts中所有Map[]误用的位置;5:精准找全所有误用并解释了Map[]返回undefined的JS规范原因"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在dictStore.ts中识别了Map与[]语法不匹配问题，找到了getDictByType中的dictMap[type]误用"
+
+[[criterion]]
+name = "Map访问方式迁移"
+description = "[Explicit] Map[]到Map.get/set的迁移是否完整正确。1:未修改或修改错误;2:只改了get未改set;3:改了get和set但has判断遗漏;4:完整迁移get/set/has三种操作;5:完整迁移并统一了整个Store的Map操作风格"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了Map.get/set但对dictMap.has()的判断逻辑调整不够合理"
+
+[[criterion]]
+name = "缓存过期策略"
+description = "[Explicit] sessionStorage字典缓存的过期策略是否合理。1:未注意缓存问题;2:注意到但过期时间设置不当;3:调整了过期时间但策略过于简单;4:合理的过期策略含时间戳比对;5:完善的缓存策略含版本号和主动失效机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "未调整sessionStorage的60秒缓存过期时间，部分字典更新后用户需等待刷新才能看到"
+
+[[criterion]]
+name = "Pinia响应式Map交互"
+description = "[Explicit] Pinia状态管理中Map类型的响应式行为理解。1:不理解Pinia与Map的交互;2:基本了解但对reactive(Map)的行为有误解;3:理解Map在Pinia中需要特殊处理;4:正确理解Pinia对Map的响应式代理机制;5:深度理解Vue3 Proxy对Map的拦截行为及其限制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "对Map和Object属性访问差异理解基本正确，但未深入分析Pinia reactive代理对Map的影响"
+
+[[criterion]]
+name = "字典显示验证"
+description = "[Explicit] 字典值显示空白问题是否完整验证。1:未验证修复效果;2:只验证了一个字典类型;3:验证了主要字典类型但遗漏了嵌套场景;4:验证了所有直接使用getDictByType的页面;5:全面验证含嵌套字典和异步加载时序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "核心Map访问问题已修复但未验证所有使用getDictByType的组件是否正常显示"
+
+[[criterion]]
+name = "代码探索与工具使用"
+description = "[Explicit] 代码探索效率和工具使用合理性。1:超过20次调用大量无效;2:15-20次含大量Bash命令;3:10-15次有冗余但找到了目标;4:5-10次路径清晰;5:5次以内精准直达"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "共17次调用含8次Bash命令，在dictStore.ts和相关组件之间反复搜索"
+
+[[criterion]]
+name = "工程一致性"
+description = "[Explicit] 修复后代码风格与项目现有Map使用模式的一致性。1:引入了与项目不一致的风格;2:部分一致但有混用;3:基本一致但命名风格略有差异;4:完全一致的Map操作风格;5:一致且优化了类型注解"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Map/Object类型转换处理不够严谨，部分地方仍混用了两种访问方式"

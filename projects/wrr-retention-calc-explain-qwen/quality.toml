@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Cohort新用户筛选"
+description = "[Explicit] 是否正确定义新用户cohort——需要计算每个用户的全局首次活跃日,仅将首次活跃日等于cohort_date的用户纳入cohort,排除之前已活跃的老用户。1:未修改原始cohort逻辑;2:有尝试但WHERE条件限制了范围导致MIN无效,未排除老用户;3:排除了部分老用户但逻辑有边界问题;4:正确使用全局MIN筛选新用户但实现冗余;5:简洁正确的新用户筛选+边界处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "正确使用全局MIN(activity_date)筛选新用户，CTE略冗余但逻辑正确"
+
+[[criterion]]
+name = "去重与分母计算"
+description = "[Explicit] 上游数据去重和分母计算是否正确——events表同一用户同一天有多条记录需要去重,分母需要用DISTINCT用户数并防除零。1:未去重未修分母;2:仅去重或仅修分母;3:两者都做但实现有冗余或小问题;4:去重+NULLIF防除零简洁正确;5:去重+防除零+cohort_size独立输出便于校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "去重正确但用6步CTE+CROSS JOIN实现，步骤偏多"
+
+[[criterion]]
+name = "异常检测类型"
+description = "[Explicit] 异常检测覆盖了多少类型——题目要求跑完能自动检测异常值,需要覆盖留存率范围/空数据/小样本/非单调/大幅下降等场景。1:无异常检测;2:仅1-2种基础检查;3:3-4种异常类型;4:5-6种异常类型;5:7种以上异常类型且有结构化错误码"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "有基本校验(day0留存率、范围检查、相邻天增幅)，类型较少"
+
+[[criterion]]
+name = "日期运算修复"
+description = "[Explicit] 是否正确替换了不兼容的DATEDIFF函数——原始SQL使用MySQL的DATEDIFF()在PostgreSQL上不可用,需要替换为日期减法。1:未修改;2:修改但语法有误;3:正确替换但实现过度复杂(多方言支持);4:直接用日期减法简洁替换;5:替换+兼容性注释+测试验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "支持postgresql+sqlite双方言但实现复杂，对bug-fix任务过度设计"
+
+[[criterion]]
+name = "API向后兼容"
+description = "[Implicit] 修复是否保持了原有API接口稳定——bug-fix任务应尽量保持函数签名不变,避免下游调用方需要修改。1:改了函数签名(参数/返回值类型),属于breaking change;2:改了签名但提供了兼容层;3:签名不变但返回数据结构有变化;4:保持原有接口,仅修改内部实现;5:保持接口+向后兼容+文档更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "改了函数签名(加engine参数+返回tuple)，下游调用方需全部修改，属于breaking change"
+
+[[criterion]]
+name = "代码简洁性"
+description = "[Implicit] 代码修改是否简洁适度——bug-fix任务应专注修复问题,避免过度工程化(添加不必要的抽象层、类型系统、多方言支持等)。1:代码量膨胀3倍以上且引入不必要的抽象;2:代码量膨胀2倍以上,有过度工程化;3:适度扩展但有些冗余;4:专注修复,代码量适中;5:最小化修改,精确修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "8150 chars含dataclass/类型注解/多方言支持，对一个bug-fix任务过度工程化"
+
+[[criterion]]
+name = "测试方法论"
+description = "[Implicit] 测试方法是否能有效验证SQL查询和业务逻辑的正确性——留存率计算核心在SQL,测试需要能验证SQL实际执行结果。1:无测试;2:仅mock测试无法验证SQL;3:mock测试但覆盖了多种边界情况;4:使用真实数据库验证SQL执行;5:真实数据库+多场景覆盖+回归测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "用真实SQLite数据库执行SQL验证，能发现SQL语法和逻辑错误"

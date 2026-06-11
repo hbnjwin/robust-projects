@@ -1,0 +1,62 @@
+[[criterion]]
+name = "告警聚合设计"
+description = "[Explicit] 告警智能聚合的设计质量。1:无聚合直接转发所有告警;2:仅简单去重;3:实现了去重+分组聚合但缺少抑制机制;4:完整的去重+分组+抑制管道或状态机驱动;5:多级聚合+状态机+自适应冷静期+聚合窗口可配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现了三级管道(去重→分组→抑制)，5分钟去重窗口和30分钟冷静期，但聚合参数硬编码较多，涉及requirements.txt的修改，涉及requirements.txt"
+
+[[criterion]]
+name = "静默时段实现"
+description = "[Explicit] 静默时段功能的完善程度。1:未实现静默;2:仅支持固定时间段;3:支持定时静默时段配置;4:支持定时+一次性静默，可通过API动态管理;5:灵活的静默策略含按服务/规则粒度静默+API管理+日志审计"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现了mute.py静默时段管理，支持定时静默"
+
+[[criterion]]
+name = "热加载机制"
+description = "[Explicit] 巡检规则热加载实现。1:需重启服务;2:定时轮询重新读取;3:watchdog文件监控自动重载;4:watchdog+增量更新+错误回退;5:文件监控+版本比较+优雅降级+API触发手动重载"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用watchdog监控patrol_rules.yaml变更自动重载"
+
+[[criterion]]
+name = "检查类型覆盖"
+description = "[Explicit] 巡检检查类型的覆盖广度。1:无检查实现;2:仅一种检查类型;3:2种检查类型;4:3种以上检查类型+抽象基类;5:多类型检查+抽象基类+自定义检查插件机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "仅实现了HTTP健康检查(http_checker.py)，缺少其他检查类型"
+
+[[criterion]]
+name = "架构与扩展性"
+description = "[Explicit] 系统架构设计与可扩展性。1:单文件实现;2:基本模块分离;3:模块化但缺少抽象层;4:清晰分层+模型分离+抽象基类;5:领域驱动设计+插件机制+依赖注入+完善的模型层"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "模块化结构(checker/alert/scheduler/api)，但缺少抽象基类和模型层，涉及http_checker.py"
+
+[[criterion]]
+name = "通知渠道质量"
+description = "[Explicit] 通知渠道实现的安全性和质量。1:仅打印日志;2:基本HTTP请求发送;3:钉钉Webhook+Markdown格式+自动重试;4:签名验证+Markdown+重试+渠道抽象;5:多渠道支持+签名+模板+限流+渠道路由"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现钉钉Webhook发送Markdown格式告警，支持自动重试，涉及engine.py"
+
+[[criterion]]
+name = "API与运维接口"
+description = "[Explicit] 运维API接口的完整性。1:无API;2:仅状态查询;3:基本CRUD端点;4:完整REST API含规则管理+状态查询+手动触发;5:完整API+认证+文档+WebSocket实时推送"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现5个REST端点覆盖基本运维需求，涉及mute.py"

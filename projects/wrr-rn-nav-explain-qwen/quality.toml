@@ -1,0 +1,62 @@
+[[criterion]]
+name = "导航Bug根因分析"
+description = "[Explicit] RN导航问题的根因分析能力。1:完全未识别navigate/push区别和Tab嵌套Stack状态丢失;2:仅表面修复未分析根因;3:识别了部分根因但分析不系统;4:准确识别多数根因并给出合理解释;5:精准定位所有根因(navigate复用实例、Tab切换Stack状态重置、无泛型约束)并深入分析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "识别了参数丢失和跳首页问题，使用了PlanMode规划但分析过程较冗长，大量Bash探索才定位问题"
+
+[[criterion]]
+name = "参数保留修复精度"
+description = "[Explicit] 深层页面返回参数丢失的修复精度。1:未修复参数丢失;2:临时方案如全局变量传参;3:使用了push替代navigate但未加运行时校验;4:push替代navigate并加了参数类型约束;5:push+TypeScript严格泛型+运行时参数校验+缺失参数自动goBack"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "添加了ParamList泛型约束和navigation.push，但运行时校验不够完善"
+
+[[criterion]]
+name = "导航守卫设计"
+description = "[Explicit] 导航守卫实现的完善程度。1:未实现守卫;2:仅有简单的页面拦截;3:实现了beforeRemove监听或基本认证检查;4:beforeRemove+AuthContext条件渲染+弹窗确认;5:完整守卫体系包含认证隔离、beforeRemove、lazy Tab防状态丢失、initialRouteName明确指定"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现了AuthContext+NavigationGate条件渲染和beforeRemove弹窗确认"
+
+[[criterion]]
+name = "TypeScript类型安全"
+description = "[Explicit] TypeScript类型安全在导航中的应用。1:无类型约束;2:仅基本类型注解;3:定义了ParamList但覆盖不完整;4:完整ParamList泛型覆盖所有路由;5:严格泛型+编译期参数错误拦截+Screen组件参数类型推导"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了types.ts定义ParamList泛型，但覆盖完整性一般"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Explicit] 任务执行路径效率。1:超过100次工具调用仍未完成;2:大量重复/无效调用(70+);3:中等效率(40-70次调用);4:较高效率(25-40次);5:极高效率(<25次)直达目标"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "73次工具调用，其中Bash调用36次占比过大，执行路径冗长"
+
+[[criterion]]
+name = "代码修改质量"
+description = "[Explicit] 代码修改的工程质量。1:引入新bug或破坏现有功能;2:修复有效但代码风格差;3:修复正确代码规范但缺少边界处理;4:高质量修复含边界处理和错误防御;5:高质量修复+完善的错误防御+代码结构优化+一致的编码风格"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了9个文件修复正确，但Bash调用过多显示过程中可能有试错"
+
+[[criterion]]
+name = "解决方案文档清晰度"
+description = "[Explicit] 解决方案说明的清晰度。1:无总结;2:简单列出修改文件;3:有修复总结表格但缺少根因;4:有根因+修复方案对照;5:每个问题独立分析根因、修复方案、代码位置引用，结构清晰可追溯"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "有总结表格列出修复项/问题/方案，但根因分析不够深入"

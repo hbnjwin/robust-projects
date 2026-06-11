@@ -1,0 +1,10 @@
+{
+  "name": "rn-nav-explain",
+  "version": "1.0.0",
+  "dependencies": {
+    "react-native": "^0.73.0",
+    "@react-navigation/native": "^6.1.0",
+    "@react-navigation/stack": "^6.3.0",
+    "@react-navigation/bottom-tabs": "^6.5.0"
+  }
+}
