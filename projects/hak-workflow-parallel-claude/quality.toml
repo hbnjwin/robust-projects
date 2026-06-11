@@ -1,0 +1,62 @@
+[[criterion]]
+name = "级联清空完整性"
+description = "[Explicit] 上级下拉变化时是否完整清空所有下级的选中值和选项列表。1:未处理清空;2:仅清空直接下级;3:清空了选中值但未清空列表;4:完整清空值+列表;5:清空+默认值恢复+用户提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useCascadeSelect.ts的watch(reportTypeId)回调中一次性清空inspectionItemId、inspectionItems、criteriaId、criteriaList四个字段，逻辑集中在89-94行，无遗漏。使用TaskCreate预先规划了三个bug的修复顺序。"
+
+[[criterion]]
+name = "请求竞态控制"
+description = "[Explicit] 快速切换上级选项时是否正确处理异步请求乱序问题。1:无任何处理;2:仅有loading标志;3:使用版本号但实现有缺陷;4:AbortController或版本号机制完整;5:取消+版本号+请求队列。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useCascadeSelect.ts中为每次请求分配递增的requestId，回调中比对当前requestId与发起时的版本号，丢弃过期响应。report.ts的fetchInspectionItems和fetchCriteria均接入版本号校验，有效防止乱序覆盖。"
+
+[[criterion]]
+name = "加载态提交防护"
+description = "[Explicit] 异步加载过程中是否禁止用户提交表单或切换其他级联项。1:无防护;2:仅loading变量未绑定UI;3:禁用了提交按钮但下拉仍可切换;4:提交+下拉均禁用;5:全局表单锁+骨架屏提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReportAuditForm.vue中el-select绑定:disabled=\"cascadeLoading\"，提交按钮绑定:disabled=\"isSubmitting || cascadeLoading\"。加载期间下拉框和提交按钮均置灰不可操作，配合el-select的loading属性展示加载动画。"
+
+[[criterion]]
+name = "composable设计质量"
+description = "[Implicit] useCascadeSelect composable的职责单一性、参数设计和复用性。1:逻辑写在组件内;2:抽取了但耦合业务细节;3:基本抽取但接口设计不通用;4:参数化配置支持复用;5:完全通用的级联选择器composable。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useCascadeSelect.ts接收泛型配置参数，通过levels数组定义级联层级关系，每层指定fetchFn和valueKey。composable内部通过配置驱动而非硬编码字段名，理论上可复用于其他表单的级联选择。"
+
+[[criterion]]
+name = "TypeScript类型安全"
+description = "[Implicit] 接口定义、泛型使用和类型推断的完整性。1:无类型标注;2:基础类型但有any;3:主要类型完整但缺少泛型;4:完整类型定义含接口和泛型;5:严格模式无any+完整推断。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "report.ts定义了InspectionItem、Criteria等完整接口，API函数返回Promise<InspectionItem[]>等具体类型。useCascadeSelect.ts使用泛型T extends Record<string, unknown>约束formData类型，el-select的value类型与接口字段类型一致。"
+
+[[criterion]]
+name = "错误处理机制"
+description = "[Implicit] 网络请求失败、空数据、超时等异常场景的处理。1:无错误处理;2:console.error但无UI反馈;3:try-catch+用户提示;4:重试+降级+详细错误提示;5:完整的错误恢复策略。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useCascadeSelect.ts中fetchOptions使用try-catch包裹，catch分支重置loading状态并通过ElMessage.error展示错误提示。但未实现请求超时处理和自动重试机制，空列表场景仅展示空下拉无额外提示。"
+
+[[criterion]]
+name = "用户体验细节"
+description = "[Implicit] 加载动画、禁用态视觉反馈、占位提示等交互细节。1:无任何反馈;2:仅loading文字;3:加载动画+禁用态;4:骨架屏+禁用+placeholder变化;5:完整的微交互体验。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "el-select配置了:loading=\"levelLoading[index]\"和loading-text=\"加载中...\"，加载时显示旋转图标。placeholder在加载完成后动态更新为\"请选择(共N项)\"，选项为空时显示\"暂无数据\"。禁用态下拉箭头置灰。"
