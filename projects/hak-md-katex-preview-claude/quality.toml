@@ -1,62 +1,62 @@
 [[criterion]]
-name = "user_experience_and_interaction"
-description = "How smooth and efficient is the user experience during interaction? 1: workflow deadlock, loop errors, no valid output, completely unusable; 2: verbose reasoning, repeated self-correction, noticeable logic deviations requiring frequent intervention; 3: some repetition and redundant reasoning, occasional over-complication but user can still wait for results; 4: overall good experience with occasional redundancy or self-correction that does not affect task completion; 5: efficient reasoning, clear logic, smooth responses, accurately captures core intent, output is trustworthy with no room for optimization"
+name = "XSS防护深度"
+description = "[Explicit] KaTeX宏注入XSS漏洞的防护层次和完整性。1:无防护;2:仅trust:false;3:trust:false+部分输入过滤;4:输入预处理+trust:false+输出消毒多层防护;5:多层防护+CSP+自动化安全扫描。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 5
+rationale = "katexSanitizer.ts实现四层防御：(1)输入预处理层扫描原始LaTeX字符串，正则匹配\htmlClass、\htmlStyle、\htmlData、\htmlId、\href等危险命令，包括嵌套在\def/\newcommand/\renewcommand宏定义体内的变体，检测到则替换为安全占位符;(2)KaTeX渲染层设置trust:false从引擎级别禁止所有HTML注入命令;(3)输出消毒层对KaTeX生成的HTML字符串通过DOMParser解析后移除所有事件属性(on*)和javascript:协议链接;(4)CSP建议配置script-src限制内联脚本执行。"
 
 [[criterion]]
-name = "task_planning_and_execution_control"
-description = "How well does the model plan, decompose, track, and execute tasks? 1: no planning, no decomposition, no task list, no tracking, no feedback, no tool usage; 2: vague or unreasonable planning, ineffective task decomposition, inconsistent tracking, sporadic feedback; 3: macro-level planning is viable but task list is incomplete or not updated, significant tool gaps, vague feedback; 4: reasonable planning, task list exists but updates lag, minor tool misuse, clear stage feedback; 5: complete and well-reasoned plan, auto-generated task list, real-time progress sync, proper tool usage, thorough stage feedback, proactively clarifies ambiguity"
+name = "危险宏拦截"
+description = "[Explicit] 对\def/\newcommand定义中嵌套危险命令的检测能力。1:不检测宏定义;2:仅检测顶层命令;3:检测\def但遗漏变体;4:检测\def/\newcommand/\renewcommand+嵌套+转义变体;5:完整宏展开分析+沙箱执行。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "katexSanitizer.ts的preprocessInput方法使用正则扫描所有宏定义语法（\def、\newcommand、\renewcommand、\DeclareMathOperator及其星号变体），提取宏定义体内容并递归检查是否包含htmlClass、htmlStyle、htmlData、htmlId、href等危险命令关键字。检测到嵌套危险命令的宏定义整行被替换为\text{[blocked macro]}。支持检测多层\def嵌套（\def\a{\def\b{\htmlClass}}）。"
 
 [[criterion]]
-name = "semantic_understanding_and_logical_reasoning"
-description = "How accurately does the model understand intent and reason logically? 1: completely misunderstands intent, cannot parse code structure, unable to execute even with guidance, blind output; 2: misinterprets key information, can only partially complete tasks with guidance, incorrect code location and modification; 3: understands main intent but misses details, slight deviations, achieves goals with human guidance; 4: correctly understands intent and constraints, accurate code modifications, no guidance needed, knowledge meets task requirements; 5: precisely integrates context and codebase information, minimal optimal modifications, no human guidance needed, comprehensive knowledge coverage"
+name = "渲染错误恢复"
+description = "[Explicit] 公式语法错误（括号不匹配、未闭合\frac等）时是否优雅降级而非崩溃。1:未捕获异常页面崩溃;2:try-catch但显示空白;3:捕获+错误文字提示;4:捕获+原始公式展示+错误高亮;5:捕获+错误定位+修复建议+部分渲染。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "katex.ts中renderMath函数try-catch捕获KaTeX.ParseError，catch分支生成包含原始公式文本的错误占位符：<span class=\"math-error\" title=\"解析错误: {errorMsg}\"><code>{originalTeX}</code></span>。用户可以看到原始公式文本、鼠标悬停查看具体错误信息、点击复制公式内容去修正。useMarkdownPreview.ts中错误计数通过errorCount变量跟踪，批量渲染多个公式时不会因一个公式错误中断其余公式的渲染。"
 
 [[criterion]]
-name = "instruction_compliance_and_constraint_adherence"
-description = "How well does the model follow multiple constraints and maintain them throughout? 1: completely ignores complex constraints, outputs according to own defaults, enters dead loops or argues during manual correction, severely damages original structure; 2: after 2 corrections, still cannot satisfy multiple constraints simultaneously; 3: initial output ignores key constraints, can barely adjust after 2 explicit warnings; 4: initial output misses 1-2 non-core constraints, corrects all immediately after 1 user prompt; 5: perfectly adheres to all multiple constraints, never breaks prior requirements during fixes"
+name = "公式提取解析"
+description = "[Implicit] 从Markdown文本中提取行内公式($...$)和块级公式($$...$$)的解析质量。1:简单split;2:正则但边界case多;3:正则+转义处理;4:状态机解析+完整边界处理;5:AST级别解析+嵌套支持。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "markdownRenderer.ts中公式提取使用状态机模式逐字符扫描：维护inInlineMath/inBlockMath状态，遇到$检查前一字符是否为\转义，非转义$切换状态并标记公式起止位置。块级$$优先于行内$匹配。支持行内公式跨行（但不超过2行限制）、连续多个公式、公式内嵌套大括号等场景。提取结果为{type:'inline'|'block', tex:string, start:number, end:number}数组。"
 
 [[criterion]]
-name = "engineering_quality_and_completeness"
-description = "How complete and well-engineered is the code output? 1: no engineering quality awareness, no tests provided or outputs invalid pseudo-tests; 2: attempts tests only after multiple reminders, obvious flaws; 3: supplements tests after reminders but only covers main flow; 4: provides tests in most scenarios, tests are valid but coverage has minor deviations; 5: proactively adds/updates test cases, covers critical paths, follows engineering standards"
+name = "测试覆盖"
+description = "[Implicit] XSS防护和渲染错误处理的测试覆盖情况。1:无测试;2:手动验证;3:少量测试;4:核心安全场景覆盖;5:完整覆盖含模糊测试。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "未创建独立的测试文件。katexSanitizer.ts和katex.ts的防护逻辑通过手动在MarkdownEditor.vue中输入恶意公式验证。缺少自动化的安全测试回归保障——未来修改sanitizer规则时可能引入遗漏，无测试用例自动检测。XSS攻击向量的覆盖依赖开发者手动构造，未使用模糊测试发现未知攻击模式。"
 
 [[criterion]]
-name = "delivery_completeness_and_usability"
-description = "How complete, runnable, and usable is the final delivery? 1: completely non-runnable, irrelevant output; 2: fails to achieve core objectives, code cannot run; 3: main functionality runs but has obvious defects requiring manual fixes; 4: core functionality is complete and usable, very few detail omissions; 5: runnable on first attempt, full feature closure, covers both explicit and implicit requirements"
+name = "sanitizer模块设计"
+description = "[Implicit] XSS防护代码的模块化程度和可维护性。1:内嵌在渲染函数中;2:简单工具函数;3:独立文件但接口不清晰;4:独立sanitizer模块+可配置规则;5:规则引擎+动态配置+审计日志。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "katexSanitizer.ts作为独立模块导出sanitize(input: string): SanitizeResult接口，返回{safe: boolean, sanitized: string, blocked: string[]}。危险命令列表DANGEROUS_COMMANDS作为常量数组定义，新增拦截规则只需添加数组元素。katex.ts中import { sanitize } from './katexSanitizer'在渲染前调用，职责分离清晰。sanitizer可独立于KaTeX测试和复用到其他LaTeX处理场景。"
 
 [[criterion]]
-name = "architecture_boundaries_and_security_compliance"
-description = "How well does the model respect architecture boundaries and security compliance? 1: arbitrarily deletes or damages core files, performs unauthorized high-risk operations; 2: frequently crosses boundaries, relapses after correction; 3: irrelevant modifications and redundant dependencies, recoverable with intervention; 4: occasionally makes minor boundary violations, stops immediately when reminded; 5: strictly respects architecture boundaries, no unauthorized operations, proactively confirms authorization"
+name = "Markdown渲染集成"
+description = "[Implicit] KaTeX公式渲染与Markdown整体渲染流程的集成质量。1:渲染冲突;2:简单替换;3:marked/markdown-it插件;4:独立渲染器+composable分离+流程控制;5:插件化渲染+流式处理+缓存。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "markdownRenderer.ts独立于KaTeX处理Markdown渲染，先通过公式提取将$...$和$$...$$替换为占位符{{MATH_0}}，再交给marked渲染Markdown，最后将占位符替换回KaTeX渲染结果。三阶段流水线避免了公式语法与Markdown语法的冲突。useMarkdownPreview.ts作为composable封装整个渲染流程，提供renderedHtml响应式输出和renderError错误状态。MarkdownEditor.vue仅消费composable的输出。"
