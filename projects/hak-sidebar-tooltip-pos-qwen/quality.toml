@@ -1,0 +1,62 @@
+[[criterion]]
+name = "tooltip定位精度"
+description = "[Explicit] 侧边栏折叠状态下tooltip是否准确显示在菜单项右侧，不偏移不遮挡。1: tooltip位置完全错误；2: 大致在右侧但偏移明显；3: 位置基本正确但边缘情况偏移；4: 精确定位且适配不同屏幕；5: 精确定位+自适应方向+防溢出。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "SidebarMenu.vue中折叠态菜单的el-tooltip使用默认placement=\"right\"，但未考虑菜单项高度不一致导致的垂直偏移。tooltip箭头指向与菜单项中心不对齐，视觉上偏移约8px。"
+
+[[criterion]]
+name = "折叠展开过渡衔接"
+description = "[Explicit] 侧边栏折叠/展开动画期间tooltip是否正确隐藏，动画结束后才可触发。1: 动画期间tooltip闪烁；2: 动画中tooltip位置跳动；3: 动画时隐藏但结束瞬间闪现；4: 平滑过渡无闪烁；5: 过渡+延迟显示+动画同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "SidebarMenu.vue的collapse过渡动画使用CSS transition，但tooltip的显隐未与折叠动画同步。折叠过程中hover菜单项会触发tooltip在错误位置闪现，展开过程中tooltip残留不消失。"
+
+[[criterion]]
+name = "鼠标移入移出响应"
+description = "[Explicit] tooltip的显示和隐藏是否跟随鼠标hover行为，无延迟卡顿或残留。1: hover无响应；2: 响应但有明显延迟；3: 基本响应但快速移动时残留；4: 响应灵敏且快速移动无残留；5: 灵敏响应+虚拟触发+防抖优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "el-tooltip的enterable属性默认true，鼠标从菜单项移向tooltip内容时tooltip保持显示。但快速在多个菜单项间移动时，上一个tooltip的hide-after延迟导致多个tooltip同时短暂显示。"
+
+[[criterion]]
+name = "子菜单tooltip联动"
+description = "[Implicit] 含子菜单的父级菜单项tooltip是否与子菜单面板协调显示。1: tooltip与子菜单重叠；2: 显示冲突但不遮挡功能；3: 折叠态tooltip正确但展开态残留；4: 两种状态均正确联动；5: 联动+子菜单悬浮面板+平滑过渡。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "el-sub-menu折叠态下tooltip与弹出的子菜单面板位置重叠，tooltip显示在子菜单面板上方造成遮挡。未实现tooltip在子菜单弹出时自动隐藏的联动逻辑。"
+
+[[criterion]]
+name = "无障碍可访问性"
+description = "[Implicit] tooltip是否配置了正确的ARIA属性，键盘导航时能否触发。1: 无ARIA标注；2: 有aria-label但tooltip不可键盘触发；3: 键盘可触发但屏幕阅读器不播报；4: ARIA完整且键盘可操作；5: 完整WCAG 2.1 AA合规。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "SidebarMenu.vue中tooltip未配置aria-describedby关联，折叠态菜单项缺少aria-label备用文本。键盘Tab导航焦点到菜单项时不触发tooltip显示，屏幕阅读器用户无法获知完整菜单名称。"
+
+[[criterion]]
+name = "响应式布局适配"
+description = "[Implicit] 不同视口宽度下tooltip位置是否自适应，移动端是否降级处理。1: 仅适配固定宽度；2: 宽屏正常但窄屏溢出；3: 基本响应式但断点处异常；4: 全视口适配且窄屏降级；5: 自适应+移动端手势+断点平滑过渡。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "SidebarMenu.vue的sidebar宽度通过CSS固定值设置，折叠态宽度64px硬编码。tooltip的placement=\"right\"在窄屏设备上可能超出视口右边界，未实现自动翻转或位置调整。"
+
+[[criterion]]
+name = "性能与资源管理"
+description = "[Implicit] tooltip组件的渲染策略和事件监听是否优化，避免频繁重渲染。1: 每个菜单项独立tooltip实例；2: 实例复用但事件未清理；3: 虚拟渲染减少DOM节点；4: 单例tooltip+事件委托；5: 虚拟滚动+单例+RAF优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "SidebarMenu.vue中每个el-menu-item内嵌独立的el-tooltip组件，20个菜单项产生20个tooltip DOM节点。折叠/展开时所有tooltip实例同时更新，触发不必要的重渲染。"
