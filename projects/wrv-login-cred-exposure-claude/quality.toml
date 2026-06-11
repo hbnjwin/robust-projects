@@ -1,0 +1,44 @@
+[[criterion]]
+name = "请求方法修复"
+description = "[Explicit] 将GET改为POST避免凭证出现在URL查询参数中。1:仍是GET;2:改了但参数仍在URL;3:POST但Content-Type不对;4:正确POST+参数在请求体;5:POST+HTTPS+CSRF防护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "auth-center.js中appRequest.get()改为appRequest.post()，参数名从params改为data作为POST body传递，凭证不再出现在URL中"
+
+[[criterion]]
+name = "哈希算法升级"
+description = "[Explicit] 密码哈希从MD5升级为更安全的算法。1:仍是MD5;2:升级但盐值不对;3:SHA-256但无盐;4:SHA-256正确替换;5:SHA-256+动态盐+PBKDF2"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "login/index.vue中CryptoJS.MD5()改为CryptoJS.SHA256()，利用已安装的crypto-js库直接升级，无需引入新依赖"
+
+[[criterion]]
+name = "凭证保护"
+description = "[Explicit] 登录凭证在传输过程中的整体保护水平。1:明文URL;2:POST但明文body;3:POST+哈希但无HTTPS约束;4:POST+SHA-256+请求体传输;5:POST+SHA-256+TLS强制+token机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "两项安全修复形成组合防护：POST请求避免URL泄露+SHA-256防止弱哈希碰撞"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围和效率。1:大量无关修改;2:有明显冗余;3:基本精准;4:精准修改;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "5次工具调用(2次Read+2次Edit+1次Agent)集中于auth-center.js和login/index.vue两个文件的安全修复"
+
+[[criterion]]
+name = "安全意识"
+description = "[Implicit] 对Web安全最佳实践的理解和应用。1:无安全意识;2:只做了表面修复;3:理解问题但修复不全面;4:GET改POST+哈希升级完整修复;5:完整修复+安全审计+CSP配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确识别两个安全风险(URL凭证暴露+弱哈希)并分别给出针对性修复方案"

@@ -1,0 +1,53 @@
+[[criterion]]
+name = "引用计数机制"
+description = "[Explicit] WebSocket单例的引用计数实现，多组件共享连接时只在最后一个组件断开时才真正关闭。1:未实现;2:简单计数但无减少逻辑;3:增减计数但边界条件有问题;4:完整refCount增减+归零断开;5:引用计数+WeakRef+自动清理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "websocket-manager.js新增refCount属性，connect()递增复用已有连接，disconnect()递减并仅当计数归零时才真正关闭连接和停止心跳/重连"
+
+[[criterion]]
+name = "监听器清理"
+description = "[Explicit] 组件卸载时正确移除WebSocket事件监听器，避免匿名函数无法off的问题。1:未处理;2:调了off但匿名函数匹配不上;3:具名函数但部分遗漏;4:所有监听器都用具名函数+完整off;5:具名+自动清理注册表"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将connected/disconnected/error三个匿名箭头函数提取为handleConnected/handleDisconnected/handleError具名函数，onUnmounted中wsManager.off()能正确匹配移除"
+
+[[criterion]]
+name = "心跳管理"
+description = "[Explicit] 引用计数归零时心跳定时器的停止和重连逻辑的清理。1:未处理心跳;2:断开但心跳继续;3:停止心跳但重连定时器残留;4:心跳+重连+所有定时器全部清理;5:清理+状态机+优雅关闭"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "disconnect()归零时停止心跳定时器和重连定时器，调用ws.close()后重置连接状态"
+
+[[criterion]]
+name = "组件隔离"
+description = "[Implicit] 各组件独立管理自己的监听器，互不影响。1:组件间互相干扰;2:部分隔离;3:基本隔离但有共享状态泄漏;4:完全隔离各自注册/注销;5:隔离+命名空间+事件总线"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ai-report-review和task-progress各自维护独立的具名监听器函数，onUnmounted中只移除自己注册的监听器，互不影响"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围和工具调用效率。1:大量无关修改;2:有明显冗余;3:基本精准;4:精准修改;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "24次工具调用(8次Edit+6次Read+6次TaskUpdate)，修改3个文件，TaskUpdate操作较多但修改范围正确"
+
+[[criterion]]
+name = "多组件覆盖"
+description = "[Explicit] ai-report-review和task-progress两个组件都完成了WebSocket使用方式的修复。1:只改了一个;2:都改了但不完整;3:都完整修改;4:都修改+统一调用模式;5:统一+文档+类型约束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "两个组件都改为connect()+on()注册、onUnmounted中off()+disconnect()释放的统一模式"

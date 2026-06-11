@@ -1,0 +1,44 @@
+[[criterion]]
+name = "API模块修正"
+description = "[Explicit] 将upload-dialog.vue的import从EXPERT_DATABASE改为AI_REPORT_REVIEW。1:未修正;2:改了import但调用未更新;3:import和调用都改了但方法名不对;4:import+调用+方法名全部正确修正;5:修正+TypeScript接口约束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "upload-dialog.vue中将import从EXPERT_DATABASE改为AI_REPORT_REVIEW，调用方法也相应更新，但53次工具调用中有大量不必要的Bash操作"
+
+[[criterion]]
+name = "导出补全"
+description = "[Explicit] api/index.js中补充AI_REPORT_REVIEW模块的导出。1:未补充;2:补了但路径错误;3:导出正确;4:导出正确且与其他模块格式一致;5:导出+类型定义+自动发现"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "api/index.js中添加了AI_REPORT_REVIEW的import和export，与现有EXPERT_DATABASE等模块格式一致"
+
+[[criterion]]
+name = "调用链修复"
+description = "[Explicit] 从import→export→调用的完整链路修复。1:链路断裂;2:部分修复;3:链路通但有冗余;4:完整链路修复;5:链路+错误边界+降级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了import、export和调用三处，但额外修改了api/modules/ai-report-review.js文件，可能引入了不必要的变更"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和效率。1:大量无关修改;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "53次工具调用(24次Bash+14次Read+12次Edit)，大量Bash操作包含git和robust-auto逻辑，12次Edit说明反复修改，严重偏离修复任务"
+
+[[criterion]]
+name = "修复完整性"
+description = "[Explicit] TypeError: EXPERT_DATABASE.postDocumentsUploadFile is not a function错误的完整消除。1:仍报错;2:不报TypeError但功能不正常;3:功能正常但有warning;4:完全消除错误且功能正常;5:消除+防御性检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后import正确的API模块，调用存在的方法，TypeError消除"

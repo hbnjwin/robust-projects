@@ -1,0 +1,53 @@
+[[criterion]]
+name = "路由传参恢复"
+description = "[Explicit] 恢复handleView中router.push传入记录ID的逻辑。1:未修复;2:传了但参数名不对;3:取消注释但参数格式有问题;4:正确传入row.id通过query;5:传参+路由守卫校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "index.vue第167行恢复路由传参，将router.push({name:'ExpertDatabaseView'})改为router.push({name:'ExpertDatabaseView',query:{id:row.id}})"
+
+[[criterion]]
+name = "详情页数据请求"
+description = "[Explicit] view.vue中添加onMounted钩子和API数据请求逻辑。1:无请求;2:有请求但API不对;3:请求正确但数据绑定不完整;4:完整的onMounted+API请求+数据绑定;5:请求+loading+错误处理+骨架屏"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "view.vue补全onMounted钩子，导入useRoute和EXPERT_DATABASE API，添加detail响应式对象，onMounted中通过id请求详情并赋值"
+
+[[criterion]]
+name = "数据绑定"
+description = "[Explicit] 模板中硬编码占位符替换为实际数据绑定。1:仍是占位符;2:部分绑定;3:主要字段绑定但有遗漏;4:所有占位符替换为动态数据;5:绑定+格式化+空值处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "模板中硬编码的xxxx替换为{{detail.fileName}}和{{detail.ruleVersion}}等动态数据绑定"
+
+[[criterion]]
+name = "API调用正确性"
+description = "[Explicit] 使用正确的API模块和方法获取专家库文档详情。1:未调用;2:调了错误的API;3:API正确但参数格式不对;4:正确使用EXPERT_DATABASE模块的详情接口;5:正确调用+响应类型校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "正确导入EXPERT_DATABASE API模块，使用对应的getDetail方法传入id获取文档详情"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和效率。1:大量无关修改;2:有冗余;3:基本精准;4:精准修改;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "13次工具调用(6次Read+3次Edit+2次Glob+2次Grep)，修改集中于index.vue和view.vue两个文件"
+
+[[criterion]]
+name = "双问题覆盖"
+description = "[Explicit] 路由传参缺失和详情页无数据请求两个问题都修复。1:只修了一个;2:都涉及但不完整;3:都修了;4:都完整修复且逻辑连贯;5:完整修复+边界情况处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "两个问题形成完整修复链：index.vue传入id→view.vue通过route.query.id获取→API请求→数据绑定渲染"

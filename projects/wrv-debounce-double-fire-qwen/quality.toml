@@ -1,0 +1,44 @@
+[[criterion]]
+name = "双触发修复"
+description = "[Explicit] immediate=true模式下debounce函数只执行一次而非两次的修复。1:未修复;2:去掉了immediate但改变语义;3:修了但边界条件有问题;4:正确区分首次立即执行和延迟重置;5:完整修复+取消机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Edit修改common-function.js的debounce函数，将setTimeout回调中的if(immediate)改为if(!immediate)，解决了双触发问题，但修复过程经过6次工具调用包括Agent委托，效率一般"
+
+[[criterion]]
+name = "延迟执行修复"
+description = "[Explicit] immediate=false模式下回调函数能正常在延迟后触发。1:仍不触发;2:触发但时机不对;3:能触发但参数丢失;4:正确延迟触发并保留参数;5:延迟触发+可取消+返回Promise"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改if(immediate)为if(!immediate)后，setTimeout回调中会在非immediate模式下执行func，解决了不触发问题"
+
+[[criterion]]
+name = "连续触发重置"
+description = "[Explicit] 连续快速触发后timeout正确重置，允许再次立即执行。1:无法重置;2:重置但有延迟;3:重置逻辑正确但clearTimeout不完整;4:完整的clearTimeout+timeout置null重置链;5:重置+leading/trailing配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后连续触发时clearTimeout正确清除定时器，但timeout=null的重置时机在setTimeout回调中，与原实现一致未做优化"
+
+[[criterion]]
+name = "上下文保留"
+description = "[Implicit] debounce包装后this指向和arguments的正确传递。1:丢失this和args;2:保留了this但args丢失;3:基本保留但箭头函数场景有问题;4:apply正确传递context和args;5:传递+支持返回值"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复集中在条件分支逻辑，未额外处理this/arguments的传递问题，沿用原有的context/args变量保存方式，但对箭头函数场景下this捕获的正确性未做验证"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于debounce逻辑修复。1:大量无关修改;2:有明显冗余;3:基本精准;4:精准修改;5:最小改动且完整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "6次工具调用包含1次Agent委托和3次Read，最终1次Edit完成修复，过程略有冗余"
