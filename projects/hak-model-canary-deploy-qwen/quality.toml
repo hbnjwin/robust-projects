@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Tab级状态隔离"
+description = "[Explicit] 筛选条件等UI状态是否按Tab隔离，避免多Tab间通过localStorage互相覆盖。1:所有状态共享localStorage;2:部分隔离;3:sessionStorage但封装不完整;4:tabStorage封装+tabId标识;5:完整隔离+状态迁移。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "storage.ts中创建了tabStorage包装器，将筛选状态存储到sessionStorage实现Tab隔离。但tabId的生成使用Math.random()，在同一Tab刷新后tabId变化导致状态丢失。review.ts中的persist配置切换到tabStorage，但useUnsavedEdits.ts仍使用默认localStorage。"
+
+[[criterion]]
+name = "编辑草稿保护"
+description = "[Explicit] 未保存的编辑内容在切Tab后是否能恢复，不被其他Tab覆盖。1:切Tab后编辑丢失;2:localStorage存但被覆盖;3:sessionStorage保存草稿;4:独立的draft store+防覆盖;5:草稿+冲突检测+合并提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useUnsavedEdits.ts将编辑草稿存入localStorage的review_draft_{reportId}键下。但当Tab2也打开同一报告并编辑时，两个Tab的草稿会互相覆盖。未实现基于tabId的草稿隔离，也无草稿版本号或时间戳用于冲突检测。ReviewDetail.vue的beforeRouteLeave提示保存但未处理Tab切换场景。"
+
+[[criterion]]
+name = "登出状态同步"
+description = "[Explicit] 一个Tab登出后其他Tab是否同步跳转到登录页，避免使用过期会话。1:其他Tab不受影响;2:刷新后才跳转;3:BroadcastChannel但不完整;4:storage事件监听+自动跳转;5:同步+会话清理+优雅提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useTabSync.ts通过BroadcastChannel在Tab间广播logout消息，接收方调用router.push('/login')跳转。但BroadcastChannel在Safari旧版本兼容性差，且未处理postMessage失败的降级方案。auth.ts的logout action中先清除token再广播，存在其他Tab在短暂窗口内使用已失效token发起请求的风险。"
+
+[[criterion]]
+name = "存储分层策略"
+description = "[Implicit] localStorage和sessionStorage的使用是否有清晰的分层设计。1:混用无规则;2:大部分用localStorage;3:有分层但不一致;4:明确的分层策略+封装;5:分层+加密+容量管理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "storage.ts中定义了tabStorage但项目中persist配置的storage属性使用不统一——review.ts用tabStorage，auth.ts用默认localStorage，useUnsavedEdits.ts也用localStorage。缺少统一的存储策略文档或常量定义，开发者容易选错存储类型。"
+
+[[criterion]]
+name = "状态恢复机制"
+description = "[Implicit] 页面刷新或Tab切回后状态是否正确恢复。1:刷新后状态全丢;2:部分恢复;3:主要状态恢复;4:完整恢复+visibilitychange处理;5:恢复+冲突检测+版本同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReviewList.vue页面刷新后依赖Pinia persist从localStorage恢复状态，但多Tab环境下恢复的可能是其他Tab最后写入的状态。例如Tab1筛选\"待审核\"，Tab2筛选\"已完成\"并触发persist写入，Tab1刷新后恢复为\"已完成\"而非\"待审核\"。visibilitychange事件未监听处理。"
+
+[[criterion]]
+name = "冲突检测"
+description = "[Implicit] 多Tab同时编辑同一数据时是否有冲突检测和提示。1:无检测静默覆盖;2:最后写入胜出;3:时间戳比较;4:版本号+提示用户;5:OT/CRDT实时协作。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "多个Tab同时编辑同一审核报告时，保存操作直接PUT到服务端，后保存的覆盖先保存的，无版本号或ETag校验。用户在Tab1编辑了30分钟的审核意见可能被Tab2的保存操作静默覆盖，造成工作丢失。"
+
+[[criterion]]
+name = "代码架构清晰度"
+description = "[Implicit] store模块划分、文件组织和职责分配的清晰程度。1:单一store堆砌;2:多store但职责重叠;3:基本模块化;4:store模块化+清晰职责;5:领域驱动+状态机设计。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了auth.ts、review.ts、useUnsavedEdits.ts、storage.ts、useTabSync.ts等多个文件，但职责划分不够清晰——useTabSync.ts的BroadcastChannel逻辑与auth.ts的登出逻辑重叠，useUnsavedEdits.ts与review store的草稿管理职责模糊。storage.ts仅导出了tabStorage一个封装，缺少完整的存储层。"
