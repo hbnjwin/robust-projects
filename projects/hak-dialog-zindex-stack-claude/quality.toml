@@ -1,0 +1,62 @@
+[[criterion]]
+name = "z-index层叠顺序修复"
+description = "[Explicit] 多层Dialog弹窗的z-index是否正确递增，避免后开弹窗被遮挡。1: 未处理z-index问题；2: 硬编码固定值无法适配多层；3: 手动递增但存在溢出或重复；4: 动态计算z-index且正确递增；5: 全局z-index管理器+自动回收。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useDialogZIndex.ts中实现了z-index管理器，通过currentZIndex响应式变量维护全局计数，每次openDialog调用时递增baseZIndex+step。Dialog组件绑定:z-index=\"nextZIndex\"，关闭时触发releaseZIndex回调。"
+
+[[criterion]]
+name = "遮罩层穿透处理"
+description = "[Explicit] 多层弹窗的遮罩层是否正确叠加，点击遮罩是否只关闭最顶层弹窗。1: 遮罩层相互干扰；2: 遮罩存在但点击行为异常；3: 遮罩正确但透明度累加过深；4: 遮罩层独立管理且行为正确；5: 遮罩+键盘ESC+焦点陷阱完整。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useDialogZIndex.ts中为每层Dialog的modal-append-to-body设置为true，遮罩z-index设为弹窗z-index减1。el-dialog配置:close-on-click-modal=\"false\"防止误关，仅允许关闭按钮和ESC操作最顶层弹窗。"
+
+[[criterion]]
+name = "弹窗关闭顺序控制"
+description = "[Explicit] ESC键和关闭按钮是否遵循后进先出的关闭顺序。1: 关闭顺序混乱；2: 关闭按钮正确但ESC行为异常；3: 基本LIFO但边界情况未处理；4: 严格LIFO+ESC仅关闭顶层；5: LIFO+动画过渡+状态恢复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "dialogStack数组维护打开顺序，handleEscape方法检查当前弹窗是否为栈顶元素，仅栈顶弹窗响应ESC。关闭时从栈中pop移除，确保严格LIFO顺序。el-dialog设置:close-on-press-escape=\"false\"由自定义逻辑接管。"
+
+[[criterion]]
+name = "弹窗状态管理"
+description = "[Implicit] 多个弹窗的打开/关闭状态是否通过统一机制管理，避免状态不同步。1: 各弹窗独立变量无统一管理；2: 有管理但状态同步延迟；3: 统一管理但缺少生命周期钩子；4: 完整的弹窗状态管理composable；5: 状态管理+持久化+跨组件通信。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useDialogManager.ts统一管理所有弹窗状态，通过registerDialog注册弹窗实例，openDialog/closeDialog操作统一入口。弹窗间通过事件总线通信，关闭外层时自动级联关闭内层弹窗。"
+
+[[criterion]]
+name = "滚动锁定处理"
+description = "[Implicit] 弹窗打开时是否正确锁定背景滚动，多层关闭后是否恢复。1: 未处理背景滚动；2: 锁定但关闭后未恢复；3: 单层正确但多层嵌套时失效；4: 多层嵌套均正确锁定和恢复；5: 锁定+滚动位置记忆+iOS兼容。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useDialogManager.ts维护activeCount计数器，每次openDialog递增、closeDialog递减，仅当activeCount归零时移除body的overflow:hidden样式。多层弹窗嵌套场景下背景始终保持锁定直到所有弹窗关闭。"
+
+[[criterion]]
+name = "组件复用性设计"
+description = "[Implicit] 弹窗z-index管理逻辑是否抽取为可复用组件或composable。1: 逻辑散落在模板中；2: 抽取但与业务耦合；3: 基本可复用但接口不通用；4: 通用composable支持配置；5: 完整的弹窗管理库+文档+测试。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useDialogZIndex.ts作为独立composable导出，接收baseZIndex和step配置参数。其他组件通过import { useDialogZIndex } from \"@/composables\"即可复用，无业务字段耦合。"
+
+[[criterion]]
+name = "TypeScript类型完整性"
+description = "[Implicit] 弹窗管理相关接口和类型定义是否完整，避免any和类型断言。1: 无类型标注；2: 基础类型但有any；3: 主要类型完整但泛型缺失；4: 完整类型定义含接口和泛型；5: 严格模式无any+完整推断。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useDialogZIndex.ts定义了DialogOptions接口约束配置参数，返回值类型通过TypeScript自动推断。但dialogStack中的元素类型使用Record<string, unknown>而非具体接口，部分回调参数仍需类型断言。"
