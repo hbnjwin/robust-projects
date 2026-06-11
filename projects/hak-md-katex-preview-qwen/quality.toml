@@ -1,0 +1,62 @@
+[[criterion]]
+name = "XSS防护深度"
+description = "[Explicit] KaTeX宏注入XSS漏洞的防护层次和完整性。1:无防护;2:仅trust:false;3:trust:false+部分输入过滤;4:输入预处理+trust:false+输出消毒多层防护;5:多层防护+CSP+自动化安全扫描。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "katex-renderer.ts中设置KaTeX选项trust:false禁止htmlClass/htmlStyle等命令执行。但\def宏定义可以将危险命令包装在看似无害的宏名下绕过trust检查——\def\safe{\htmlClass{x}{\html{<img onerror=alert(1)>}}}调用\safe时trust:false的检查点在宏展开之前，展开后的危险命令可能未被拦截。输入层面未对\def体内的内容做预检查。"
+
+[[criterion]]
+name = "危险宏拦截"
+description = "[Explicit] 对\def/\newcommand定义中嵌套危险命令的检测能力。1:不检测宏定义;2:仅检测顶层命令;3:检测\def但遗漏变体;4:检测\def/\newcommand/\renewcommand+嵌套+转义变体;5:完整宏展开分析+沙箱执行。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "katex-renderer.ts中仅通过trust:false在KaTeX渲染时拦截直接使用的\htmlClass等命令。但未在输入层面扫描\def宏定义体内的危险命令。攻击者可以通过\def\a#1{\htmlClass{#1}{payload}}定义宏，然后在公式中调用\a{attacker-class}，宏展开后产生的\htmlClass在某些KaTeX版本中可能绕过trust检查。"
+
+[[criterion]]
+name = "渲染错误恢复"
+description = "[Explicit] 公式语法错误（括号不匹配、未闭合\frac等）时是否优雅降级而非崩溃。1:未捕获异常页面崩溃;2:try-catch但显示空白;3:捕获+错误文字提示;4:捕获+原始公式展示+错误高亮;5:捕获+错误定位+修复建议+部分渲染。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "katex-renderer.ts中KaTeX.renderToString调用包裹在try-catch中，catch分支返回<span class=\"math-error\">公式渲染失败</span>错误提示。但错误提示中未展示原始公式文本，用户无法知道是哪个公式出了问题，也无法复制公式内容去修正。错误提示样式固定为红色文字，在暗色模式下不够显眼。"
+
+[[criterion]]
+name = "公式提取解析"
+description = "[Implicit] 从Markdown文本中提取行内公式($...$)和块级公式($$...$$)的解析质量。1:简单split;2:正则但边界case多;3:正则+转义处理;4:状态机解析+完整边界处理;5:AST级别解析+嵌套支持。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "markdown-math.ts中使用正则表达式匹配$...$和$$...$$公式块。但正则未处理转义的\$符号——文本中的\"价格是\$100\"会被误识别为公式开始符。对于嵌套的$符号如$a$b$c$会贪婪匹配为单个公式$a$b$c$而非两个公式$a$和$c$。测试文件markdown-math.test.ts中覆盖了部分边界case。"
+
+[[criterion]]
+name = "测试覆盖"
+description = "[Implicit] XSS防护和渲染错误处理的测试覆盖情况。1:无测试;2:手动验证;3:少量测试;4:核心安全场景覆盖;5:完整覆盖含模糊测试。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了katex-renderer.test.ts和markdown-math.test.ts两个测试文件，共41个测试用例全部通过。覆盖了：\htmlClass直接注入、\def嵌套注入、\href javascript:协议、trust:false验证、括号不匹配降级、未闭合\frac降级、正常公式渲染、行内/块级公式提取、转义\$处理等场景。使用vitest运行，配置了vitest.config.ts。"
+
+[[criterion]]
+name = "sanitizer模块设计"
+description = "[Implicit] XSS防护代码的模块化程度和可维护性。1:内嵌在渲染函数中;2:简单工具函数;3:独立文件但接口不清晰;4:独立sanitizer模块+可配置规则;5:规则引擎+动态配置+审计日志。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "katex-renderer.ts中XSS防护逻辑与KaTeX渲染逻辑混在同一个renderMath函数中。trust:false配置和输入过滤的正则表达式直接写在渲染函数内，难以单独测试防护规则或在其他KaTeX使用点复用。添加新的危险命令拦截规则需要修改渲染函数代码。"
+
+[[criterion]]
+name = "Markdown渲染集成"
+description = "[Implicit] KaTeX公式渲染与Markdown整体渲染流程的集成质量。1:渲染冲突;2:简单替换;3:marked/markdown-it插件;4:独立渲染器+composable分离+流程控制;5:插件化渲染+流式处理+缓存。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useMarkdownPreview.ts中Markdown渲染使用marked库，KaTeX公式通过自定义的marked扩展在渲染流程中处理。但公式提取和渲染在marked的tokenizer/renderer中同步执行，大量公式时阻塞主线程。markdown-math.ts的公式正则与marked的内置行内代码规则存在冲突——`$code$`被同时匹配为行内代码和行内公式。"
