@@ -1,0 +1,44 @@
+[[criterion]]
+name = "错误捕获修复"
+description = "[Explicit] 为getTableList的promise链添加.catch()捕获API请求失败的异常。1: 仍无.catch()；2: 添加了但未处理错误；3: catch中有console.error但无用户提示；4: catch中弹出错误提示MessagePlugin并记录日志；5: catch加重试机制加降级策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "expert-database/index.vue中为getTableList的promise链添加了.catch()回调，catch中有错误处理逻辑，但20次工具调用（含5次Bash和1次Skill）显示修复过程不够直接"
+
+[[criterion]]
+name = "用户错误提示"
+description = "[Explicit] API请求失败时向用户展示可理解的错误提示信息而非空白列表。1: 仍无提示；2: 提示了但信息不友好；3: 友好提示但无操作建议；4: 友好提示并建议刷新重试；5: 分级提示（网络错误/服务端错误/超时）加自动重试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "catch回调中添加了错误提示，用户在请求失败时能看到提示信息而非空白列表"
+
+[[criterion]]
+name = "防御性解构"
+description = "[Explicit] 对API响应数据做防御性解构避免后端返回异常数据时TypeError。1: 无防御；2: 简单if判断但不全面；3: 可选链或默认值但覆盖不完整；4: data?.data配合{list=[], total=0}默认值的完整防御；5: 防御加响应数据schema校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "API调用的.then()回调中对响应数据的解构缺乏防御，后端返回null或格式不一致时仍可能导致TypeError"
+
+[[criterion]]
+name = "finally状态清理"
+description = "[Implicit] 无论请求成功或失败都正确清理loading状态，避免表格永远显示加载中。1: loading状态残留；2: 只在成功时清理；3: 在then和catch中都清理但有重复代码；4: 使用.finally()统一清理loading状态；5: finally清理加超时保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "请求失败时的loading状态清理逻辑存在但实现方式可能不统一，.catch()和.then()中分别处理loading可能导致代码重复"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于错误处理修复。1: 大量无关修改；2: 有明显冗余操作；3: 核心修复正确但过程冗长；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "20次工具调用（6次Read+5次Bash+4次Grep+2次Glob+2次Edit+1次Skill），其中Skill调用和多次Grep/Glob搜索说明定位问题过程迂回，实际修复只需2次Edit修改一个文件"

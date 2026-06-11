@@ -4,12 +4,14 @@ import oauth2 from '@/utils/oauth2'
 // import { useUserinfoStore } from '@/store/modules/userinfo'
 
 import LoginRoute from './modules/login'
+import AuthCenterRoute from './modules/auth-center'
 import ExpertDatabaseRoute from './modules/expert-database'
 import AiReportReviewRoute from './modules/ai-report-review'
 import SystemRoute from './modules/system'
 
 const routerModules = [
 	LoginRoute,
+	AuthCenterRoute,
 	ExpertDatabaseRoute,
 	AiReportReviewRoute,
 	SystemRoute,
