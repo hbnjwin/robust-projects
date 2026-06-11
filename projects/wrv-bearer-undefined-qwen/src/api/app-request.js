@@ -16,13 +16,12 @@ const baseReq = ['/api/sysOperator/sms', '/api/sysOperator/verifyUser', '/api/sy
 // 请求拦截器
 service.interceptors.request.use((req) => {
 	NProgress.start();
-	let Authorization = '';
-	if (baseReq.includes(req.url)) {
-		Authorization = '';
-	} else {
-		Authorization = 'Bearer ' + oauth2.getAccessToken();
+	if (!baseReq.includes(req.url)) {
+		const token = oauth2.getAccessToken();
+		if (token) {
+			req.headers['Authorization'] = 'Bearer ' + token;
+		}
 	}
-	req.headers['Authorization'] = Authorization;
 	return req;
 });
 
