@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位URL查询参数变化后页面不刷新的原因：router-view的:key使用route.path不包含query参数，导致Vue认为是同一组件实例。1: 未定位；2: 只看到页面不刷新但不知原因；3: 找到key绑定但未分析path和fullPath的区别；4: 准确定位:key='route.path'不含query导致组件不重建；5: 定位根因并分析了Vue Router的path/fullPath/query的完整区别"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read和Glob读取layout/index.vue，找到第12行:key='route.path'，分析了path不包含query字符串导致组件不重新创建的问题"
+
+[[criterion]]
+name = "key属性修复"
+description = "[Explicit] 将:key='route.path'修改为:key='route.fullPath'使组件在查询参数变化时重新创建。1: 未修复；2: 修了但用了错误的属性；3: 用了fullPath但语法有误；4: 正确修改为route.fullPath；5: 修改为fullPath并考虑了hash变化的场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将layout/index.vue第12行:key='route.path'改为:key='route.fullPath'，修复了query变化时组件不重建的问题"
+
+[[criterion]]
+name = "查询参数响应验证"
+description = "[Implicit] 修复后从/path?page=1导航到/path?page=2时页面是否正确刷新显示新数据。1: 仍不刷新；2: 刷新但有闪烁；3: 刷新正确但过渡动画缺失；4: 正确刷新且保持平滑过渡；5: 正确刷新并验证了多种query参数组合"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后fullPath在query变化时值不同，Vue重建组件实例，onMounted重新执行数据获取逻辑，理论上可以刷新，但未验证实际效果"
+
+[[criterion]]
+name = "副作用评估"
+description = "[Implicit] 是否考虑了使用fullPath作为key可能带来的副作用（如不必要的组件重建、hash变化导致的刷新等）。1: 未考虑；2: 提到但未分析；3: 分析了但未给出方案；4: 分析并认为fullPath在当前场景合理；5: 分析副作用并提供了watch route.query作为替代方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "直接修改为fullPath，未在summary中讨论fullPath可能导致hash变化时也重建组件的副作用"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "4次工具调用（2次Read+1次Glob+1次Edit），Glob搜索和第二次Read属于额外探索步骤，核心修改只需1次Read+1次Edit"

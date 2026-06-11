@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位关闭浏览器后需重新登录的原因：Cookies.set()未传expires选项导致cookie为session cookie，浏览器关闭时自动清除。1: 未定位；2: 只看到需重新登录但不知原因；3: 找到Cookies.set但未分析expires缺失；4: 准确定位第28行Cookies.set缺少{expires:N}导致session cookie；5: 定位根因并分析了js-cookie的expires参数与HTTP Set-Cookie规范的关系"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取oauth2.js和README，找到第28行Cookies.set(KEY, JSON.stringify(temp))未传expires参数，但排查路径较长，先读了README再读源码，还用了Bash和Grep搜索"
+
+[[criterion]]
+name = "expires参数修复"
+description = "[Explicit] 为Cookies.set添加expires选项，将cookie持久化到token过期时间。1: 未修复；2: 添了expires但值不正确；3: 值正确但单位换算有误；4: 正确添加{expires: oauth.expires_in / 86400}将秒转天；5: 添加expires且处理了expires_in为undefined的降级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将Cookies.set改为Cookies.set(KEY, JSON.stringify(temp), {expires: oauth.expires_in / 86400})，秒转天的换算正确，但未处理expires_in为undefined时86400除法得到NaN的边界情况"
+
+[[criterion]]
+name = "过期时间计算"
+description = "[Implicit] expires_in秒数转天数的计算是否正确，是否考虑了边界情况（如expires_in为0、undefined、负数）。1: 计算错误；2: 基本正确但有边界问题；3: 正确但未处理undefined；4: 正确且有基本的undefined判断；5: 完善的边界处理和合理的默认值"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "直接使用oauth.expires_in / 86400计算天数，未对expires_in进行有效性检查，如果expires_in为undefined则结果为NaN，cookie可能行为不确定"
+
+[[criterion]]
+name = "cookie持久化验证"
+description = "[Implicit] 修复后关闭浏览器重新打开页面时cookie是否保留，用户是否不需要重新登录。1: 仍被清除；2: 保留但过期时间不对；3: 保留且时间正确但有其他登录问题；4: 完整保留且用户体验正常；5: 保留并验证了多浏览器/多标签页场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了expires参数使cookie持久化，但排查过程中消耗了16次工具调用（5次Bash+4次Read+3次Grep+2次Glob+1次Edit+1次Skill），大量时间花在搜索和验证而非修复上"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改或冗余操作；2: 修改正确但探索过多；3: 修改正确有少量额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "16次工具调用（5次Bash+4次Read+3次Grep+2次Glob+1次Edit+1次Skill），其中Bash执行了多次npm/node命令、Grep和Glob大范围搜索，实际只需1次Read+1次Edit即可完成，效率极低"

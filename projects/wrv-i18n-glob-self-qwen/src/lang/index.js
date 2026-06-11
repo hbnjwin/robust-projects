@@ -1,7 +1,7 @@
 import Cookies from 'js-cookie'
 import { createI18n, useI18n } from 'vue-i18n'
 import { computed } from 'vue'
-const langModules = import.meta.glob('./**/*.js', { eager: true })
+const langModules = import.meta.glob('./*/*.js', { eager: true })
 const messages = {}
 
 for (const [path, modules] of Object.entries(langModules)) {
