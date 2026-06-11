@@ -1,0 +1,62 @@
+[[criterion]]
+name = "文件类型Magic Bytes校验"
+description = "[Explicit] 是否通过读取文件头部魔数(magic bytes)校验真实文件类型而非仅依赖扩展名。1: 仅校验扩展名；2: 校验MIME但可伪造；3: Magic Bytes但覆盖类型不全；4: Magic Bytes覆盖PDF/DOCX/XLSX主要格式；5: 完整魔数库+异步校验+服务端二次验证。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "fileValidator.ts的validateFileType函数通过FileReader.readAsArrayBuffer读取前16字节。PDF校验%PDF-签名，DOCX/XLSX/PPTX校验PK头后进一步读取ZIP内部[Content_Types].xml区分Office格式类型。覆盖了.doc/.xls的OLE2签名D0 CF 11 E0。ReportUpload.vue中before-upload钩子调用validateFileType，返回false阻止不合规文件上传。"
+
+[[criterion]]
+name = "拖拽上传校验"
+description = "[Explicit] 拖拽方式上传文件时是否执行与点击上传相同的类型校验。1: 拖拽不校验任何文件可上传；2: 校验扩展名但不校验内容；3: 校验了但有绕过方式；4: 拖拽与点击共用相同的magic bytes校验逻辑；5: 共用校验+拖拽区域视觉反馈+非法文件拒绝动画。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReportUpload.vue的el-upload配置了:before-upload=\"handleBeforeUpload\"钩子，该钩子对点击和拖拽方式的文件统一执行validateFileType校验。useUploadProgress.ts中对drag事件额外添加了dragover/drop事件监听，在drop时先过滤event.dataTransfer.files中不符合类型要求的文件，再传入el-upload的上传流程。不合规文件在拖入时即弹出ElMessage.warning提示。"
+
+[[criterion]]
+name = "进度条单调递增"
+description = "[Explicit] 网络波动时上传进度条是否保持只增不减避免视觉回退。1: 进度随网络波动来回跳动；2: 回退幅度减小但仍可见；3: 限制最大回退幅度；4: 进度值取max(当前值, 新值)确保单调递增；5: 单调递增+平滑插值+预估剩余时间。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useUploadProgress.ts中维护displayProgress变量，on-progress回调中通过Math.max(displayProgress.value, event.percent)确保进度值单调递增。即使底层percent回退，UI展示的进度条只会向前不会后退。上传完成时通过setTimeout将进度从当前值平滑过渡到100%，避免最后阶段的跳变。"
+
+[[criterion]]
+name = "文件校验器设计"
+description = "[Implicit] 文件类型校验模块的设计质量和可扩展性。1: 校验逻辑内嵌在组件中；2: 抽取但硬编码类型；3: 独立文件但扩展性差；4: 可配置的文件类型校验器；5: 校验器+注册机制+异步验证链。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "fileValidator.ts定义FILE_SIGNATURES常量数组，每项包含{ext, mime, magic, offset}配置。validateFileType遍历签名列表逐一比对，返回{valid: boolean, detectedType: string, reason: string}详细结果。添加新格式只需在FILE_SIGNATURES中追加配置项，无需修改校验逻辑。"
+
+[[criterion]]
+name = "上传composable封装"
+description = "[Implicit] 上传逻辑是否抽取为独立composable，接口是否清晰。1: 逻辑在组件内；2: 部分抽取；3: 抽取但接口混乱；4: 完整的useUpload composable含进度/校验/错误状态；5: 通用composable支持多场景复用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useUploadProgress.ts封装了完整的上传生命周期：beforeUpload（类型校验）、onProgress（进度管理）、onSuccess、onError回调。导出fileList、progress、uploading、error等响应式状态。ReportUpload.vue仅负责模板渲染和样式，通过v-bind=\"uploadProps\"一次性绑定composable返回的el-upload props。"
+
+[[criterion]]
+name = "错误提示质量"
+description = "[Implicit] 文件校验失败时的错误提示是否友好明确。1: 无提示静默拒绝；2: 通用错误消息；3: 区分文件类型错误和大小错误；4: 具体提示检测到的实际类型和允许的类型列表；5: 具体提示+文件预览+修正建议。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ReportUpload.vue中校验失败时ElMessage.warning展示具体信息：'检测到文件实际类型为HTML，仅允许上传PDF、DOCX、XLSX格式'。区分了类型不匹配、文件过大、网络错误三种场景的提示消息。但未提供允许类型的可视化列表或上传帮助文档链接。"
+
+[[criterion]]
+name = "MIME类型映射"
+description = "[Implicit] 文件扩展名、MIME类型和magic bytes三者的映射关系是否完整准确。1: 无映射关系；2: 仅扩展名映射；3: 扩展名+MIME映射；4: 三者完整映射含变体；5: 完整映射+动态更新+服务端同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "fileValidator.ts的FILE_SIGNATURES配置表显式关联ext、mime和magic三个维度。覆盖了新旧格式：.pdf(application/pdf)、.docx(application/vnd...wordprocessingml)、.doc(application/msword)、.xlsx(application/vnd...spreadsheetml)、.xls(application/vnd.ms-excel)。el-upload的accept属性使用FILE_SIGNATURES中的mime值动态生成，三者保持一致。"
