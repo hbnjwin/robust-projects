@@ -73,10 +73,10 @@ const handleLogin = ({ validateResult, firstError }) => {
 					MessagePlugin({ type: 'warning', message: data.warning })
 					return
 				}
-				router.push({ name: 'Expert' })
 				const { user, accessToken } = data
 				userInfo.value = user
 				oauth2.setOauth({ access_token: accessToken })
+				router.push({ name: 'Expert' })
 			})
 			.finally(() => {
 				loading.value = false
