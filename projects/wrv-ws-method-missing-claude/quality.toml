@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位subscribeToTask/unsubscribeFromTask报TypeError的原因：方法名与websocket-manager.js中实际定义的subscribeTaskProgress/unsubscribeTaskProgress不匹配。1: 未定位；2: 看到TypeError但不知原因；3: 找到方法调用但未对比实际定义；4: 完整对比index-fixed.vue调用和websocket-manager.js定义的方法名差异；5: 定位差异并分析了参数签名的不一致"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Read读取index-fixed.vue定位第151行subscribeToTask和第159行unsubscribeFromTask，对比websocket-manager.js中实际方法名subscribeTaskProgress(第136行)和unsubscribeTaskProgress(第147行)"
+
+[[criterion]]
+name = "方法名修正"
+description = "[Explicit] 将两处错误的方法名修正为websocket-manager.js中实际定义的名称。1: 未修正；2: 只改一处；3: 改了但拼写有误；4: 两处都正确修改为subscribeTaskProgress和unsubscribeTaskProgress；5: 修正方法名且调整了参数传递"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "2次Edit精准修改：第151行改为subscribeTaskProgress(taskId)，第159行改为unsubscribeTaskProgress()去掉无用的taskId参数，与websocket-manager.js定义完全一致"
+
+[[criterion]]
+name = "参数签名校验"
+description = "[Implicit] 是否注意到unsubscribeTaskProgress()不接受参数而原代码传入了taskId。1: 未注意；2: 注意到但未修改；3: 去掉了参数但未说明原因；4: 正确去掉参数并在rationale中说明；5: 去掉参数并分析了websocket-manager中取消订阅的实际逻辑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "明确识别unsubscribeTaskProgress()不接受参数（它取消所有任务订阅），修改时去掉了无用的taskId参数传递"
+
+[[criterion]]
+name = "API一致性验证"
+description = "[Implicit] 是否验证了修改后的方法调用与websocket-manager.js的API契约完全一致。1: 未验证；2: 只看了方法名；3: 看了方法名和部分参数；4: 完整验证方法名、参数和返回值；5: 验证API一致性并检查了其他可能的方法名错误"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Read读取index-fixed.vue时完整浏览了所有wsManager调用点，确认第151和159行是仅有的方法名不匹配处"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "3次工具调用（1次Read+2次Edit），读取index-fixed.vue后直接定位两处方法调用并分别修正，高效精准"

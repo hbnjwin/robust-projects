@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位国际化配置异常的原因：import.meta.glob('./**/*.js')匹配了index.js自身导致递归引用和messages结构污染。1: 未定位；2: 只看到翻译失效但不知原因；3: 找到glob但未分析匹配自身的问题；4: 准确定位glob模式匹配自身导致langModules包含index.js导出的递归引用；5: 定位根因并分析了messages对象被非翻译数据污染的具体影响"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "1次Read读取lang/index.js第4行，分析'./**/*.js'递归匹配当前目录所有js文件包括index.js自身，导致langModules['./index.js']包含i18n实例等非翻译数据"
+
+[[criterion]]
+name = "glob模式修正"
+description = "[Explicit] 修改glob模式排除index.js自身，只匹配子目录中的翻译文件。1: 未修改；2: 改了但仍匹配自身；3: 排除了自身但可能遗漏翻译文件；4: 正确改为'./*/*.js'只匹配子目录文件；5: 改为精确模式并考虑了嵌套子目录的翻译文件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "精准将'./**/*.js'改为'./*/*.js'，只匹配lang/目录下一级子目录（zh_Hans/、en_US/等）中的翻译文件，排除了index.js自身"
+
+[[criterion]]
+name = "自引用消除"
+description = "[Implicit] 修复后langModules中是否完全不包含index.js的导出，messages结构是否纯净。1: 仍包含自引用；2: 不包含但有其他非翻译文件；3: 纯净但可能遗漏某些翻译；4: 完全纯净的翻译数据结构；5: 纯净且验证了messages的key对应正确的语言代码"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后glob模式只匹配zh_Hans/、en_US/等子目录下的js文件，index.js不在任何子目录中，自引用完全消除"
+
+[[criterion]]
+name = "翻译加载验证"
+description = "[Implicit] 修复后vue-i18n的messages是否正确加载了各语言的翻译内容。1: 翻译仍不工作；2: 部分语言加载；3: 加载正确但格式有问题；4: 所有语言正确加载为对象格式；5: 正确加载且验证了$t()调用的翻译输出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后glob只匹配子目录翻译文件，结合循环中的path.split('/')[1]提取语言代码作为messages key，结构正确"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "2次工具调用（1次Read+1次Edit），直接读取lang/index.js并修改glob模式字符串，1行修改完成"

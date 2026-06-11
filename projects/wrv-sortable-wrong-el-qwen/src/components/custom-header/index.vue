@@ -59,10 +59,11 @@ const open = () => {
 	drawer.visible = true
 }
 // 注册列表可排序
+const dragTable = ref(null)
 let list = ref([])
 let sortableInstance = ref(null)
 function registerSort() {
-	const el = document.querySelector('.el-table__body-wrapper tbody')
+	const el = dragTable.value.$el.querySelector('.el-table__body-wrapper tbody')
 	sortableInstance = Sortable.create(el, {
 		ghostClass: 'sortable-ghost',
 		setData: function (dataTransfer) {

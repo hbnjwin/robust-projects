@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位路由混乱的原因：home.js和expert-database.js都定义path:'/'导致Vue Router路径冲突。1: 未定位；2: 只看到路由异常但不知原因；3: 找到重复path但未分析冲突机制；4: 准确定位两个模块path:'/'冲突导致children覆盖和redirect矛盾；5: 定位根因并分析了Vue Router的路径匹配优先级和addRoute行为"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "3次Read分别读取home.js、expert-database.js和router/index.js，直接对比两个模块的path:'/'定义，分析了Vue Router同层同path的匹配冲突机制"
+
+[[criterion]]
+name = "路径冲突解决"
+description = "[Explicit] 修改其中一个模块的path避免冲突，如将home.js的path从'/'改为'/home'。1: 未修复；2: 修了但引入新冲突；3: 改了path但子路由路径未适配；4: 正确修改path且子路由路径保持合理；5: 修改path并更新了所有引用该路由的导航链接"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将home.js第6行path:'/'改为path:'/home'，子路由使用相对路径（如'create-review'）自动拼接为'/home/create-review'，无需额外修改"
+
+[[criterion]]
+name = "重定向更新"
+description = "[Implicit] 修改path后原来的redirect配置是否仍然有效，是否需要更新相关的导航链接。1: redirect失效；2: redirect更新但指向错误；3: redirect正确但导航菜单未更新；4: redirect正确且导航路径一致；5: 全面更新redirect和所有router.push/router-link引用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改path为'/home'后，home.js的redirect指向子路由name（如{name:'CreateReview'}），基于name的重定向不受path变更影响"
+
+[[criterion]]
+name = "路由注册验证"
+description = "[Implicit] 修复后两个模块是否能同时在router/index.js中正确注册和工作。1: 仍然冲突；2: 注册了但有子路由问题；3: 注册正确但某些页面不可访问；4: 两个模块完全独立工作；5: 独立工作且验证了所有子路由的可访问性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取router/index.js确认路由模块的注册情况，修改path为'/home'后两个模块可以在同一路由配置中共存"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改或冗余操作；2: 修改正确但探索过多；3: 修改正确有少量额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "4次工具调用（3次Read+1次Edit），分别读取home.js、expert-database.js和router/index.js确认路由结构后1次Edit修改path，高效精准"
