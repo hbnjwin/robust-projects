@@ -1,0 +1,71 @@
+[[criterion]]
+name = "懒加载触发机制"
+description = "[Explicit] 图片懒加载是否正确使用IntersectionObserver或scroll事件实现。1: 无懒加载；2: scroll事件无节流；3: scroll+throttle基本可用；4: IntersectionObserver正确实现；5: IO+rootMargin预加载+优先级队列。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useLazyImage.ts使用IntersectionObserver API创建观察器，threshold设为0.1当图片进入视口10%时触发加载。配置rootMargin=\"200px\"实现预加载，图片距离可视区域200px时提前发起请求，滚动到位时已完成加载。"
+
+[[criterion]]
+name = "滚动跳动修复"
+description = "[Explicit] 懒加载图片加载完成后是否保持滚动位置稳定，避免内容跳动。1: 加载后页面严重跳动；2: 有占位但尺寸不匹配；3: 固定占位高度但宽高比不一致；4: aspect-ratio占位+加载后平滑替换；5: 占位+骨架屏+LQIP渐进加载。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useLazyImage.ts为每个图片容器设置CSS aspect-ratio属性（默认16/9），加载前占位区域与加载后尺寸一致。图片加载完成后通过opacity从0过渡到1的fade-in效果替换占位，滚动位置完全不受影响。"
+
+[[criterion]]
+name = "加载状态展示"
+description = "[Explicit] 图片加载过程中是否展示loading状态，加载失败是否有错误提示。1: 无任何加载提示；2: 仅有loading文字；3: loading动画但无失败处理；4: loading骨架屏+失败重试；5: 骨架屏+渐进加载+失败重试+降级图。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "el-image通过slot=\"placeholder\"展示灰色骨架屏动画，slot=\"error\"展示错误图标和\"点击重试\"按钮。点击重试通过重置src触发重新加载，三次失败后显示降级占位图并提示\"图片加载失败\"。"
+
+[[criterion]]
+name = "虚拟滚动支持"
+description = "[Implicit] 大量图片列表是否实现虚拟滚动，仅渲染可视区域内的DOM节点。1: 全量渲染所有图片；2: 有分页但无虚拟滚动；3: 基本虚拟滚动但高度计算不准确；4: 完整虚拟滚动+动态高度；5: 虚拟滚动+预渲染+滚动恢复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useVirtualScroll.ts实现虚拟滚动列表，仅渲染可视区域上下各buffer=5个图片的DOM节点。通过transform:translateY动态调整容器偏移，scrollTop变化时重新计算visibleRange。支持图片高度不一致的动态行高计算。"
+
+[[criterion]]
+name = "图片缓存策略"
+description = "[Implicit] 已加载的图片是否有缓存机制，返回滚动时避免重复请求。1: 无缓存每次重新请求；2: 浏览器缓存但无主动管理；3: 内存缓存但无淘汰策略；4: LRU缓存+preload预热；5: 多级缓存+Service Worker+离线支持。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useLazyImage.ts维护loadedUrls的Set缓存已加载图片URL，IntersectionObserver回调中先检查缓存命中则直接设置src跳过loading态。配合el-image的preload逻辑，已加载图片再次进入视口时瞬间显示无闪烁。"
+
+[[criterion]]
+name = "内存泄漏防护"
+description = "[Implicit] IntersectionObserver和事件监听是否在组件卸载时正确断开和清理。1: 未清理导致内存泄漏；2: 部分清理有遗漏；3: observer.disconnect但回调引用未释放；4: 完整清理+WeakRef防泄漏；5: 清理+监控+自动GC触发。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useLazyImage.ts在onUnmounted钩子中调用observer.disconnect()断开所有观察，清空loadedUrls缓存Set。通过WeakMap存储element到observer的映射，DOM元素被回收时对应的观察记录自动释放。"
+
+[[criterion]]
+name = "移动端触摸适配"
+description = "[Implicit] 触摸设备上快速滑动时懒加载是否正常触发，惯性滚动是否处理。1: 触摸滑动不触发加载；2: 触发但惯性滚动期间遗漏；3: 基本适配但性能差；4: 被动事件监听+惯性滚动适配；5: 适配+手势缩放+触觉反馈。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "IntersectionObserver天然支持被动观察不阻塞主线程，触摸设备上惯性滚动期间持续触发intersection回调。useLazyImage.ts中observer的threshold配置为[0, 0.1, 0.5]多级触发，快速滑动时更早捕获图片进入视口的时机。"
+
+[[criterion]]
+name = "SEO与首屏优化"
+description = "[Implicit] 首屏可见图片是否优先加载而非懒加载，是否影响搜索引擎爬取。1: 所有图片均懒加载含首屏；2: 首屏懒加载但有noscript降级；3: 首屏直接加载其余懒加载；4: 首屏eager+其余lazy+loading属性；5: SSR预渲染+CDN+WebP自适应。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useLazyImage.ts接受eagerCount参数（默认3），前eagerCount张图片直接设置loading=\"eager\"立即加载不经过IntersectionObserver。其余图片使用loading=\"lazy\"配合自定义observer懒加载，首屏无空白闪烁。"
