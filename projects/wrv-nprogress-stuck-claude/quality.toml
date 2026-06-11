@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位NProgress进度条卡住的根本原因：baseRouterNames分支在nprogress.start()之后直接return next()而未调用nprogress.done()。1: 未定位到根因；2: 定位到router但未找到具体分支；3: 找到beforeEach但未区分分支差异；4: 准确定位到baseRouterNames分支缺少done()调用；5: 定位根因并分析了所有分支的NProgress状态流转"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取router/index.js第52-58行，准确定位到nprogress.start()在第52行无条件执行后，baseRouterNames分支在第55行直接return next()未调用nprogress.done()，导致进度条永远停留在启动状态"
+
+[[criterion]]
+name = "进度条修复"
+description = "[Explicit] 在baseRouterNames分支添加nprogress.done()使进度条正常结束。1: 未添加；2: 添加位置不对导致闪烁；3: 添加了但时序不正确；4: 在return next()前正确调用nprogress.done()；5: 修复并覆盖所有提前return的分支"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在router/index.js第55行baseRouterNames分支中，在return next()前插入nprogress.done()，直接修复403/404页面进度条卡住的核心问题"
+
+[[criterion]]
+name = "兜底机制"
+description = "[Explicit] 添加router.afterEach钩子作为NProgress的全局兜底保障。1: 无兜底；2: 添加了但钩子类型不对；3: afterEach中调用done()但未考虑嵌套路由；4: 完整的afterEach兜底确保任何路由完成后进度条都结束；5: afterEach兜底加异常路由的错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在router/index.js第72-74行新增router.afterEach钩子，在每次路由导航完成后无条件调用nprogress.done()，形成双重保障机制"
+
+[[criterion]]
+name = "路由守卫完整性"
+description = "[Implicit] 修复后beforeEach所有分支（登录检查、权限检查、baseRouterNames）的NProgress状态是否闭合。1: 多个分支仍缺done()；2: 只修了一个分支；3: baseRouterNames修了但其他分支靠afterEach兜底；4: 所有分支的start/done配对完整；5: 配对完整且有状态机保证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复baseRouterNames分支后结合afterEach兜底，确保beforeEach中所有可能的路由分支（baseRouterNames提前返回、正常导航、权限跳转）都能正确结束进度条"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于NProgress修复，无冗余改动。1: 大量无关修改；2: 有明显冗余或反复修改；3: 修改集中但有多余操作；4: 精准修改目标文件；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "17次工具调用中2次Edit精准修改router/index.js的两处位置（baseRouterNames分支添加done和新增afterEach钩子），改动范围精准"

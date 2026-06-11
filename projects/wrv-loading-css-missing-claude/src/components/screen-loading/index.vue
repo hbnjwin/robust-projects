@@ -25,5 +25,5 @@
 </template>
 
 <style lang="less" scoped>
-@import '/loading.css';
+@import './loading.css';
 </style>
