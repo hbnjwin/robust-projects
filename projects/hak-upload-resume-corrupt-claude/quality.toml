@@ -1,0 +1,71 @@
+[[criterion]]
+name = "分片偏移对齐"
+description = "[Explicit] 续传恢复时分片偏移是否以服务端实际接收记录为准，避免重复或遗漏。1:仅靠客户端偏移;2:查询服务端但对齐逻辑错误;3:服务端为准但边界case遗漏;4:reconcileChunks服务端权威+逐片对齐;5:对齐+一致性校验+自动修复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "useChunkedUpload.ts的reconcileChunks方法以服务端返回的receivedChunks列表为唯一权威数据源。对比本地totalChunks生成pendingChunks列表（服务端缺失的分片），无论序号是否连续都逐个补传。upload-pool.ts按pendingChunks列表调度上传任务，确保所有分片最终到达服务端，彻底消除偏移对齐问题。"
+
+[[criterion]]
+name = "分片完整性校验"
+description = "[Explicit] 每个分片上传后是否通过MD5/SHA校验确保内容完整无损。1:无校验;2:仅文件级校验;3:分片MD5但时机不对;4:预计算分片MD5+上传后服务端比对;5:双端校验+损坏自动重传。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "hash.ts中sliceAndHash方法按分片大小切割文件，使用SparkMD5逐片计算MD5摘要，返回chunkHashes数组。上传每个分片时携带chunkMD5字段，服务端接收后计算实际MD5与客户端传入值比对，不匹配则返回422要求重传。file-chunker.ts中预计算所有分片hash在上传开始前完成，避免边传边算的竞态。"
+
+[[criterion]]
+name = "续传恢复逻辑"
+description = "[Explicit] 浏览器刷新后续传的恢复机制是否可靠，是否依赖服务端状态而非客户端localStorage。1:刷新后从头上传;2:localStorage记录但不可靠;3:查询服务端但逻辑有缺陷;4:服务端分片列表为唯一数据源+客户端缓存辅助;5:无缝恢复+进度精确还原。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useChunkedUpload.ts刷新后通过initUpload(fileHash)向服务端查询已接收的分片ID列表和每片MD5。storage.ts中localStorage仅缓存fileHash和totalChunks用于快速恢复上传任务元信息，分片状态完全以服务端返回为准。reconcileChunks对比服务端列表与本地全量分片hash，生成精确的待传列表。"
+
+[[criterion]]
+name = "并发上传控制"
+description = "[Implicit] 多分片并发上传的队列管理和并发度控制。1:串行逐片上传;2:Promise.all无控制;3:简单并发数限制;4:upload-pool并发池+优先级+重试;5:自适应并发+带宽检测+动态调整。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "upload-pool.ts实现了UploadPool类，维护并发任务队列，默认concurrency=3同时上传3个分片。pool.add(chunkTask)入队，内部通过Promise链控制活跃任务数。某个分片上传失败时自动重试（maxRetries=3），重试间隔指数退避。pool.onProgress回调汇总所有分片的上传进度计算整体百分比。"
+
+[[criterion]]
+name = "Web Worker哈希计算"
+description = "[Implicit] 大文件哈希计算是否在Web Worker中执行，避免阻塞UI主线程。1:主线程同步计算;2:主线程异步但仍阻塞;3:Worker但通信开销大;4:Worker+流式计算+进度回调;5:Worker+WASM+零拷贝Transferable。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "hash.worker.ts作为独立Web Worker文件，接收File对象的ArrayBuffer切片，使用SparkMD5增量计算每个分片的MD5。主线程通过postMessage发送分片数据，Worker计算完成后回传chunkHash。hash.ts中createHashWorker封装了Worker的创建、消息传递和错误处理，支持onProgress回调报告哈希计算进度。大文件哈希计算期间UI保持流畅响应。"
+
+[[criterion]]
+name = "错误重试策略"
+description = "[Implicit] 分片上传失败后的重试机制和退避策略。1:失败即终止;2:简单重试无退避;3:固定间隔重试;4:指数退避+最大重试次数+错误分类;5:自适应退避+断路器+用户可选跳过。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "upload-pool.ts中每个分片任务配置maxRetries=3。上传失败后按指数退避重试（1s→2s→4s）。区分可重试错误（网络超时408、服务端过载503）和不可重试错误（文件不存在404、校验失败422），不可重试错误直接标记分片失败不浪费重试次数。但未实现全局断路器，大量分片连续失败时仍会逐个重试。"
+
+[[criterion]]
+name = "文件分片器"
+description = "[Implicit] 文件切片模块的设计质量，包括分片大小策略和切片实现。1:硬编码分片大小;2:可配置但无优化;3:基本分片器;4:独立file-chunker模块+动态分片大小;5:自适应分片+对齐+预读缓冲。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "file-chunker.ts作为独立模块，FileChunker类接收chunkSize参数（默认2MB），提供getChunks()生成器按需切割避免内存占用。支持根据文件大小自动调整分片大小策略：<10MB用1MB分片，10-100MB用2MB分片，>100MB用5MB分片。getTotalChunks()和getChunkRange(index)方法提供分片元信息查询。"
+
+[[criterion]]
+name = "存储抽象层"
+description = "[Implicit] 客户端持久化存储（上传任务元信息）的抽象封装质量。1:直接localStorage.setItem;2:简单封装;3:类型安全的封装;4:storage.ts统一抽象+序列化+容量管理;5:IndexedDB+降级+加密存储。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "storage.ts封装了UploadStorage类，提供saveTask(fileHash, metadata)和getTask(fileHash)类型安全的API。以fileHash（文件SHA-256）为唯一标识避免同名文件冲突。元数据包含fileName、totalChunks、chunkSize、createdAt等字段，JSON.stringify序列化存储。提供clearExpiredTasks()方法清理超过7天的历史任务，防止存储膨胀。"
