@@ -68,15 +68,14 @@ const handleLogin = ({ validateResult, firstError }) => {
 		const params = { userName, password: CryptoJS.MD5(String(password)).toString() }
 		AUTH_CENTER.getVerifyUser(params)
 			.then(({ data }) => {
-				console.log(oauth2)
 				if (data.warning) {
 					MessagePlugin({ type: 'warning', message: data.warning })
 					return
 				}
-				router.push({ name: 'Expert' })
 				const { user, accessToken } = data
 				userInfo.value = user
 				oauth2.setOauth({ access_token: accessToken })
+				router.push({ name: 'Expert' })
 			})
 			.finally(() => {
 				loading.value = false
