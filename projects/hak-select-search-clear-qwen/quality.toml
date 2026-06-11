@@ -1,0 +1,62 @@
+[[criterion]]
+name = "清空按钮行为修正"
+description = "[Explicit] el-select多选模式下清空按钮(×)是否仅清空搜索关键词而非已选项。1: 清空搜索同时清空已选项；2: 修复了但有残留bug；3: 阻止了clearable但交互不自然；4: 清空仅影响搜索框保留已选tag；5: 清空搜索+保留已选+输入框聚焦。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "FixableSelect.vue通过覆写el-select的clear事件，在handler中先保存当前selectedValues，阻止默认的清空行为后恢复已选值。但实现方式依赖nextTick时序，在某些Element Plus版本中clear事件触发顺序不同导致已选值闪烁一下再恢复，体验不够顺滑。"
+
+[[criterion]]
+name = "Backspace键行为隔离"
+description = "[Explicit] 搜索过滤状态下按Backspace键是否仅删除搜索文字而非移除最后一个已选tag。1: 删除搜索文字同时移除tag；2: 修复了但输入法状态异常；3: 阻止了但Backspace完全失效；4: 搜索框有文字时删文字无文字时不操作；5: 正确区分+输入法兼容+键盘导航。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "FixableSelect.vue中未处理Backspace键的特殊行为。el-select多选模式下Backspace键在搜索框为空时默认移除最后一个已选tag，搜索框有文字时优先删除文字。但当用户过滤了列表（搜索框有\"王\"）后按Backspace，\"王\"被删除后搜索框变空，下一次Backspace直接移除了最后一个已选tag（李四），用户来不及反应。"
+
+[[criterion]]
+name = "远程搜索已选保留"
+description = "[Explicit] 远程搜索返回新选项列表后已选中的项是否仍在下拉列表中显示。1: 已选项从列表消失tag悬空；2: 保留但标记不正确；3: 缓存已选但合并逻辑有bug；4: 本地缓存已选项与远程结果合并去重；5: 合并+排序+分组展示（已选/搜索结果）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useRemoteSearch.ts中维护selectedCache数组缓存已选择的选项对象（{value, label}）。远程搜索返回结果后将selectedCache中不在新结果中的项追加到options列表开头。但合并逻辑使用value值做字符串比对，当value为数字类型时1!=='1'导致重复项未去重，下拉列表出现两个同名选项。"
+
+[[criterion]]
+name = "el-select覆写方案"
+description = "[Implicit] 修复el-select行为问题的技术方案是否合理可维护。1: 直接修改node_modules；2: 复制组件源码修改；3: CSS/样式hack；4: 组合式API+事件拦截+原生DOM操作；5: 自定义指令或renderless组件包装。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "FixableSelect.vue通过直接在el-select组件上绑定事件监听和ref操作DOM来修复行为。部分修复依赖el-select内部DOM结构（如通过$el.querySelector('.el-input__inner')获取搜索输入框），Element Plus版本升级后DOM结构变化可能导致修复失效。与el-select的内部状态管理存在竞争。"
+
+[[criterion]]
+name = "composable封装质量"
+description = "[Implicit] 搜索修复逻辑的composable封装和复用性。1: 修复逻辑散落在组件中；2: 部分抽取；3: 抽取但与业务耦合；4: 通用useSelectSearchFix composable可跨组件复用；5: composable+配置化+自动检测修复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useRemoteSearch.ts仅封装了远程搜索的缓存合并逻辑，清空按钮和Backspace的修复仍在FixableSelect.vue组件的setup中直接操作DOM。三个bug的修复代码分散在composable和组件中，其他页面的el-select多选框如果也有同样问题需要复制粘贴修复代码。"
+
+[[criterion]]
+name = "TypeScript类型定义"
+description = "[Implicit] 选项数据和搜索参数的TypeScript类型定义质量。1: 无类型定义；2: 基础类型有any；3: 主要类型覆盖；4: 完整的接口定义含泛型；5: 严格模式无any含类型守卫。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "select.ts中SelectOption接口定义了value:string|number和label:string两个字段。但useRemoteSearch.ts中selectedCache类型为any[]，远程搜索回调的参数类型未标注。FixableSelect.vue的props中options类型为Array<any>，模板中的v-for遍历选项缺少类型推断。"
+
+[[criterion]]
+name = "边界场景处理"
+description = "[Implicit] 空搜索结果、全选/全取消、搜索中切换等边界场景的处理。1: 边界场景崩溃；2: 部分处理；3: 主要场景覆盖；4: 覆盖空结果/全选/切换/输入法等场景；5: 完整覆盖含压力测试。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "FixableSelect.vue中远程搜索返回空结果时下拉列表显示空白无\"无匹配结果\"提示。搜索中快速切换下拉框的展开/收起状态时，远程请求的回调可能在下拉框已收起后更新options导致视觉闪烁。全选再全取消后selectedCache未清空，下次打开下拉框仍显示旧的已选项在列表顶部。"
