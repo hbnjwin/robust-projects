@@ -65,7 +65,7 @@ const handleLogin = ({ validateResult, firstError }) => {
 	if (validateResult === true) {
 		loading.value = true
 		const { userName, password } = formData
-		const params = { userName, password: CryptoJS.MD5(String(password)).toString() }
+		const params = { userName, password: CryptoJS.SHA256(String(password)).toString() }
 		AUTH_CENTER.getVerifyUser(params)
 			.then(({ data }) => {
 				console.log(oauth2)
