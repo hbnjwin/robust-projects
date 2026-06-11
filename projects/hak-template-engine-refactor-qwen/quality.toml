@@ -1,62 +1,71 @@
 [[criterion]]
-name = "user_experience_and_interaction"
-description = "How smooth and efficient is the user experience during interaction? 1: workflow deadlock, loop errors, no valid output, completely unusable; 2: verbose reasoning, repeated self-correction, noticeable logic deviations requiring frequent intervention; 3: some repetition and redundant reasoning, occasional over-complication but user can still wait for results; 4: overall good experience with occasional redundancy or self-correction that does not affect task completion; 5: efficient reasoning, clear logic, smooth responses, accurately captures core intent, output is trustworthy with no room for optimization"
+name = "Teleport组件暗色适配"
+description = "[Explicit] Element Plus弹窗类组件（MessageBox/Notification/DatePicker）在暗色模式下是否正确应用暗色样式。1:仍为亮色;2:部分组件适配;3:主色适配但细节颜色不对;4:通过html.dark类+Element暗色CSS变量完整适配;5:适配+自定义暗色配色+无缝切换。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useTheme.ts将dark class添加到document.documentElement上，main.ts中导入了element-plus/theme-chalk/dark/css-vars.css。MessageBox和Notification的主背景色变为暗色，但DatePicker日历面板的今日标记颜色、下拉箭头颜色等细节仍显示亮色配色，_element-overrides.scss中的覆盖样式不够完整。"
 
 [[criterion]]
-name = "task_planning_and_execution_control"
-description = "How well does the model plan, decompose, track, and execute tasks? 1: no planning, no decomposition, no task list, no tracking, no feedback, no tool usage; 2: vague or unreasonable planning, ineffective task decomposition, inconsistent tracking, sporadic feedback; 3: macro-level planning is viable but task list is incomplete or not updated, significant tool gaps, vague feedback; 4: reasonable planning, task list exists but updates lag, minor tool misuse, clear stage feedback; 5: complete and well-reasoned plan, auto-generated task list, real-time progress sync, proper tool usage, thorough stage feedback, proactively clarifies ambiguity"
+name = "ECharts图表主题联动"
+description = "[Explicit] 暗色模式下ECharts图表的坐标轴文字、图例、背景色等是否跟随主题变化。1:图表颜色不变;2:背景变了但文字没变;3:手动设置颜色但硬编码;4:useChartTheme动态生成主题配置;5:动态主题+过渡动画+实时切换。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "WindChart.vue中ECharts的坐标轴文字颜色通过axisLabel.color硬编码为'#333'深色，暗色背景下几乎不可见。useChartTheme.ts虽然定义了暗色主题配置对象，但WindChart.vue的option未引用该配置，仍使用初始化时的固定颜色值。图例textStyle.color同样硬编码。"
 
 [[criterion]]
-name = "semantic_understanding_and_logical_reasoning"
-description = "How accurately does the model understand intent and reason logically? 1: completely misunderstands intent, cannot parse code structure, unable to execute even with guidance, blind output; 2: misinterprets key information, can only partially complete tasks with guidance, incorrect code location and modification; 3: understands main intent but misses details, slight deviations, achieves goals with human guidance; 4: correctly understands intent and constraints, accurate code modifications, no guidance needed, knowledge meets task requirements; 5: precisely integrates context and codebase information, minimal optimal modifications, no human guidance needed, comprehensive knowledge coverage"
+name = "已渲染组件主题刷新"
+description = "[Explicit] 切换主题时已经渲染过的组件（如富文本编辑器工具栏）是否立即更新颜色。1:不更新需刷新页面;2:部分组件更新;3:CSS变量类组件更新但JS渲染类不更新;4:watch主题变化强制刷新非响应式组件;5:全部实时更新+过渡动画。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "RichTextEditor.vue的工具栏颜色在初始化时设定，切换暗色模式后工具栏背景和图标颜色未改变——编辑器使用的是内联style而非CSS变量，不受html.dark类切换影响。useTheme.ts中未提供主题变更回调让组件订阅刷新。"
 
 [[criterion]]
-name = "instruction_compliance_and_constraint_adherence"
-description = "How well does the model follow multiple constraints and maintain them throughout? 1: completely ignores complex constraints, outputs according to own defaults, enters dead loops or argues during manual correction, severely damages original structure; 2: after 2 corrections, still cannot satisfy multiple constraints simultaneously; 3: initial output ignores key constraints, can barely adjust after 2 explicit warnings; 4: initial output misses 1-2 non-core constraints, corrects all immediately after 1 user prompt; 5: perfectly adheres to all multiple constraints, never breaks prior requirements during fixes"
+name = "切换过渡动画"
+description = "[Explicit] 主题切换时是否有平滑的颜色过渡效果，避免突兀闪烁。1:瞬间切换有闪烁;2:部分元素有过渡;3:CSS transition但有闪白;4:全局transition+prefers-color-scheme预加载;5:View Transition API丝滑切换。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "_transitions.scss中为color、background-color、border-color设置了transition: 0.3s ease，大部分元素有过渡效果。但切换瞬间仍有约100ms的白色闪烁——因为html.dark类添加后CSS变量更新与transition生效之间有时间差，body背景色的transition未覆盖。"
 
 [[criterion]]
-name = "engineering_quality_and_completeness"
-description = "How complete and well-engineered is the code output? 1: no engineering quality awareness, no tests provided or outputs invalid pseudo-tests; 2: attempts tests only after multiple reminders, obvious flaws; 3: supplements tests after reminders but only covers main flow; 4: provides tests in most scenarios, tests are valid but coverage has minor deviations; 5: proactively adds/updates test cases, covers critical paths, follows engineering standards"
+name = "CSS变量体系"
+description = "[Implicit] 是否建立了系统化的CSS自定义属性体系来统一管理主题色。1:无CSS变量;2:少量变量;3:主要颜色变量化;4:完整的语义化CSS变量体系;5:变量+设计Token+自动生成。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "_variables.scss中定义了20+个CSS变量包括--bg-primary、--text-primary、--border-color等，html.dark下覆盖为暗色值。但变量命名不够语义化，存在--color-1、--color-2等无含义命名。部分组件仍直接使用十六进制色值而非CSS变量引用。"
 
 [[criterion]]
-name = "delivery_completeness_and_usability"
-description = "How complete, runnable, and usable is the final delivery? 1: completely non-runnable, irrelevant output; 2: fails to achieve core objectives, code cannot run; 3: main functionality runs but has obvious defects requiring manual fixes; 4: core functionality is complete and usable, very few detail omissions; 5: runnable on first attempt, full feature closure, covers both explicit and implicit requirements"
+name = "主题持久化与初始化"
+description = "[Implicit] 用户选择的主题偏好是否持久化保存，刷新后是否正确恢复。1:刷新后重置;2:localStorage存但有闪烁;3:持久化+prefers-color-scheme;4:持久化+预加载脚本消除闪烁;5:完整的主题系统含跟随系统选项。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "useTheme.ts中将主题偏好存入localStorage('theme_mode')，但读取和应用发生在Vue组件mounted之后，页面加载时先渲染亮色再切换暗色产生明显闪烁（FOUC）。未在index.html的head中添加内联脚本预读取主题设置。"
 
 [[criterion]]
-name = "architecture_boundaries_and_security_compliance"
-description = "How well does the model respect architecture boundaries and security compliance? 1: arbitrarily deletes or damages core files, performs unauthorized high-risk operations; 2: frequently crosses boundaries, relapses after correction; 3: irrelevant modifications and redundant dependencies, recoverable with intervention; 4: occasionally makes minor boundary violations, stops immediately when reminded; 5: strictly respects architecture boundaries, no unauthorized operations, proactively confirms authorization"
+name = "useTheme composable质量"
+description = "[Implicit] useTheme composable的API设计、响应式集成和可扩展性。1:简单的class toggle;2:基本composable;3:isDark+toggle功能;4:isDark+toggle+onThemeChange+模式选择;5:完整的主题管理系统含插件机制。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useTheme.ts导出isDark响应式变量和toggleTheme函数，内部使用watchEffect同步html元素的dark类。但未提供主题变更事件回调注册机制，外部组件无法订阅主题变化事件。ThemeToggle.vue直接读取isDark并调用toggleTheme，功能可用但缺少系统模式跟随等高级特性。"
+
+[[criterion]]
+name = "第三方组件暗色适配"
+description = "[Implicit] 除Element Plus外的第三方组件（富文本编辑器、图表库等）的暗色适配覆盖度。1:未处理;2:仅Element Plus;3:Element Plus+一个第三方;4:覆盖主要第三方组件;5:全部第三方+自定义组件统一暗色。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "项目使用了ECharts和富文本编辑器两个主要第三方组件。_element-overrides.scss仅覆盖Element Plus组件的暗色样式，ECharts通过useChartTheme部分适配但未在WindChart中引用，富文本编辑器的_editor-dark.scss虽然创建了但样式覆盖不够完整，工具栏下拉菜单仍为亮色。"
