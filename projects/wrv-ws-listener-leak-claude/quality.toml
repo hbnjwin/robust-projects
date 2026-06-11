@@ -1,0 +1,44 @@
+[[criterion]]
+name = "监听器具名化"
+description = "[Explicit] 将匿名箭头函数改为具名函数使wsManager.off()能正确匹配移除。1:仍是匿名;2:部分改为具名;3:全部具名但命名不规范;4:全部改为语义化具名函数;5:具名+TypeScript类型约束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "task-progress/index.vue将3个匿名箭头函数提取为handleConnected/handleDisconnected/handleError具名函数，off()的indexOf能正确匹配"
+
+[[criterion]]
+name = "卸载清理"
+description = "[Explicit] onUnmounted中调用wsManager.off()移除所有注册的监听器。1:未清理;2:只清理了部分;3:清理了但顺序不对;4:所有监听器在onUnmounted中完整off;5:off+disconnect+状态重置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "onUnmounted中依次调用off('connected',handleConnected)、off('disconnected',handleDisconnected)等移除所有8个监听器"
+
+[[criterion]]
+name = "内存泄漏防护"
+description = "[Explicit] 组件反复挂载/卸载后不再出现监听器累积和已销毁组件reactive引用错误。1:仍泄漏;2:部分解决;3:不泄漏但有其他副作用;4:完全消除泄漏和reactive错误;5:消除+内存监控+自动GC"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "具名函数确保off能精确移除，onUnmounted中完整清理后不会有残留回调访问已销毁组件的reactive数据"
+
+[[criterion]]
+name = "off匹配修复"
+description = "[Explicit] wsManager.off()内部indexOf匹配机制与具名函数的配合。1:仍无法匹配;2:匹配但有边界问题;3:基本匹配;4:完全匹配+移除成功;5:匹配+事件总线封装"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "具名函数变量保持引用一致性，on(event,handleFn)注册的同一handleFn在off(event,handleFn)中被indexOf精确匹配移除"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和效率。1:大量无关修改;2:有冗余;3:基本精准;4:精准;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "6次工具调用(3次Read+2次Edit+1次Glob)，修改集中于task-progress/index.vue的监听器注册和卸载逻辑"
