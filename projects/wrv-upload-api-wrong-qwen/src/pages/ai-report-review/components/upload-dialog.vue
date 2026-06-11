@@ -63,7 +63,7 @@
 </template>
 <script setup>
 import { MessagePlugin } from 'tdesign-vue-next'
-import { EXPERT_DATABASE } from '@/api'
+import { AI_REPORT_REVIEW } from '@/api'
 import doc from '@/assets/image/data-upload/doc.png'
 import jpg from '@/assets/image/data-upload/jpg.png'
 import docx from '@/assets/image/data-upload/docx.png'
@@ -102,7 +102,7 @@ const handleSubmit = () => {
 	const fd = new FormData()
 	fd.append('file', dialog.form.filesList.raw)
 	fd.append('docType', dialog.form.docType)
-	EXPERT_DATABASE.postDocumentsUploadFile(fd)
+	AI_REPORT_REVIEW.postDocumentsUploadFile(fd)
 		.then(({ data }) => {
 			MessagePlugin.success(data.msg)
 			handleClose()
