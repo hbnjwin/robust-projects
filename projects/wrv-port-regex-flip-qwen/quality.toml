@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位端口验证结果交替变化的根本原因：正则表达式/^(\d)+$/g的g标志导致RegExp.test()的lastIndex在调用间保留。1: 未定位；2: 知道验证不稳定但不知原因；3: 找到正则但未分析g标志的影响；4: 准确定位到g标志导致test()的lastIndex交替变化；5: 定位根因并分析了JavaScript RegExp状态机制的底层原理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取validate.js找到port方法中的正则/^(\d)+$/g，识别到g标志导致test()调用间lastIndex保留，首次匹配成功后lastIndex前进到末尾下次调用必然失败，但分析过程较简短未深入验证"
+
+[[criterion]]
+name = "正则修复"
+description = "[Explicit] 去掉正则表达式的g全局标志使每次test()调用都从头匹配。1: 未修复；2: 改了但引入新问题；3: 去掉g但改变了正则其他部分；4: 精准去掉g标志保留原有匹配逻辑；5: 去掉g并优化了正则表达式"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将/^(\d)+$/g改为/^(\d)+$/，去掉g标志后每次test()调用都从位置0开始匹配，但使用Write重写了整个validate.js文件而不是Edit精准修改一处"
+
+[[criterion]]
+name = "全局影响排查"
+description = "[Implicit] 检查validate.js中其他验证函数是否存在相同的g标志问题。1: 未排查；2: 只看了port方法；3: 浏览了文件但未逐个检查；4: 用Grep搜索了所有带g标志的正则并确认无其他问题；5: 全局排查并修复了所有潜在的g标志问题"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复集中在port方法的正则，未检查validate.js中ip()、domain()等其他验证函数是否也存在带g标志的正则表达式导致类似的交替验证问题"
+
+[[criterion]]
+name = "验证函数健壮性"
+description = "[Implicit] 修复后port验证函数在连续调用、边界值等场景下的行为稳定性。1: 仍有不稳定行为；2: 基本稳定但边界值有问题；3: 连续调用稳定但边界值未验证；4: 连续调用稳定且常见端口号验证正确；5: 完全稳定并通过了多轮连续调用验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "去掉g标志后port验证函数在连续调用时结果一致，但未通过Bash运行测试脚本验证边界值（如0、65535、65536、非数字）的验证行为"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 修改范围过大；3: 修改正确但方式不够精准；4: 精准修改目标位置；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "8次工具调用中使用Write重写了整个validate.js文件，虽然修改内容正确（仅去掉g标志），但Write整文件的方式不如Edit精准修改一行高效，可能引入格式差异"
