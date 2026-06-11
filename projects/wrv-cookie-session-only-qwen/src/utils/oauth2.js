@@ -25,7 +25,7 @@ export default {
 			...oauth,
 			expires_at: dayjs().add(oauth.expires_in, 'seconds').format('YYYY-MM-DD HH:mm:ss')
 		}
-		Cookies.set(KEY, JSON.stringify(temp))
+		Cookies.set(KEY, JSON.stringify(temp), {expires: oauth.expires_in / 86400})
 	},
 	getExpiresAt() {
 		return this.getOauth().expires_at

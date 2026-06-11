@@ -62,14 +62,15 @@ export const hexToUint8Array = (hexString) => {
 export const debounce = (func, wait, immediate = true) => {
 	let timeout
 	return function () {
+		const args = arguments
 		if (immediate && !timeout) {
-			func()
+			func.apply(this, args)
 		}
 		clearTimeout(timeout)
 		timeout = setTimeout(() => {
 			// 如果没有设置立即执行，在等待时间后执行
 			if (immediate) {
-				func()
+				func.apply(this, args)
 			}
 		}, wait)
 	}
