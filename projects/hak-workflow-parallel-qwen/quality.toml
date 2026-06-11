@@ -1,0 +1,62 @@
+[[criterion]]
+name = "级联清空完整性"
+description = "[Explicit] 上级下拉变化时是否完整清空所有下级的选中值和选项列表。1:未处理清空;2:仅清空直接下级;3:清空了选中值但未清空列表;4:完整清空值+列表;5:清空+默认值恢复+用户提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useCascadeSelect.ts中watch(reportTypeId)时清空了inspectionItemId和inspectionItems，但第一版遗漏了criteriaId和criteriaList的清空，后续补充修复。清空逻辑分散在watch回调中，未形成统一的resetDownstream方法。"
+
+[[criterion]]
+name = "请求竞态控制"
+description = "[Explicit] 快速切换上级选项时是否正确处理异步请求乱序问题。1:无任何处理;2:仅有loading标志;3:使用版本号但实现有缺陷;4:AbortController或版本号机制完整;5:取消+版本号+请求队列。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "report.ts中的API调用未使用AbortController或请求版本号机制，仅依赖loading标志位防止重复请求。当用户快速从月度切到年度再切回月度时，三个请求可能乱序返回，后发先至的旧响应覆盖新数据的风险未消除。"
+
+[[criterion]]
+name = "加载态提交防护"
+description = "[Explicit] 异步加载过程中是否禁止用户提交表单或切换其他级联项。1:无防护;2:仅loading变量未绑定UI;3:禁用了提交按钮但下拉仍可切换;4:提交+下拉均禁用;5:全局表单锁+骨架屏提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportAuditForm.vue中设置了loading响应式变量，但未将其绑定到el-select的disabled属性或表单提交按钮的:disabled上。加载检测项目期间用户仍可点击提交，可能保存不完整的表单数据。"
+
+[[criterion]]
+name = "composable设计质量"
+description = "[Implicit] useCascadeSelect composable的职责单一性、参数设计和复用性。1:逻辑写在组件内;2:抽取了但耦合业务细节;3:基本抽取但接口设计不通用;4:参数化配置支持复用;5:完全通用的级联选择器composable。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "抽取了useCascadeSelect.ts但内部硬编码了reportTypeId、inspectionItemId等字段名，与风电审核表单业务强耦合。watch回调中直接操作formData.value的具体字段，无法复用到其他级联场景。"
+
+[[criterion]]
+name = "TypeScript类型安全"
+description = "[Implicit] 接口定义、泛型使用和类型推断的完整性。1:无类型标注;2:基础类型但有any;3:主要类型完整但缺少泛型;4:完整类型定义含接口和泛型;5:严格模式无any+完整推断。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "report.ts的API返回类型使用了any，useCascadeSelect.ts中formData类型为Record<string, any>。下拉选项的value类型未约束为string|number，存在类型不安全的隐患。"
+
+[[criterion]]
+name = "错误处理机制"
+description = "[Implicit] 网络请求失败、空数据、超时等异常场景的处理。1:无错误处理;2:console.error但无UI反馈;3:try-catch+用户提示;4:重试+降级+详细错误提示;5:完整的错误恢复策略。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useCascadeSelect.ts中的API调用缺少try-catch包裹，网络请求失败时直接抛出未捕获异常。未处理加载超时、服务端返回空列表、接口404等边界场景，loading状态可能卡在true不恢复。"
+
+[[criterion]]
+name = "用户体验细节"
+description = "[Implicit] 加载动画、禁用态视觉反馈、占位提示等交互细节。1:无任何反馈;2:仅loading文字;3:加载动画+禁用态;4:骨架屏+禁用+placeholder变化;5:完整的微交互体验。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportAuditForm.vue中级联下拉缺少loading状态下的视觉反馈，el-select未配置loading和loading-text属性。用户快速切换报告类型时无法感知后台正在加载，体验上像是控件卡死。"

@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/tulin/Documents/GitHub/robust -path */node_modules -prune -o -name *.vue -print)",
+      "Bash(find /Users/tulin/Documents/GitHub/robust/robust-projects/projects -path */node_modules -prune -o -name *.vue -print)"
+    ]
+  }
+}
