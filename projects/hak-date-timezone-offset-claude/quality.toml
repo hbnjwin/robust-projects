@@ -1,0 +1,62 @@
+[[criterion]]
+name = "日期提交时区校正"
+description = "[Explicit] DatePicker选择的本地日期提交到后端时是否保持日期不变不因UTC转换偏移。1: 日期偏移一天；2: 部分场景偏移；3: 手动补偿但硬编码时区；4: toLocalDateString提取本地年月日避免UTC转换；5: 完整的时区策略含服务端协商。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "date.ts的toLocalDateString通过getFullYear/getMonth/getDate提取本地日期分量，确保YYYY-MM-DD格式不受时区影响。useReportFilter.ts中所有日期类型的筛选参数统一经过toLocalDateString转换后再传给API。ReportList.vue的表单提交也使用formatSubmitDate统一处理，消除所有日期字段的UTC偏移风险。"
+
+[[criterion]]
+name = "范围筛选边界处理"
+description = "[Explicit] 日期范围筛选是否包含结束日期当天的完整24小时数据。1: 结束日期当天数据全部遗漏；2: 部分遗漏；3: 手动加1天但有副作用；4: 结束日期设置为23:59:59.999或次日00:00:00；5: 完整边界处理含时区感知。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "date.ts的toEndOfDay函数将结束日期设置为当天23:59:59.999：new Date(date.getFullYear(), date.getMonth(), date.getDate(), 23, 59, 59, 999)。useReportFilter.ts中范围筛选的endDate统一经过toEndOfDay处理后再提交。后端SQL查询WHERE created_at <= '2026-06-10T23:59:59.999'正确包含6月10日全天数据。"
+
+[[criterion]]
+name = "时间格式解析容错"
+description = "[Explicit] 后端返回的各种时间格式（ISO/时间戳/自定义格式）是否能正确解析显示。1: 非标准格式显示NaN或Invalid Date；2: 部分格式解析失败；3: 主要格式覆盖；4: ISO/时间戳/自定义格式全覆盖+容错；5: 完整解析+本地化格式化+相对时间。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "date.ts的parseDate函数支持多种格式的容错解析：ISO 8601字符串、Unix毫秒时间戳（检测纯数字）、自定义格式（通过正则匹配YYYY/MM/DD和YYYY-MM-DD变体）。解析失败时返回null而非Invalid Date，ReportList.vue中格式化时判断null显示'-'占位。formatDateTime函数输出统一的YYYY-MM-DD HH:mm格式，在所有浏览器表现一致。"
+
+[[criterion]]
+name = "日期工具函数设计"
+description = "[Implicit] 日期处理工具函数的设计质量和覆盖度。1: 无工具函数直接操作Date；2: 少量工具函数；3: 基本工具覆盖；4: 完整的date.ts工具库覆盖格式化/解析/比较/范围；5: 工具库+国际化+日历系统支持。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "date.ts作为完整的日期工具模块导出：toLocalDateString（提交格式化）、toEndOfDay（范围边界）、parseDate（多格式解析）、formatDateTime（显示格式化）、isValidDate（校验）。useReportFilter.ts中所有日期操作均通过工具函数完成，不直接使用Date构造器或时间戳运算。函数均为纯函数，无副作用，便于单元测试。"
+
+[[criterion]]
+name = "DatePicker配置"
+description = "[Implicit] el-date-picker的value-format、default-time等配置是否正确设置以减少时区问题。1: 默认配置不处理；2: 设置了value-format但不完整；3: value-format+default-time配置；4: 完整配置含禁用未来日期/快捷选项等；5: 完整配置+自定义面板+国际化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReportList.vue的日期范围选择器配置value-format='YYYY-MM-DD'返回字符串格式，:default-time=\"[new Date(0,0,0,0,0,0), new Date(0,0,0,23,59,59)]\"设置范围结束时间为当天末尾。disabled-date限制不能选择未来日期。提供shortcuts快捷选项（最近7天/30天/本月/上月），减少手动选择日期的操作步骤。"
+
+[[criterion]]
+name = "国际化时区适配"
+description = "[Implicit] 日期处理方案是否考虑了不同时区用户的使用场景。1: 硬编码东八区；2: 依赖浏览器本地时区；3: 本地时区+格式化正确；4: 支持时区感知的日期处理；5: 完整的i18n时区方案含日历本地化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "date.ts的工具函数基于浏览器本地时区处理日期，对于国内单一时区（东八区）的风电审核系统场景足够。toLocalDateString的实现不依赖硬编码的+8偏移量，而是通过getFullYear等方法自动适配浏览器时区。formatDateTime使用Intl.DateTimeFormat(undefined, options)进行本地化格式化。但未实现服务端时区锁定机制，跨时区使用时仍有风险。"
+
+[[criterion]]
+name = "日期相关测试"
+description = "[Implicit] 日期时区处理逻辑的测试覆盖情况。1: 无测试；2: 手动验证；3: 少量测试；4: 覆盖主要时区场景；5: 完整覆盖含跨时区/夏令时/闰年。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "虽然未创建独立的测试文件，但date.ts的函数设计为纯函数，输入Date输出string，具备良好的可测试性。useReportFilter.ts中通过console.log验证了提交参数格式。但缺少自动化测试保障，特殊日期场景的正确性需要后续补充vitest用例。"
