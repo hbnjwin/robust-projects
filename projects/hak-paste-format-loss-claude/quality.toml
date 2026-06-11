@@ -1,0 +1,71 @@
+[[criterion]]
+name = "Word表格结构保留"
+description = "[Explicit] 从Word复制的表格粘贴后是否保留table/tr/td结构。1: 表格完全丢失变纯文本；2: 保留部分结构但错位；3: 结构保留但样式丢失；4: 清洗Word专有标签后完整保留表格结构；5: 保留且自动适配编辑器表格样式。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "paste-format.ts的cleanWordHtml方法分步处理：(1)移除<!--[if...]-->条件注释和<w:*>/<o:*>/<v:*>命名空间标签；(2)保留<table><tr><td>结构及colspan/rowspan属性；(3)移除mso-*样式但保留width/height/border基础样式；(4)为清洗后的table添加默认border-collapse:collapse和边框样式。复杂表格的结构和合并单元格均正确保留。"
+
+[[criterion]]
+name = "Word文本格式保留"
+description = "[Explicit] 从Word复制的加粗、斜体、标题等格式是否保留。1: 所有格式丢失变纯文本；2: 仅保留加粗；3: 保留加粗斜体但标题层级丢失；4: 完整保留加粗/斜体/标题/列表格式；5: 保留且映射为编辑器原生格式。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "paste-format.ts的cleanWordHtml识别Word的MsoHeading1~MsoHeading6类名并转换为对应的<h1>~<h6>标签。<span style='font-style:italic'>转换为<em>，<span style='font-weight:bold'>转换为<strong>。mso-list样式的<p>序列转换为<ul>/<ol>+<li>标准列表结构。WangEditor能直接识别转换后的标准HTML标签，格式在编辑器中正确展示。"
+
+[[criterion]]
+name = "Excel合并单元格处理"
+description = "[Explicit] 从Excel复制含合并单元格的表格粘贴后是否正确保持布局。1: 合并拆开数据错位；2: 部分合并保持；3: 合并保持但尺寸错误；4: colspan/rowspan正确保留且数据对齐；5: 保留且自动调整编辑器表格尺寸。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "paste-format.ts的cleanExcelHtml方法保留td/th元素上的colspan、rowspan、width、height属性。移除Excel专有的x:*命名空间标签和条件格式样式，但保留背景色和边框等视觉样式。合并单元格的跨行跨列属性完整保留，粘贴后表格布局与Excel源文件一致。"
+
+[[criterion]]
+name = "颜色样式白名单"
+description = "[Explicit] 粘贴带颜色的文字后是否保留安全的颜色样式并过滤危险属性。1: 所有样式丢失或全部保留；2: 颜色保留但含危险属性；3: 白名单过滤但遗漏项多；4: color/background-color白名单保留且过滤危险属性；5: 白名单+颜色标准化+编辑器调色板映射。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "sanitize.ts的ALLOWED_STYLES白名单包含color、background-color、font-size、font-weight、font-style、text-align、text-decoration、vertical-align等安全的格式属性。过滤expression()、url()、javascript:等危险值，保留十六进制和rgb()颜色值。ContentPreview.vue中预览页使用相同的sanitize函数确保粘贴内容在预览时也是安全的。"
+
+[[criterion]]
+name = "HTML清洗引擎设计"
+description = "[Implicit] 粘贴HTML清洗模块的架构设计和可维护性。1: 正则替换散落各处；2: 单一函数过于庞大；3: 分函数但调用链不清晰；4: 清洗管道模式分步处理且可配置；5: 插件化清洗引擎支持自定义规则。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "paste-format.ts将清洗逻辑拆分为独立方法：removeComments()、removeNamespaceTags()、convertHeadings()、convertLists()、cleanStyles()、normalizeTable()。主函数cleanPastedHtml按顺序调用各步骤形成清洗管道，每步职责单一可独立测试。通过isWordHtml()/isExcelHtml()判断来源选择不同的清洗流程。"
+
+[[criterion]]
+name = "XSS安全防护"
+description = "[Implicit] 粘贴内容是否经过XSS安全过滤防止脚本注入。1: 无过滤直接插入；2: 仅移除script标签；3: 移除script+事件属性；4: 白名单标签+白名单属性+危险值过滤；5: DOMPurify级别的完整消毒。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "sanitize.ts实现了标签白名单（p/h1-h6/table/tr/td/th/ul/ol/li/strong/em/a/img/span/br）和属性白名单（href/src/alt/colspan/rowspan/style）。移除所有on*事件属性，href中过滤javascript:协议，src中过滤data:协议（保留data:image/）。粘贴的HTML经过DOMParser解析后逐节点过滤，非白名单标签的内容提取为纯文本保留。"
+
+[[criterion]]
+name = "预览同步渲染"
+description = "[Implicit] 编辑器内容变更后预览区是否同步更新且格式一致。1: 无预览功能；2: 预览但格式不一致；3: 同步但有延迟；4: 实时同步且格式与编辑器一致；5: 同步+打印预览+导出PDF。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ContentPreview.vue通过watch监听编辑器content变化，变更时调用sanitize()过滤后更新预览HTML。预览区样式通过.preview-content scoped CSS匹配编辑器的默认样式（表格边框、字号、行高等）。但预览区与编辑器的CSS样式仍有细微差异，如列表缩进和标题间距不完全一致。"
+
+[[criterion]]
+name = "代码模块化"
+description = "[Implicit] 粘贴处理相关代码的模块划分和职责分离程度。1: 所有逻辑在组件中；2: 部分抽取但混乱；3: 分文件但职责重叠；4: 清洗/校验/组件职责分离清晰；5: 插件化架构支持扩展。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "paste-format.ts专注于来源识别和格式转换（Word→标准HTML、Excel→标准HTML），sanitize.ts专注于安全过滤（标签白名单、属性白名单、危险值过滤）。RichEditor.vue通过WangEditor的customPaste钩子接入，调用链清晰：clipboardData→paste-format.clean()→sanitize.sanitize()→editor.dangerouslyInsertHtml()。三个模块职责分离，可独立测试和维护。"
