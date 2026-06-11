@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位token几乎立即过期的根本原因：login/index.vue调用setOauth时只传access_token未传expires_in，dayjs().add(undefined)返回当前时间导致token瞬间过期。1: 未定位；2: 知道过期太快但不知原因；3: 找到setOauth但未分析dayjs行为；4: 完整追溯login.vue→setOauth→dayjs().add(undefined)的因果链；5: 追溯因果链并分析dayjs对undefined参数的处理机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read检查login/index.vue和oauth2.js，定位到setOauth调用时缺少expires_in，dayjs().add(undefined)返回当前时间导致token过期时间等于当前时间，但11次工具调用中3次Bash和1次Skill属于非修复操作"
+
+[[criterion]]
+name = "expires_in传递"
+description = "[Explicit] 登录成功后从后端响应中解构expiresIn并传入setOauth。1: 未传递；2: 传了但字段名不匹配；3: 传递正确但解构方式不规范；4: 正确从响应解构expiresIn并传入setOauth的expires_in字段；5: 传递加类型校验加合理范围检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "login/index.vue中从后端响应data解构expiresIn，传入setOauth({access_token:accessToken, expires_in:expiresIn})，修复了核心问题"
+
+[[criterion]]
+name = "兜底机制"
+description = "[Explicit] oauth2.js的setOauth中对expires_in缺失添加默认值兜底。1: 无兜底；2: 兜底值不合理；3: 合理默认值但实现方式不优；4: expires_in || 7200的默认兜底防止undefined导致立即过期；5: 兜底加console.warn日志提醒开发者"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "oauth2.js的setOauth中对expires_in做了兜底处理，缺失时使用默认过期时间，但具体实现细节未充分验证"
+
+[[criterion]]
+name = "过期时间计算"
+description = "[Implicit] 修复后dayjs计算的过期时间是否在合理范围（几小时后而非当前时间）。1: 仍为当前时间；2: 过期时间不合理；3: 合理但精度不够；4: dayjs().add(7200,'seconds')计算出2小时后的正确时间戳；5: 正确计算加时区处理加存储格式规范"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复后expires_in有值时dayjs计算正确，但未通过Bash验证dayjs().add(7200,'seconds')的实际输出是否为2小时后的时间戳"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有明显冗余；3: 修改正确但有额外操作；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "11次工具调用（4次Read+3次Bash+2次Edit+1次Grep+1次Skill），其中Bash和Skill操作非修复必要，2次Edit修改login/index.vue和oauth2.js两个核心文件"

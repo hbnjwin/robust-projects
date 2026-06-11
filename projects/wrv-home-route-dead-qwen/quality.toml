@@ -1,0 +1,44 @@
+[[criterion]]
+name = "路由模块识别"
+description = "[Explicit] 准确识别HomeRoute模块文件存在但未在router/index.js中导入和注册的问题。1: 未识别；2: 只看到404但不知原因；3: 知道路由不存在但未找到home.js模块文件；4: 准确定位src/router/modules/home.js存在（包含8个功能页面路由）但未在router/index.js中注册；5: 定位问题并分析了8个子路由的组件引用完整性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read检查router/index.js发现缺少HomeRoute的import，但需要10次工具调用（7次Read+2次Bash+1次Edit）才完成修复，部分Read属于探索性读取"
+
+[[criterion]]
+name = "路由注册修复"
+description = "[Explicit] 在router/index.js中正确导入并注册HomeRoute模块。1: 未注册；2: import了但未加入routerModules；3: 加入了但展开方式不对；4: 正确import并在routerModules数组中展开HomeRoute；5: 注册并验证所有8个子路由可达"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在router/index.js中添加import HomeRoute和routerModules数组展开，但只修改了一个文件，未检查home.js模块本身是否有问题"
+
+[[criterion]]
+name = "子路由完整性"
+description = "[Implicit] home.js中定义的8个功能页面路由配置是否完整且组件引用正确。1: 多个子路由配置错误；2: 部分路由缺少组件引用；3: 配置基本正确但有遗漏；4: 8个子路由路径、名称、组件引用都完整；5: 完整且包含权限控制和懒加载配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "仅在router/index.js添加HomeRoute注册，未Read home.js确认8个子路由（评审计划、审核任务、资料上传等）的组件懒加载路径是否指向存在的.vue文件"
+
+[[criterion]]
+name = "路由层级修复"
+description = "[Implicit] HomeRoute的父路由与Layout组件的嵌套关系是否正确。1: 层级错误导致页面无导航栏；2: 层级对但重定向不正确；3: 基本正确但默认子路由不对；4: 父路由使用Layout组件包裹，子路由正确嵌套在router-view中；5: 层级正确加面包屑导航和权限守卫"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "HomeRoute注册后理论上能正确嵌套在Layout中，但未验证主页路由的redirect配置是否指向正确的默认子路由"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "10次工具调用（7次Read+2次Bash+1次Edit），7次Read中部分是探索性读取其他路由模块文件用于参考格式，最终1次Edit修改router/index.js"

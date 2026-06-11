@@ -1,0 +1,44 @@
+[[criterion]]
+name = "竞态识别"
+description = "[Explicit] 准确识别FileReader.readAsText()异步操作与Promise.reject(res.data)同步执行之间的竞态条件。1: 未识别；2: 知道错误提示有问题但不知竞态；3: 知道是异步问题但未定位竞态点；4: 准确定位FileReader.onload回调尚未执行时Promise.reject已将原始Blob对象传递给调用方；5: 定位竞态并分析了Event Loop中微任务/宏任务的调度顺序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取app-request.js响应拦截器，识别到FileReader.readAsText()是异步的但reject在同步代码中执行，导致调用方收到Blob而非解析后的JSON"
+
+[[criterion]]
+name = "异步修复"
+description = "[Explicit] 将FileReader异步读取改为正确等待解析完成后再reject。1: 未修复；2: 修了但仍有竞态；3: 用Promise包装但resolve/reject不对；4: 用new Promise包装FileReader，onload中resolve解析结果后再reject；5: Promise包装加超时保护加fallback"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了响应拦截器将FileReader包装在Promise中，确保onload完成后再处理，但5次工具调用中2次Edit说明首次修改可能不完整"
+
+[[criterion]]
+name = "错误提示修复"
+description = "[Explicit] 修复后ElMessage/MessagePlugin能在正确时机显示解析后的错误文本而非[object Blob]。1: 仍显示Blob对象；2: 显示了但时机不对；3: 时机和内容正确但格式不友好；4: FileReader完成解析后ElMessage显示JSON中的错误信息文本；5: 友好提示加错误分类加持续时间配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后ElMessage在FileReader完成解析后弹出，显示JSON中的msg字段内容，但未验证JSON.parse失败时的降级处理"
+
+[[criterion]]
+name = "Promise链完整"
+description = "[Implicit] 修复后响应拦截器的Promise链在blob成功/blob错误/非blob错误三种场景下的行为是否都正确。1: 多个场景有问题；2: 部分场景正确；3: 主要场景正确但blob成功场景受影响；4: 三种场景的Promise resolve/reject都正确；5: 完整处理加ContentType检测加取消请求支持"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复集中在blob错误的FileReader竞态问题，但未验证blob成功下载场景和非blob普通JSON错误场景的响应拦截器行为是否保持正确"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "5次工具调用（2次Read+2次Edit+1次Bash），2次Edit说明首次修改不完整需要补充，Bash可能用于验证"

@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位API请求无限等待的根本原因：axios实例的timeout设置为0表示无超时限制。1: 未定位；2: 知道请求卡住但不知原因；3: 找到timeout但未理解0的含义；4: 准确定位app-request.js第11行timeout:0表示axios不设超时限制；5: 定位根因并分析了axios timeout的完整工作机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取app-request.js第11行发现timeout:0，准确理解axios文档中timeout:0的语义是禁用超时机制，请求将无限等待直到TCP连接级别超时或用户手动取消"
+
+[[criterion]]
+name = "超时值设置"
+description = "[Explicit] 将timeout从0改为合理的超时时间使请求能在有限时间内失败。1: 仍为0；2: 改了但值不合理；3: 设置了但偏大或偏小；4: 设置为30000ms（30秒）符合Web应用常见超时标准；5: 30秒加根据请求类型动态设置不同超时"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "app-request.js第11行将timeout:0改为timeout:30000，30秒超时平衡了慢速网络的容忍度和用户等待体验，与主流Web应用的API超时配置一致"
+
+[[criterion]]
+name = "错误反馈链路"
+description = "[Explicit] 超时后axios触发错误是否能通过响应拦截器正确传递到用户界面显示错误提示。1: 超时后无反馈；2: 控制台有错误但用户无感知；3: 有提示但内容不友好；4: 超时触发error interceptor显示用户可理解的错误提示；5: 友好提示加重试按钮加不同错误类型区分"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "超时后axios触发AxiosError(code:ECONNABORTED)进入app-request.js第54行的响应拦截器error回调，该回调执行NProgress.done()停止进度条并将错误通过Promise.reject传递给调用方的.catch()处理"
+
+[[criterion]]
+name = "NProgress状态"
+description = "[Implicit] 超时后NProgress进度条是否正确停止。1: 仍在滚动；2: 停止但有延迟；3: 停止但样式残留；4: 超时后NProgress.done()立即停止进度条；5: 停止加过渡动画自然结束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "app-request.js第55行响应拦截器的error回调中已有NProgress.done()调用，超时错误触发后进度条立即停止，用户不再看到无限滚动的进度条"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "2次工具调用（1次Read+1次Edit），直接读取app-request.js并修改第11行timeout值，最小改动完成修复"

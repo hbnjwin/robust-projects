@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位密码强度组件首次加载显示0颗星的根本原因：watch监听strength时缺少immediate:true导致初始值不同步。1: 未定位；2: 只看到显示不对但不知原因；3: 找到watch但未分析immediate缺失；4: 准确定位data()初始化value=0且watch缺少immediate:true导致首次渲染用默认值；5: 定位根因并分析了Vue watch的完整生命周期时序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取password-strength/index.vue发现data()将value初始化为0，watch监听strength但未设置immediate:true，导致首次挂载时handler不执行，value停留在0"
+
+[[criterion]]
+name = "watch修复"
+description = "[Explicit] 将watch从简写语法改为对象语法并添加immediate:true使首次挂载时同步值。1: 未修复；2: 修了但语法错误；3: 加了immediate但handler不对；4: 正确改为{handler, immediate:true}对象语法；5: 对象语法加deep选项处理复杂类型"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将watch的strength从简写函数改为对象语法{handler(val){this.value=val}, immediate:true}，修复了首次加载不同步的问题"
+
+[[criterion]]
+name = "初始值同步"
+description = "[Explicit] 修复后组件首次加载时value等于父组件传入的strength值。1: 仍为0；2: 同步了但有闪烁；3: 同步正确但时序有延迟；4: 首次渲染即显示正确的星级数；5: 同步正确且支持strength为0的边界情况"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "immediate:true确保watch在created阶段执行，value在首次render前已同步为strength值，t-rate组件显示正确星级"
+
+[[criterion]]
+name = "组件状态一致性"
+description = "[Implicit] 修复后星级显示（t-rate）与文字描述（strengthText计算属性）是否一致。1: 不一致；2: 部分值不一致；3: 常见值一致但边界不对；4: 所有strength值的星级和文字描述一致；5: 一致且在strength动态变化时保持同步"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了value的初始同步，但未验证strengthText计算属性在value为0-5各值时的返回文字是否与星级视觉一致（如value=3对应'中等'和3颗星）"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "4次工具调用（2次Read+1次Glob+1次Edit），其中2次Read读取同一文件和Glob搜索属于定位过程，最终1次Edit完成修复"

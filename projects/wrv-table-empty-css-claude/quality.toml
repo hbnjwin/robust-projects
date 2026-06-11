@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位表格空状态样式异常的两个根因：style标签缺少scoped导致CSS全局泄漏，选择器使用了Element Plus的类名而非TDesign的类名。1: 未定位；2: 只发现一个问题；3: 发现两个问题但分析不够深入；4: 准确定位scoped缺失和选择器错误两个独立问题；5: 定位双重根因并分析了CSS作用域机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取table-empty/index.vue的style标签（第45行），准确识别两个独立问题：1)缺少scoped属性导致min-height:400px样式泄漏到所有页面的表格空状态区域；2).el-table__empty-block是Element Plus类名，TDesign对应的类名是.t-table__empty"
+
+[[criterion]]
+name = "scoped修复"
+description = "[Explicit] 为style标签添加scoped属性限制CSS作用域到当前组件。1: 未添加；2: 添加了但语法不对；3: 添加正确但影响了深度选择器；4: 正确添加scoped且配合:deep()穿透选择器；5: scoped加CSS模块化方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "table-empty/index.vue第45行将<style>改为<style scoped>，配合:deep()穿透选择器确保样式既不泄漏到全局又能正确作用于TDesign子组件内部的DOM元素"
+
+[[criterion]]
+name = "选择器修正"
+description = "[Explicit] 将Element Plus的.el-table__empty-block选择器修正为TDesign的.t-table__empty。1: 未修正；2: 修了但类名不对；3: 类名对了但缺少:deep()穿透；4: 正确使用:deep(.t-table__empty)穿透scoped限制；5: 穿透选择器加组件库版本兼容"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将选择器从.el-table__empty-block改为:deep(.t-table__empty)，:deep()是Vue 3 scoped样式的穿透语法，确保样式能作用于TDesign t-table组件内部渲染的空状态容器"
+
+[[criterion]]
+name = "样式隔离验证"
+description = "[Implicit] 修复后其他页面的表格空状态不再受影响，样式仅作用于table-empty组件内。1: 仍有泄漏；2: 大部分页面正常但个别有影响；3: 隔离正确但样式优先级不够；4: 样式完全隔离且优先级正确；5: 隔离验证加回归测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "scoped属性为table-empty组件的样式添加了data-v-xxx属性选择器限定，:deep(.t-table__empty)的min-height:400px仅作用于该组件内部渲染的TDesign表格空状态区域，其他页面不受影响"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "2次工具调用（1次Read+1次Edit），1次Edit同时完成scoped添加和选择器修正两处改动，效率极高"

@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位token几乎立即过期的根本原因：login/index.vue调用setOauth时只传access_token未传expires_in，dayjs().add(undefined)返回当前时间导致token瞬间过期。1: 未定位；2: 知道过期太快但不知原因；3: 找到setOauth但未分析dayjs行为；4: 完整追溯login.vue→setOauth→dayjs().add(undefined)的因果链；5: 追溯因果链并分析dayjs对undefined参数的处理机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "4次工具调用快速定位根因：login/index.vue第79行setOauth({access_token:accessToken})缺少expires_in字段，oauth2.js的setOauth用dayjs().add(oauth.expires_in,'seconds')计算过期时间，undefined导致dayjs返回当前时间，isTokenExpired()立即返回true"
+
+[[criterion]]
+name = "expires_in传递"
+description = "[Explicit] 登录成功后从后端响应中解构expiresIn并传入setOauth。1: 未传递；2: 传了但字段名不匹配；3: 传递正确但解构方式不规范；4: 正确从响应解构expiresIn并传入setOauth的expires_in字段；5: 传递加类型校验加合理范围检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "login/index.vue第77行从const {user, accessToken}改为const {user, accessToken, expiresIn}，第79行setOauth调用增加expires_in:expiresIn字段，后端返回的过期秒数正确传递给token存储逻辑"
+
+[[criterion]]
+name = "兜底机制"
+description = "[Explicit] oauth2.js的setOauth中对expires_in缺失添加默认值兜底。1: 无兜底；2: 兜底值不合理；3: 合理默认值但实现方式不优；4: expires_in || 7200的默认兜底防止undefined导致立即过期；5: 兜底加console.warn日志提醒开发者"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "oauth2.js第24行将dayjs().add(oauth.expires_in,'seconds')改为dayjs().add(oauth.expires_in || 7200,'seconds')，当expires_in为undefined或0时使用7200秒（2小时）作为默认过期时间"
+
+[[criterion]]
+name = "过期时间计算"
+description = "[Implicit] 修复后dayjs计算的过期时间是否在合理范围（几小时后而非当前时间）。1: 仍为当前时间；2: 过期时间不合理；3: 合理但精度不够；4: dayjs().add(7200,'seconds')计算出2小时后的正确时间戳；5: 正确计算加时区处理加存储格式规范"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后当后端返回expiresIn=7200时，dayjs().add(7200,'seconds')正确计算出当前时间+2小时的ISO时间戳存入cookie，isTokenExpired()比对当前时间确认token未过期"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有明显冗余；3: 修改正确但有额外操作；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "4次工具调用（2次Read+2次Edit），精准修改login/index.vue和oauth2.js两个文件各一处，无冗余操作"

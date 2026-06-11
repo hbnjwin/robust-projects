@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位'Must be called at the top of a setup function'错误的根本原因：在非setup上下文中调用了useI18n()组合式API。1: 未定位；2: 知道报错但不知原因；3: 找到useI18n但未分析调用上下文；4: 准确定位lang/index.js中setLocaleOnClient和lang导出函数在模块顶层或非组件函数中调用useI18n()违反了Vue 3组合式API约束；5: 定位根因并解释了Vue 3 setup函数的调用时机限制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取lang/index.js发现第34-43行的setLocaleOnClient和lang使用useI18n()，理解了useI18n()只能在setup函数顶层调用"
+
+[[criterion]]
+name = "API替换"
+description = "[Explicit] 将useI18n()替换为i18n.global直接访问全局i18n实例。1: 仍使用useI18n；2: 替换了但访问方式不对；3: 用了i18n.global但属性名不正确；4: 正确用i18n.global.locale.value替代useI18n()的locale；5: 替换加TypeScript类型支持"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将setLocaleOnClient中的useI18n()解构改为直接使用i18n.global.locale，lang导出也改为从i18n.global获取，2次Edit完成替换"
+
+[[criterion]]
+name = "scope理解"
+description = "[Implicit] 对Vue 3 useI18n与i18n.global两种API的使用场景理解。1: 混淆两种API；2: 知道区别但解释不准确；3: 理解但未说明适用场景；4: 准确区分useI18n(组件setup内)和i18n.global(模块/工具函数)的适用场景；5: 深入理解并说明了useScope选项的作用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "理解了useI18n()受限于setup上下文，改用i18n.global作为替代方案"
+
+[[criterion]]
+name = "导入清理"
+description = "[Implicit] 替换useI18n后是否清理了多余的import语句。1: 遗留无用import；2: 清理了但引入了新的多余依赖；3: 清理不完整；4: 移除useI18n的import且不影响其他导入；5: 完整清理加tree-shaking优化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "将useI18n()替换为i18n.global后，lang/index.js顶部的import {useI18n} from 'vue-i18n'是否被清理未确认"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "6次工具调用（3次Read+2次Edit+1次Glob），3次Read中可能包含重复读取，2次Edit修改lang/index.js的useI18n替换和import清理"
