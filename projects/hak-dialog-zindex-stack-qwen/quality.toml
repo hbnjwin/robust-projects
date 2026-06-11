@@ -1,0 +1,62 @@
+[[criterion]]
+name = "z-index层叠顺序修复"
+description = "[Explicit] 多层Dialog弹窗的z-index是否正确递增，避免后开弹窗被遮挡。1: 未处理z-index问题；2: 硬编码固定值无法适配多层；3: 手动递增但存在溢出或重复；4: 动态计算z-index且正确递增；5: 全局z-index管理器+自动回收。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportAuditForm.vue中Dialog组件未设置动态z-index，多个弹窗叠加时使用Element Plus默认值，未实现手动管理。当连续打开审核详情和编辑弹窗时，后开的弹窗可能被先开的遮盖。"
+
+[[criterion]]
+name = "遮罩层穿透处理"
+description = "[Explicit] 多层弹窗的遮罩层是否正确叠加，点击遮罩是否只关闭最顶层弹窗。1: 遮罩层相互干扰；2: 遮罩存在但点击行为异常；3: 遮罩正确但透明度累加过深；4: 遮罩层独立管理且行为正确；5: 遮罩+键盘ESC+焦点陷阱完整。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Dialog的modal属性使用默认true，多层弹窗的遮罩层z-index未单独管理，导致累加变黑。点击遮罩时close-on-click-modal未区分层级，可能同时关闭多个弹窗。"
+
+[[criterion]]
+name = "弹窗关闭顺序控制"
+description = "[Explicit] ESC键和关闭按钮是否遵循后进先出的关闭顺序。1: 关闭顺序混乱；2: 关闭按钮正确但ESC行为异常；3: 基本LIFO但边界情况未处理；4: 严格LIFO+ESC仅关闭顶层；5: LIFO+动画过渡+状态恢复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "el-dialog的close-on-press-escape默认开启，但多层弹窗时ESC会触发所有层级的关闭事件。虽然关闭按钮只影响当前弹窗，但键盘操作缺乏层级感知，未实现弹窗栈管理。"
+
+[[criterion]]
+name = "弹窗状态管理"
+description = "[Implicit] 多个弹窗的打开/关闭状态是否通过统一机制管理，避免状态不同步。1: 各弹窗独立变量无统一管理；2: 有管理但状态同步延迟；3: 统一管理但缺少生命周期钩子；4: 完整的弹窗状态管理composable；5: 状态管理+持久化+跨组件通信。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportAuditForm.vue中使用多个独立的ref变量（showDetailDialog、showEditDialog）控制弹窗，缺少统一的弹窗管理机制。弹窗间状态不同步，关闭外层弹窗时内层状态可能残留。"
+
+[[criterion]]
+name = "滚动锁定处理"
+description = "[Implicit] 弹窗打开时是否正确锁定背景滚动，多层关闭后是否恢复。1: 未处理背景滚动；2: 锁定但关闭后未恢复；3: 单层正确但多层嵌套时失效；4: 多层嵌套均正确锁定和恢复；5: 锁定+滚动位置记忆+iOS兼容。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "el-dialog默认的lock-scroll在多层场景下存在问题，关闭中间层弹窗时可能提前解除body的overflow:hidden，导致背景可滚动。未实现引用计数机制跟踪活跃弹窗数。"
+
+[[criterion]]
+name = "组件复用性设计"
+description = "[Implicit] 弹窗z-index管理逻辑是否抽取为可复用组件或composable。1: 逻辑散落在模板中；2: 抽取但与业务耦合；3: 基本可复用但接口不通用；4: 通用composable支持配置；5: 完整的弹窗管理库+文档+测试。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "z-index相关逻辑直接写在ReportAuditForm.vue模板的style属性中，硬编码具体数值。未抽取composable或工具函数，其他页面的弹窗需要重复编写相同逻辑。"
+
+[[criterion]]
+name = "TypeScript类型完整性"
+description = "[Implicit] 弹窗管理相关接口和类型定义是否完整，避免any和类型断言。1: 无类型标注；2: 基础类型但有any；3: 主要类型完整但泛型缺失；4: 完整类型定义含接口和泛型；5: 严格模式无any+完整推断。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Dialog相关的props传递使用对象字面量无类型约束，弹窗回调函数的参数类型为any。缺少DialogConfig、DialogState等接口定义，弹窗数据在父子组件间传递时丢失类型信息。"
