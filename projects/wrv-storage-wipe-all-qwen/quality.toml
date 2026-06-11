@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位退出登录后表格列配置丢失的根本原因：signOut和oauth2.remove()中两次localStorage.clear()清除了pinia持久化数据。1: 未定位；2: 只发现配置丢失但不知原因；3: 找到localStorage.clear()但未分析调用链；4: 完整定位两处localStorage.clear()及其对pinia persist的影响；5: 定位根因并分析了oauth2.remove()和signOut的职责边界问题"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取nav-bar/index.vue和oauth2.js，发现signOut第84行和oauth2.remove()第44行各有一次localStorage.clear()，定位了两次清除导致pinia stores丢失的问题，但排查路径较长，先读了4个文件才聚焦"
+
+[[criterion]]
+name = "清除策略修复"
+description = "[Explicit] 将localStorage.clear()全量清除改为精确清除认证相关数据，保护pinia持久化的业务数据。1: 未修复；2: 只删一处clear；3: 删了两处但替代方案不完善；4: 两处都正确修改为只清除认证相关key；5: 精确清除且考虑了其他store的安全性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在oauth2.remove()中去掉了localStorage.clear()只保留Cookies.remove(KEY)，在signOut中将localStorage.clear()改为localStorage.removeItem移除特定key，但signOut中的精确清除列表不够完善"
+
+[[criterion]]
+name = "pinia持久化保护"
+description = "[Implicit] 修复后useTableStore的persist:true持久化数据在退出登录后是否完整保留。1: 仍被清除；2: 部分保留；3: 保留但有竞态风险；4: 完整保留且退出-重新登录后配置恢复；5: 完整保留并验证了多store共存的安全性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后不再全量clear localStorage，useTableStore的持久化数据理论上得到保护，但未通过Read验证table.js的persist配置键名，也未验证userinfo store的key是否与table store冲突"
+
+[[criterion]]
+name = "重复清除消除"
+description = "[Explicit] 消除oauth2.remove()和signOut中对localStorage.clear()的重复调用。1: 两处都保留；2: 只消除一处；3: 消除了但引入新的重复；4: 完全消除重复调用，职责清晰；5: 消除重复且重构了退出流程的调用层次"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "去掉了oauth2.remove()中的localStorage.clear()，signOut中改为removeItem，消除了重复调用，但整体退出流程的职责划分说明不够清晰"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改或冗余操作；2: 修改正确但探索过多；3: 修改正确有少量额外步骤；4: 精准高效完成修复；5: 最小改动量完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "23次工具调用（9次Read+5次Glob+4次Grep+3次Bash+2次Edit），其中多次Glob和Grep搜索属于过度探索，实际只需读取3个关键文件即可定位问题"
