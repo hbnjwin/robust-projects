@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位登录后循环跳转的根本原因：router.push在oauth2.setOauth之前执行，路由守卫检测到token未存储判定未登录又跳回登录页。1: 未定位；2: 知道循环跳转但不知原因；3: 找到执行顺序但未分析路由守卫的检查时机；4: 准确定位router.push先于setOauth执行导致路由守卫在token存储前检查认证状态；5: 定位根因并分析了Vue Router导航守卫的完整执行流程"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取login/index.vue第76-79行，分析登录成功后代码先执行router.push({name:'Expert'})触发导航，路由守卫beforeEach检查isTokenExpired()时setOauth()尚未执行，token为空判定未登录跳回/login，形成循环"
+
+[[criterion]]
+name = "执行顺序修复"
+description = "[Explicit] 将router.push移到setOauth和userInfo存储之后执行。1: 顺序未改；2: 改了但仍有部分逻辑在push之后；3: push在最后但解构顺序不对；4: 正确的执行顺序：解构响应→存储userInfo→setOauth→router.push；5: 正确顺序加await router.push加错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "login/index.vue重排第76-79行执行顺序为：1)const {user,accessToken}解构响应 2)userInfo.value=user存储用户信息 3)oauth2.setOauth({access_token:accessToken})存储token 4)router.push({name:'Expert'})最后跳转"
+
+[[criterion]]
+name = "认证状态保障"
+description = "[Implicit] 修复后router.push触发导航时路由守卫能检测到有效的token和用户信息。1: 守卫仍检测不到；2: 能检测到token但用户信息缺失；3: 都能检测到但有竞态窗口；4: setOauth和userInfo都在push前完成，守卫检查一定通过；5: 保障加同步写入确认加重试机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "router.push执行前setOauth已将token和过期时间写入cookie，userInfo.value已赋值为user对象，路由守卫beforeEach中isTokenExpired()返回false且用户信息存在，导航到Expert路由顺利通过"
+
+[[criterion]]
+name = "路由守卫配合"
+description = "[Implicit] 修复后登录流程与路由守卫的协作是否完整无缝。1: 仍有冲突；2: 大部分场景正确但edge case有问题；3: 正常流程正确但快速重复登录可能有问题；4: 登录→存储→跳转→守卫检查的完整链路无缝协作；5: 无缝协作加Token刷新加Session恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后登录链路：login.vue表单提交→API返回{user,accessToken}→store存储用户信息→cookie存储token和过期时间→router.push导航→beforeEach守卫检查token有效且有用户信息→放行到Expert页面"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改和非修复操作；2: 有明显冗余；3: 修改正确但过程冗长；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "3次工具调用（2次Read+1次Edit），读取login/index.vue确认代码后1次Edit调整4行代码的执行顺序，精准高效"
