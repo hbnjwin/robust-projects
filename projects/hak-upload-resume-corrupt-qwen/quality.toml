@@ -1,0 +1,71 @@
+[[criterion]]
+name = "分片偏移对齐"
+description = "[Explicit] 续传恢复时分片偏移是否以服务端实际接收记录为准，避免重复或遗漏。1:仅靠客户端偏移;2:查询服务端但对齐逻辑错误;3:服务端为准但边界case遗漏;4:reconcileChunks服务端权威+逐片对齐;5:对齐+一致性校验+自动修复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useResumableUpload.ts中续传恢复时调用服务端API获取已接收分片列表，按列表中最大chunkIndex+1作为续传起点。但未处理中间缺失分片的情况——如果服务端收到了0,1,3号分片（2号丢失），续传从4号开始会永久遗漏2号分片，合并后文件在2号分片位置出现空洞。"
+
+[[criterion]]
+name = "分片完整性校验"
+description = "[Explicit] 每个分片上传后是否通过MD5/SHA校验确保内容完整无损。1:无校验;2:仅文件级校验;3:分片MD5但时机不对;4:预计算分片MD5+上传后服务端比对;5:双端校验+损坏自动重传。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "hash.ts中实现了SparkMD5计算文件整体哈希，但未对每个分片单独计算MD5。上传分片时仅发送chunkIndex和chunkData，服务端无法校验接收到的分片内容是否与原始文件对应位置的数据一致。网络传输中的数据损坏（如代理截断、编码错误）无法被检测到。"
+
+[[criterion]]
+name = "续传恢复逻辑"
+description = "[Explicit] 浏览器刷新后续传的恢复机制是否可靠，是否依赖服务端状态而非客户端localStorage。1:刷新后从头上传;2:localStorage记录但不可靠;3:查询服务端但逻辑有缺陷;4:服务端分片列表为唯一数据源+客户端缓存辅助;5:无缝恢复+进度精确还原。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useResumableUpload.ts中localStorage记录uploaded_offset=N（已发送到第N个分片），刷新后从offset恢复。但服务端实际接收的分片可能少于N（网络超时重传导致客户端认为已发送但服务端未收到），续传跳过了实际未到达服务端的分片，合并后文件出现截断。这正是题目描述的核心bug。"
+
+[[criterion]]
+name = "并发上传控制"
+description = "[Implicit] 多分片并发上传的队列管理和并发度控制。1:串行逐片上传;2:Promise.all无控制;3:简单并发数限制;4:upload-pool并发池+优先级+重试;5:自适应并发+带宽检测+动态调整。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useResumableUpload.ts中分片上传使用for循环串行执行，每次await uploadChunk(i)完成后才上传下一片。100MB文件切成100个1MB分片时，串行上传无法利用浏览器的并发HTTP连接能力，上传速度远低于带宽上限。上传大文件时用户等待时间过长。"
+
+[[criterion]]
+name = "Web Worker哈希计算"
+description = "[Implicit] 大文件哈希计算是否在Web Worker中执行，避免阻塞UI主线程。1:主线程同步计算;2:主线程异步但仍阻塞;3:Worker但通信开销大;4:Worker+流式计算+进度回调;5:Worker+WASM+零拷贝Transferable。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "hash.ts中使用SparkMD5在主线程通过FileReader.readAsArrayBuffer逐片读取并计算哈希。100MB文件的完整哈希计算耗时约3-5秒，期间UI线程被阻塞，页面无法响应用户操作（按钮点击无反应、动画冻结）。未使用Web Worker将计算密集型任务移出主线程。"
+
+[[criterion]]
+name = "错误重试策略"
+description = "[Implicit] 分片上传失败后的重试机制和退避策略。1:失败即终止;2:简单重试无退避;3:固定间隔重试;4:指数退避+最大重试次数+错误分类;5:自适应退避+断路器+用户可选跳过。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useResumableUpload.ts中uploadChunk失败时catch中仅console.error记录错误并将该分片标记为failed，未实现自动重试。用户需要手动点击\"继续上传\"按钮重新触发整个续传流程。对于网络波动导致的偶发失败，每次都需要人工干预效率很低。"
+
+[[criterion]]
+name = "文件分片器"
+description = "[Implicit] 文件切片模块的设计质量，包括分片大小策略和切片实现。1:硬编码分片大小;2:可配置但无优化;3:基本分片器;4:独立file-chunker模块+动态分片大小;5:自适应分片+对齐+预读缓冲。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "upload.ts中文件切片通过file.slice(start, end)按固定1MB大小切割。分片大小硬编码在函数内部，无法根据文件大小或网络状况调整。超大文件（1GB+）产生1000+个分片，分片管理开销增大。切片逻辑与上传逻辑混在同一函数中，无法独立复用。"
+
+[[criterion]]
+name = "存储抽象层"
+description = "[Implicit] 客户端持久化存储（上传任务元信息）的抽象封装质量。1:直接localStorage.setItem;2:简单封装;3:类型安全的封装;4:storage.ts统一抽象+序列化+容量管理;5:IndexedDB+降级+加密存储。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useResumableUpload.ts中直接使用localStorage.setItem/getItem存储上传偏移量，key格式为upload_{fileName}硬编码字符串拼接。存储的value为纯数字字符串，getItem后parseInt可能返回NaN未处理。多个文件同时上传时key可能冲突（同名不同文件）。未考虑localStorage 5MB容量限制下大量上传任务的存储清理。"

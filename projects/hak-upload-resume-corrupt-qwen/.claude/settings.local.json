@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find . -name *.ts -o -name *.vue -o -name *.js -o -name *.json)",
+      "Bash(grep -rn -i \"upload\\\\|断点续传\" /Users/tulin/Documents/GitHub/robust/docs/题目*.md)",
+      "Bash(find /Users/tulin/Documents/GitHub/robust -path */hak-upload* -type f)",
+      "Bash(python3 -c \":*)",
+      "mcp__context7__resolve-library-id",
+      "mcp__context7__query-docs",
+      "WebSearch",
+      "Bash(npm install:*)",
+      "Bash(npx vue-tsc:*)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}
