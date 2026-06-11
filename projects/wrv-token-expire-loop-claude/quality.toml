@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位token过期死循环的根本原因：expires_in未传导致dayjs计算出当前时间。1:未定位;2:定位错误;3:定位到oauth2但未找到expires_in缺失;4:准确定位到setOauth中dayjs().add(undefined)返回当前时间;5:定位+完整因果链分析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "5次工具调用快速定位根因：setOauth只收到access_token未收到expires_in，dayjs().add(undefined,'seconds')返回当前时间，token存入即过期，路由守卫检测过期跳回登录形成死循环"
+
+[[criterion]]
+name = "expires_in传递"
+description = "[Explicit] 登录成功后将后端返回的expires_in正确传入setOauth。1:未修复;2:传了但字段名不匹配;3:传递正确但无解构;4:从响应中解构expiresIn并传入setOauth;5:传递+字段映射+类型校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "login/index.vue第77行从后端响应中解构expiresIn并传入setOauth，字段名映射正确"
+
+[[criterion]]
+name = "兜底机制"
+description = "[Explicit] setOauth中对expires_in缺失时的默认值兜底。1:无兜底;2:兜底但值不合理;3:合理默认值但无日志;4:默认7200秒兜底+防御性编程;5:兜底+告警+配置化过期时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "oauth2.js第24-25行对expires_in做兜底，缺失时默认7200秒(2小时)，防止undefined导致dayjs计算错误"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围和效率。1:大量无关修改;2:有冗余;3:基本精准;4:精准高效;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "5次工具调用(2次Read+2次Edit+1次Glob)精准完成两个文件的修复，无冗余操作"
+
+[[criterion]]
+name = "死循环防护"
+description = "[Implicit] 防止类似的token过期死循环再次发生的健壮性设计。1:无防护;2:简单修复;3:加了兜底;4:兜底+路由守卫增加重试限制;5:兜底+限制+错误提示+登出清理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "两层防护：login.vue传递expires_in + oauth2.js兜底默认值，即使后端未返回也不会产生立即过期的token"
