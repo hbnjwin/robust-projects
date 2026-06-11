@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位列拖拽排序绑定到错误表格的原因：document.querySelector全局选择器选中了先渲染的数据表格而非抽屉内的配置表格。1: 未定位；2: 只发现拖拽不对但不知原因；3: 找到querySelector但未分析多表格并存的选择器优先级；4: 准确定位全局选择器在多表格场景下选中首个匹配元素的问题；5: 定位根因并分析了DOM渲染顺序对querySelector的影响"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "1次Read直接定位custom-header/index.vue的registerSort函数第64-66行，准确分析document.querySelector在抽屉打开时选中先渲染的数据表格tbody而非抽屉内配置表格的根因"
+
+[[criterion]]
+name = "ref引用修复"
+description = "[Explicit] 将全局document.querySelector替换为Vue ref引用或限定作用域的选择器。1: 未修复；2: 修了但语法错误；3: 用ref但引用方式不对；4: 正确添加ref并通过$el限定作用域查询；5: ref引用加nextTick确保DOM挂载后操作"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "添加const dragTable = ref(null)，registerSort中改用dragTable.value.$el.querySelector限定查询作用域到抽屉内的表格组件"
+
+[[criterion]]
+name = "拖拽功能恢复"
+description = "[Implicit] 修复后Sortable正确绑定到抽屉内的列配置表格，拖拽操作不影响底层数据表格。1: 拖拽仍错误；2: 能拖但有异常；3: 基本正确但边界情况有问题；4: 拖拽功能完全恢复正常；5: 拖拽正常且处理了抽屉关闭时的cleanup"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后Sortable通过ref精确绑定到抽屉内的列配置表格，不再影响底层数据表格行顺序"
+
+[[criterion]]
+name = "DOM查询安全性"
+description = "[Implicit] 修复方案是否避免了querySelector的全局副作用，是否考虑了DOM未就绪的情况。1: 仍用全局选择器；2: 改了但未考虑null safety；3: 有null判断但不完善；4: 完整的ref引用加null safety；5: 完善的null safety加DOM ready保证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过ref限定作用域消除全局副作用，修复方案中dragTable.value在registerSort调用时抽屉已打开，ref已绑定，时序正确"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "2次工具调用（1次Read+1次Edit），直接读取文件定位问题并一次Edit完成ref声明和querySelector替换两处修改"
