@@ -1,0 +1,62 @@
+[[criterion]]
+name = "排序方向校正"
+description = "[Explicit] 排序箭头方向与实际数据排列顺序是否一致。1: 方向完全相反；2: 部分列方向不一致；3: 修复了但依赖硬编码方向；4: sort-method与箭头方向统一校正；5: 统一校正且支持自定义排序函数。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useTableSort.ts中修正了sort-method的比较函数方向，将a.auditDate-b.auditDate改为b.auditDate-a.auditDate使升序箭头对应日期从小到大。但修复方式是针对auditDate列单独调整比较函数，未建立统一的排序方向映射机制，其他列如果也有类似问题需要逐个修改。"
+
+[[criterion]]
+name = "排序高亮清除"
+description = "[Explicit] 切换排序列时前一列的高亮箭头是否正确清除。1: 高亮从不清除；2: 偶尔清除；3: 手动clearSort但时机不对；4: sort-change中自动清除非当前列高亮；5: 清除且支持多列排序模式切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useTableSort.ts中sort-change事件回调未调用tableRef.value.clearSort()清除前一列的排序状态。el-table内部维护的sortingColumn未更新，导致用户先按审核日期排序再按报告状态排序时，审核日期列的蓝色箭头仍然高亮，视觉上误导用户以为是双字段排序。"
+
+[[criterion]]
+name = "远程排序竞态"
+description = "[Explicit] 远程排序请求并发时是否正确处理响应乱序问题。1: 旧响应覆盖新数据；2: loading锁但有竞态窗口；3: 版本号但实现不完整；4: AbortController取消旧请求或版本号校验；5: 取消+版本号+loading状态同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useTableSort.ts中sort-change触发远程排序请求时，仅通过loading标志防止按钮重复点击，但快速点击不同列头时上一次请求未被取消。两个排序请求同时飞行，后发先至的旧排序结果可能覆盖新排序，用户看到的列表与当前高亮的排序列不匹配。"
+
+[[criterion]]
+name = "排序composable设计"
+description = "[Implicit] 排序逻辑是否抽取为独立composable，接口设计是否清晰。1: 逻辑散落在组件中；2: 部分抽取；3: 抽取了但与组件耦合；4: 完整的useTableSort/useSortable composable；5: 通用composable支持多表格复用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useTableSort.ts将排序逻辑从ReportList.vue中抽取为composable，导出sortState、handleSortChange等。但composable内部直接引用了report.ts的fetchReports函数和Report类型，与报告列表业务耦合。其他表格（如设备列表、审核记录表）无法复用该composable。"
+
+[[criterion]]
+name = "类型定义完整性"
+description = "[Implicit] 排序相关的TypeScript类型定义是否完整准确。1: 无类型定义；2: 基础类型有any；3: 主要类型覆盖；4: 完整的接口和枚举定义；5: 严格类型含泛型约束和类型守卫。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "report.ts中定义了SortParams接口包含field和order字段，但order类型为string而非'ascending'|'descending'字面量类型。useTableSort.ts中tableRef类型标注为any，sort-change回调参数未定义类型，依赖隐式推断。"
+
+[[criterion]]
+name = "用户交互反馈"
+description = "[Implicit] 排序操作过程中的加载状态、禁用态等用户反馈。1: 无反馈；2: 仅console日志；3: loading状态展示；4: loading+列头禁用+数据淡出过渡；5: 完整交互反馈含排序方向动画。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportList.vue中远程排序期间未展示loading状态，表格数据直接替换无过渡效果。用户点击排序列头后无法感知请求是否在处理中，快速连续点击会发送多个请求。列头排序箭头的切换也无动画过渡。"
+
+[[criterion]]
+name = "多列排序扩展性"
+description = "[Implicit] 排序方案是否预留了多列排序的扩展能力。1: 完全不支持；2: 硬编码单列；3: 单列但接口可扩展；4: 预留多列排序接口；5: 完整实现多列排序切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useTableSort.ts中sortState仅记录单个{field, order}对象，handleSortChange直接覆盖上一次排序。el-table的sort-change事件本身只支持单列排序，composable未预留sortFields数组或优先级机制用于未来扩展多列排序需求。"

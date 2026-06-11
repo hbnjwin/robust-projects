@@ -1,0 +1,71 @@
+[[criterion]]
+name = "Word表格结构保留"
+description = "[Explicit] 从Word复制的表格粘贴后是否保留table/tr/td结构。1: 表格完全丢失变纯文本；2: 保留部分结构但错位；3: 结构保留但样式丢失；4: 清洗Word专有标签后完整保留表格结构；5: 保留且自动适配编辑器表格样式。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "paste-handler.ts中cleanWordHtml函数通过正则移除了<w:*>、<o:*>等Word专有XML标签和条件注释<!--[if ...]-->，保留了<table><tr><td>基本结构。但Word生成的colspan/rowspan属性在清洗过程中被误删，复杂表格（合并单元格）的布局仍然错乱。清洗后的表格缺少border样式，视觉上看不到表格边框。"
+
+[[criterion]]
+name = "Word文本格式保留"
+description = "[Explicit] 从Word复制的加粗、斜体、标题等格式是否保留。1: 所有格式丢失变纯文本；2: 仅保留加粗；3: 保留加粗斜体但标题层级丢失；4: 完整保留加粗/斜体/标题/列表格式；5: 保留且映射为编辑器原生格式。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "paste-handler.ts中HTML清洗过程将Word的<b>/<strong>保留了，但<i>/<em>在某些Word版本中被包裹在<span style='font-style:italic'>中，清洗时连同span一起被移除导致斜体丢失。Word标题通过<p class='MsoHeading1'>标识，清洗后class被删除变成普通段落，标题层级信息丢失。有序/无序列表的mso-list样式被清除后列表标记消失。"
+
+[[criterion]]
+name = "Excel合并单元格处理"
+description = "[Explicit] 从Excel复制含合并单元格的表格粘贴后是否正确保持布局。1: 合并拆开数据错位；2: 部分合并保持；3: 合并保持但尺寸错误；4: colspan/rowspan正确保留且数据对齐；5: 保留且自动调整编辑器表格尺寸。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "paste-handler.ts中未针对Excel的HTML格式做特殊处理。Excel复制到剪贴板的HTML中合并单元格通过colspan/rowspan属性表示，但清洗过程中属性过滤逻辑将非style的HTML属性统一移除，colspan和rowspan也被删掉。粘贴后合并单元格被拆分为多个独立单元格，数据填充到错误的列位置。"
+
+[[criterion]]
+name = "颜色样式白名单"
+description = "[Explicit] 粘贴带颜色的文字后是否保留安全的颜色样式并过滤危险属性。1: 所有样式丢失或全部保留；2: 颜色保留但含危险属性；3: 白名单过滤但遗漏项多；4: color/background-color白名单保留且过滤危险属性；5: 白名单+颜色标准化+编辑器调色板映射。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "sanitize.ts中定义了允许的CSS属性白名单包含color和background-color，保留了文字颜色。但白名单中未包含font-size和text-align等常用格式属性导致字号和对齐信息丢失。position、expression等危险属性已被过滤，但background-image:url()未被过滤存在潜在的数据泄露风险（可通过url跟踪用户）。"
+
+[[criterion]]
+name = "HTML清洗引擎设计"
+description = "[Implicit] 粘贴HTML清洗模块的架构设计和可维护性。1: 正则替换散落各处；2: 单一函数过于庞大；3: 分函数但调用链不清晰；4: 清洗管道模式分步处理且可配置；5: 插件化清洗引擎支持自定义规则。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "paste-handler.ts中cleanWordHtml函数约200行，包含10+个正则替换操作串联执行。各步骤之间存在顺序依赖（先移除注释再移除标签再处理样式），但未通过注释或函数拆分说明管道顺序。添加新的清洗规则需要在函数中间插入正则，容易破坏已有逻辑。"
+
+[[criterion]]
+name = "XSS安全防护"
+description = "[Implicit] 粘贴内容是否经过XSS安全过滤防止脚本注入。1: 无过滤直接插入；2: 仅移除script标签；3: 移除script+事件属性；4: 白名单标签+白名单属性+危险值过滤；5: DOMPurify级别的完整消毒。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "paste-handler.ts中仅通过正则移除<script>标签，未处理<img onerror=alert(1)>、<svg onload=...>、<a href='javascript:...'>等XSS向量。粘贴包含事件属性的HTML标签时恶意脚本可执行。sanitize.ts中的白名单过滤仅应用于CSS属性，未覆盖HTML属性和标签的安全校验。"
+
+[[criterion]]
+name = "预览同步渲染"
+description = "[Implicit] 编辑器内容变更后预览区是否同步更新且格式一致。1: 无预览功能；2: 预览但格式不一致；3: 同步但有延迟；4: 实时同步且格式与编辑器一致；5: 同步+打印预览+导出PDF。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ReviewPreview.vue通过v-html绑定编辑器的HTML内容实现预览，内容变更时自动更新。但预览区的CSS样式与WangEditor编辑器内的样式不完全一致——编辑器内表格有边框但预览区的表格无边框，字体大小也有差异。预览区未应用sanitize过滤，存在XSS风险。"
+
+[[criterion]]
+name = "代码模块化"
+description = "[Implicit] 粘贴处理相关代码的模块划分和职责分离程度。1: 所有逻辑在组件中；2: 部分抽取但混乱；3: 分文件但职责重叠；4: 清洗/校验/组件职责分离清晰；5: 插件化架构支持扩展。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "paste-handler.ts承担了HTML清洗和格式转换的全部职责，文件约300行。sanitize.ts仅负责CSS属性过滤功能较单一。ReviewEditor.vue中仍包含部分粘贴事件处理逻辑与paste-handler的调用耦合。两个工具文件的职责边界不够清晰——HTML标签过滤应该属于sanitize还是paste-handler不明确。"

@@ -1,0 +1,62 @@
+[[criterion]]
+name = "列宽拖拽实现"
+description = "[Explicit] 表格列宽拖拽是否流畅，拖拽过程中列宽是否实时更新。1: 拖拽无响应；2: 拖拽卡顿或跳跃；3: 基本流畅但存在抖动；4: 流畅拖拽且实时预览；5: 流畅+吸附对齐+性能优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts通过mousedown/mousemove/mouseup事件自定义拖拽逻辑，mousemove中使用requestAnimationFrame节流更新列宽。拖拽时显示蓝色参考线指示目标位置，释放后一次性更新column.width避免中间态闪烁。"
+
+[[criterion]]
+name = "相邻列宽度联动"
+description = "[Explicit] 拖拽某列边框时相邻列是否同步调整宽度，总表宽是否保持不变。1: 相邻列不联动导致错位；2: 联动但总宽变化；3: 总宽不变但非相邻列偏移；4: 正确的相邻列反向调整；5: 联动+最小宽约束+比例分配。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts在拖拽列宽变化deltaX时，同步将相邻右列宽度减少deltaX，保持totalWidth不变。设置minWidth=80px约束防止列被压缩至不可见，达到最小宽度时停止拖拽响应。"
+
+[[criterion]]
+name = "列宽持久化存储"
+description = "[Explicit] 用户调整后的列宽是否保存到本地存储，刷新页面后恢复。1: 不保存刷新即丢失；2: 保存但恢复时机错误；3: localStorage保存但未处理表结构变化；4: 持久化+版本管理+过期清理；5: 持久化+云端同步+用户偏好导出。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts在列宽变化后通过watchDebounced将columnWidths对象序列化存入localStorage，key包含表格标识符。组件mounted时读取存储值覆盖默认列宽，处理了列数量变化时的版本兼容。"
+
+[[criterion]]
+name = "固定列与拖拽兼容"
+description = "[Implicit] 表格存在固定列（fixed）时拖拽是否正常工作，固定列阴影是否正确。1: 固定列下拖拽完全失效；2: 拖拽可用但固定列阴影错位；3: 基本兼容但滚动时异常；4: 完整兼容且阴影正确；5: 兼容+固定列可拖拽+动态切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts在列宽更新后调用tableRef.value.doLayout()触发Element Plus重新计算固定列位置。固定列的left/right值通过columns的累加宽度重新计算，阴影位置与可滚动区域边界对齐。"
+
+[[criterion]]
+name = "双击自适应列宽"
+description = "[Implicit] 双击列边框是否自动调整为内容最佳宽度。1: 不支持双击调整；2: 双击有响应但宽度计算错误；3: 正确计算但不含表头宽度；4: 内容+表头取最大值；5: 自适应+动画过渡+批量调整。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useColumnResize.ts监听header上的dblclick事件，遍历该列所有td计算最大文本宽度，加上padding后设置为列宽。但未考虑表头文字宽度，当表头比内容长时列宽不足以显示完整标题。"
+
+[[criterion]]
+name = "拖拽光标与视觉反馈"
+description = "[Implicit] 拖拽过程中鼠标光标、列边框高亮等视觉反馈是否完善。1: 无任何视觉反馈；2: 仅光标变化；3: 光标+拖拽区域高亮；4: 光标+高亮+参考线+尺寸提示；5: 完整视觉反馈+动画过渡。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts拖拽时在鼠标位置显示蓝色竖线（resize-indicator），线高等于表格高度。鼠标附近显示宽度数值tooltip（如\"180px\"），释放时参考线渐隐消失。hover拖拽区域时边框高亮为蓝色。"
+
+[[criterion]]
+name = "性能与渲染优化"
+description = "[Implicit] 大数据量表格下列宽拖拽是否保持流畅，是否避免不必要的重渲染。1: 大数据量下严重卡顿；2: 有优化但效果不明显；3: 基本流畅但DOM操作过多；4: requestAnimationFrame+虚拟渲染；5: RAF+GPU加速+增量更新。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts中mousemove回调通过requestAnimationFrame合并更新，拖拽过程中仅更新参考线位置（CSS transform），mouseup时才批量更新列宽触发表格重渲染。避免了拖拽中间态的频繁DOM操作。"

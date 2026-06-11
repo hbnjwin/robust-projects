@@ -1,0 +1,62 @@
+[[criterion]]
+name = "排序方向校正"
+description = "[Explicit] 排序箭头方向与实际数据排列顺序是否一致。1: 方向完全相反；2: 部分列方向不一致；3: 修复了但依赖硬编码方向；4: sort-method与箭头方向统一校正；5: 统一校正且支持自定义排序函数。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSortable.ts中定义了SortDirection枚举和compareFn工厂函数，根据列的dataType（date/number/string）自动生成正确方向的比较器。ReportTable.vue中每列通过:sort-method=\"getSortMethod(col)\"统一获取比较函数，箭头方向与数据排列方向一致。新增列只需声明dataType即可自动匹配排序逻辑。"
+
+[[criterion]]
+name = "排序高亮清除"
+description = "[Explicit] 切换排序列时前一列的高亮箭头是否正确清除。1: 高亮从不清除；2: 偶尔清除；3: 手动clearSort但时机不对；4: sort-change中自动清除非当前列高亮；5: 清除且支持多列排序模式切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSortable.ts的handleSortChange方法在处理新的排序请求前，先通过tableRef.value.clearSort()清除所有列的排序状态，再对当前点击的列设置排序。配合el-table的default-sort属性确保只有一列显示高亮箭头。sortState响应式对象记录当前排序列和方向，UI层根据sortState渲染箭头状态。"
+
+[[criterion]]
+name = "远程排序竞态"
+description = "[Explicit] 远程排序请求并发时是否正确处理响应乱序问题。1: 旧响应覆盖新数据；2: loading锁但有竞态窗口；3: 版本号但实现不完整；4: AbortController取消旧请求或版本号校验；5: 取消+版本号+loading状态同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSortable.ts维护AbortController实例，每次sort-change触发远程排序前先abort()取消上一个未完成的请求。request.ts的fetchReports接受signal参数透传给fetch/axios。被取消的请求在catch中通过signal.aborted判断静默忽略，不影响loading状态。确保列表数据始终对应最后一次排序操作。"
+
+[[criterion]]
+name = "排序composable设计"
+description = "[Implicit] 排序逻辑是否抽取为独立composable，接口设计是否清晰。1: 逻辑散落在组件中；2: 部分抽取；3: 抽取了但与组件耦合；4: 完整的useTableSort/useSortable composable；5: 通用composable支持多表格复用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSortable.ts接收泛型配置{columns, fetchFn, defaultSort}，通过泛型T约束数据类型。导出sortState、handleSortChange、clearSort等方法和loading、currentSort响应式状态。ReportTable.vue通过useSortable<Report>({...})使用，composable不依赖具体业务类型，理论上可复用于其他表格。"
+
+[[criterion]]
+name = "类型定义完整性"
+description = "[Implicit] 排序相关的TypeScript类型定义是否完整准确。1: 无类型定义；2: 基础类型有any；3: 主要类型覆盖；4: 完整的接口和枚举定义；5: 严格类型含泛型约束和类型守卫。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "report.ts中SortDirection定义为'ascending'|'descending'|null联合类型，SortParams接口的order字段使用SortDirection类型。useSortable.ts中tableRef类型为InstanceType<typeof ElTable>，handleSortChange参数定义了{column: TableColumnCtx, prop: string, order: SortDirection}接口。"
+
+[[criterion]]
+name = "用户交互反馈"
+description = "[Implicit] 排序操作过程中的加载状态、禁用态等用户反馈。1: 无反馈；2: 仅console日志；3: loading状态展示；4: loading+列头禁用+数据淡出过渡；5: 完整交互反馈含排序方向动画。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ReportTable.vue中排序期间通过v-loading=\"sortLoading\"在表格上展示加载遮罩。useSortable.ts的loading状态驱动表格的loading属性。但排序列头在loading期间仍可点击触发新排序，未通过pointer-events:none禁用交互。数据切换无淡入淡出动画。"
+
+[[criterion]]
+name = "多列排序扩展性"
+description = "[Implicit] 排序方案是否预留了多列排序的扩展能力。1: 完全不支持；2: 硬编码单列；3: 单列但接口可扩展；4: 预留多列排序接口；5: 完整实现多列排序切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSortable.ts中sortState设计为数组SortField[]，当前默认max=1仅保留最后一个排序字段。但接口层面支持传入maxSortFields配置，sortFields数组可容纳多个排序条件。fetchFn接收sortFields数组参数，后端可据此构建多字段ORDER BY。为多列排序预留了扩展空间。"

@@ -1,0 +1,62 @@
+[[criterion]]
+name = "文件类型Magic Bytes校验"
+description = "[Explicit] 是否通过读取文件头部魔数(magic bytes)校验真实文件类型而非仅依赖扩展名。1: 仅校验扩展名；2: 校验MIME但可伪造；3: Magic Bytes但覆盖类型不全；4: Magic Bytes覆盖PDF/DOCX/XLSX主要格式；5: 完整魔数库+异步校验+服务端二次验证。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "fileValidator.ts中通过FileReader读取文件前8个字节，比对PDF(%PDF-)和DOCX/XLSX(PK头50 4B 03 04)的魔数。但DOCX和XLSX共享相同的PK头（都是ZIP格式），无法区分两者——一个.xlsx文件改名为.docx也能通过校验。未覆盖.doc（旧版Word的D0 CF 11 E0头）和.xls格式的魔数。"
+
+[[criterion]]
+name = "拖拽上传校验"
+description = "[Explicit] 拖拽方式上传文件时是否执行与点击上传相同的类型校验。1: 拖拽不校验任何文件可上传；2: 校验扩展名但不校验内容；3: 校验了但有绕过方式；4: 拖拽与点击共用相同的magic bytes校验逻辑；5: 共用校验+拖拽区域视觉反馈+非法文件拒绝动画。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "FileUpload.vue中el-upload的accept属性仅在点击选择文件时限制文件类型弹窗的过滤器，拖拽上传时drop事件不经过accept校验。fileValidator.ts的校验逻辑仅在before-upload钩子中调用，但拖拽多个文件时before-upload对每个文件的调用时机不确定，存在校验被跳过的窗口。"
+
+[[criterion]]
+name = "进度条单调递增"
+description = "[Explicit] 网络波动时上传进度条是否保持只增不减避免视觉回退。1: 进度随网络波动来回跳动；2: 回退幅度减小但仍可见；3: 限制最大回退幅度；4: 进度值取max(当前值, 新值)确保单调递增；5: 单调递增+平滑插值+预估剩余时间。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useUpload.ts中el-upload的on-progress回调直接将axios返回的event.percent赋值给progress响应式变量。网络波动时底层XMLHttpRequest的loaded值可能在TCP重传后跳变，导致percent从80%回退到60%再恢复到85%，进度条出现明显的倒退现象，用户产生上传出错的错觉。"
+
+[[criterion]]
+name = "文件校验器设计"
+description = "[Implicit] 文件类型校验模块的设计质量和可扩展性。1: 校验逻辑内嵌在组件中；2: 抽取但硬编码类型；3: 独立文件但扩展性差；4: 可配置的文件类型校验器；5: 校验器+注册机制+异步验证链。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "fileValidator.ts导出validateFileType函数，内部通过switch-case判断文件头字节。支持的类型列表硬编码在函数中，添加新类型需要修改函数内部逻辑。函数返回boolean，校验失败时无法区分是类型不匹配还是读取文件失败。"
+
+[[criterion]]
+name = "上传composable封装"
+description = "[Implicit] 上传逻辑是否抽取为独立composable，接口是否清晰。1: 逻辑在组件内；2: 部分抽取；3: 抽取但接口混乱；4: 完整的useUpload composable含进度/校验/错误状态；5: 通用composable支持多场景复用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useUpload.ts仅封装了进度状态管理和文件列表维护，但before-upload的校验逻辑仍在FileUpload.vue组件的methods中。上传成功/失败的回调也分散在组件中，composable与组件的职责分界不清晰。多个上传组件无法共享上传队列管理。"
+
+[[criterion]]
+name = "错误提示质量"
+description = "[Implicit] 文件校验失败时的错误提示是否友好明确。1: 无提示静默拒绝；2: 通用错误消息；3: 区分文件类型错误和大小错误；4: 具体提示检测到的实际类型和允许的类型列表；5: 具体提示+文件预览+修正建议。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "FileUpload.vue中校验失败时ElMessage.error('文件类型不符合要求')，未告知用户具体检测到了什么类型、允许上传哪些类型。用户将.html改名为.pdf上传被拒后，不知道是因为内容校验被识别为HTML而非文件名问题，可能反复尝试重命名。"
+
+[[criterion]]
+name = "MIME类型映射"
+description = "[Implicit] 文件扩展名、MIME类型和magic bytes三者的映射关系是否完整准确。1: 无映射关系；2: 仅扩展名映射；3: 扩展名+MIME映射；4: 三者完整映射含变体；5: 完整映射+动态更新+服务端同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "fileValidator.ts中MIME类型映射覆盖了application/pdf、application/vnd.openxmlformats-officedocument.wordprocessingml.document等主要格式。但未覆盖application/msword（.doc旧格式）和application/vnd.ms-excel（.xls旧格式）的映射。Magic bytes与MIME的关联关系隐含在switch-case逻辑中，无统一的映射表。"

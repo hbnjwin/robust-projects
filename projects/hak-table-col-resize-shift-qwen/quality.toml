@@ -1,0 +1,62 @@
+[[criterion]]
+name = "列宽拖拽实现"
+description = "[Explicit] 表格列宽拖拽是否流畅，拖拽过程中列宽是否实时更新。1: 拖拽无响应；2: 拖拽卡顿或跳跃；3: 基本流畅但存在抖动；4: 流畅拖拽且实时预览；5: 流畅+吸附对齐+性能优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "el-table使用border属性开启列宽拖拽，但header-dragend事件中直接修改column.width导致渲染延迟。拖拽过程中列宽先跳到目标值再弹回，视觉上出现抖动闪烁现象。"
+
+[[criterion]]
+name = "相邻列宽度联动"
+description = "[Explicit] 拖拽某列边框时相邻列是否同步调整宽度，总表宽是否保持不变。1: 相邻列不联动导致错位；2: 联动但总宽变化；3: 总宽不变但非相邻列偏移；4: 正确的相邻列反向调整；5: 联动+最小宽约束+比例分配。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "el-table的header-dragend仅更新当前列宽度，未同步调整右侧相邻列。拖宽左列后右侧所有列向右偏移，表格总宽度超出容器出现横向滚动条，与用户预期的固定总宽列宽交换不符。"
+
+[[criterion]]
+name = "列宽持久化存储"
+description = "[Explicit] 用户调整后的列宽是否保存到本地存储，刷新页面后恢复。1: 不保存刷新即丢失；2: 保存但恢复时机错误；3: localStorage保存但未处理表结构变化；4: 持久化+版本管理+过期清理；5: 持久化+云端同步+用户偏好导出。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "el-table的列宽调整结果仅存在于组件内存中，页面刷新后恢复为columns定义中的默认宽度。用户每次打开报告审核页面都需重新调整列宽，体验不佳。"
+
+[[criterion]]
+name = "固定列与拖拽兼容"
+description = "[Implicit] 表格存在固定列（fixed）时拖拽是否正常工作，固定列阴影是否正确。1: 固定列下拖拽完全失效；2: 拖拽可用但固定列阴影错位；3: 基本兼容但滚动时异常；4: 完整兼容且阴影正确；5: 兼容+固定列可拖拽+动态切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "el-table的操作列设置fixed=\"right\"，拖拽其他列宽后固定列的left/right偏移值未重新计算，固定列位置与实际内容列错位。表格横向滚动时固定列阴影的box-shadow位置偏移。"
+
+[[criterion]]
+name = "双击自适应列宽"
+description = "[Implicit] 双击列边框是否自动调整为内容最佳宽度。1: 不支持双击调整；2: 双击有响应但宽度计算错误；3: 正确计算但不含表头宽度；4: 内容+表头取最大值；5: 自适应+动画过渡+批量调整。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "el-table不支持双击列边框自适应列宽的功能，用户只能手动拖拽调整。对于内容长度差异大的列（如报告类型名称列），用户需要多次拖拽才能找到合适宽度。"
+
+[[criterion]]
+name = "拖拽光标与视觉反馈"
+description = "[Implicit] 拖拽过程中鼠标光标、列边框高亮等视觉反馈是否完善。1: 无任何视觉反馈；2: 仅光标变化；3: 光标+拖拽区域高亮；4: 光标+高亮+参考线+尺寸提示；5: 完整视觉反馈+动画过渡。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "el-table默认在列边框hover时显示col-resize光标，但拖拽过程中无其他视觉反馈。用户拖拽时无法直观看到目标宽度，缺少参考线或宽度数值提示。"
+
+[[criterion]]
+name = "性能与渲染优化"
+description = "[Implicit] 大数据量表格下列宽拖拽是否保持流畅，是否避免不必要的重渲染。1: 大数据量下严重卡顿；2: 有优化但效果不明显；3: 基本流畅但DOM操作过多；4: requestAnimationFrame+虚拟渲染；5: RAF+GPU加速+增量更新。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "el-table的header-dragend触发后整个表格重新渲染，100行数据时拖拽响应延迟约200ms。每次mousemove都触发Vue响应式更新和DOM重绘，未使用节流或虚拟渲染优化。"

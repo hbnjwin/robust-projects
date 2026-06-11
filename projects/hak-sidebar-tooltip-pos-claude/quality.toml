@@ -1,0 +1,62 @@
+[[criterion]]
+name = "tooltip定位精度"
+description = "[Explicit] 侧边栏折叠状态下tooltip是否准确显示在菜单项右侧，不偏移不遮挡。1: tooltip位置完全错误；2: 大致在右侧但偏移明显；3: 位置基本正确但边缘情况偏移；4: 精确定位且适配不同屏幕；5: 精确定位+自适应方向+防溢出。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useTooltipPosition.ts通过getBoundingClientRect获取菜单项精确位置，动态计算tooltip的top偏移量使其垂直居中对齐。placement根据视口右侧剩余空间自动切换right/left方向。"
+
+[[criterion]]
+name = "折叠展开过渡衔接"
+description = "[Explicit] 侧边栏折叠/展开动画期间tooltip是否正确隐藏，动画结束后才可触发。1: 动画期间tooltip闪烁；2: 动画中tooltip位置跳动；3: 动画时隐藏但结束瞬间闪现；4: 平滑过渡无闪烁；5: 过渡+延迟显示+动画同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "watch(isCollapsed)回调中设置tooltipDisabled为true，通过setTimeout在300ms（与CSS transition-duration一致）后恢复。过渡期间所有tooltip被禁用，动画结束后才重新启用hover触发。"
+
+[[criterion]]
+name = "鼠标移入移出响应"
+description = "[Explicit] tooltip的显示和隐藏是否跟随鼠标hover行为，无延迟卡顿或残留。1: hover无响应；2: 响应但有明显延迟；3: 基本响应但快速移动时残留；4: 响应灵敏且快速移动无残留；5: 灵敏响应+虚拟触发+防抖优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "el-tooltip配置:enterable=\"false\"和:hide-after=\"0\"确保鼠标离开菜单项时tooltip立即消失。配合:show-after=\"200\"的防抖延迟，快速划过不触发显示，悬停200ms后才展示。"
+
+[[criterion]]
+name = "子菜单tooltip联动"
+description = "[Implicit] 含子菜单的父级菜单项tooltip是否与子菜单面板协调显示。1: tooltip与子菜单重叠；2: 显示冲突但不遮挡功能；3: 折叠态tooltip正确但展开态残留；4: 两种状态均正确联动；5: 联动+子菜单悬浮面板+平滑过渡。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "el-sub-menu的tooltip通过:disabled=\"hasChildren && isSubmenuOpen\"条件控制，当子菜单弹出时自动禁用父级tooltip。关闭子菜单后tooltip恢复可触发状态，两者互斥显示无冲突。"
+
+[[criterion]]
+name = "无障碍可访问性"
+description = "[Implicit] tooltip是否配置了正确的ARIA属性，键盘导航时能否触发。1: 无ARIA标注；2: 有aria-label但tooltip不可键盘触发；3: 键盘可触发但屏幕阅读器不播报；4: ARIA完整且键盘可操作；5: 完整WCAG 2.1 AA合规。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "el-tooltip通过effect=\"dark\"和content属性提供文本内容，菜单项添加了:aria-label=\"item.title\"属性。但键盘focus事件未绑定tooltip触发，仅hover可用，ARIA关联不完整。"
+
+[[criterion]]
+name = "响应式布局适配"
+description = "[Implicit] 不同视口宽度下tooltip位置是否自适应，移动端是否降级处理。1: 仅适配固定宽度；2: 宽屏正常但窄屏溢出；3: 基本响应式但断点处异常；4: 全视口适配且窄屏降级；5: 自适应+移动端手势+断点平滑过渡。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useTooltipPosition.ts在计算定位时检查window.innerWidth，当右侧空间不足时自动切换placement为\"left\"或\"bottom\"。sidebar折叠宽度通过CSS变量--sidebar-collapsed-width配置，响应式断点下调整tooltip偏移。"
+
+[[criterion]]
+name = "性能与资源管理"
+description = "[Implicit] tooltip组件的渲染策略和事件监听是否优化，避免频繁重渲染。1: 每个菜单项独立tooltip实例；2: 实例复用但事件未清理；3: 虚拟渲染减少DOM节点；4: 单例tooltip+事件委托；5: 虚拟滚动+单例+RAF优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "el-tooltip使用:visible控制按需渲染，非hover状态下不生成popover DOM。但仍为每个菜单项创建独立tooltip实例，未实现单例tooltip通过事件委托共享。减少了常态DOM节点数但实例数未优化。"

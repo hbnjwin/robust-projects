@@ -1,0 +1,62 @@
+[[criterion]]
+name = "清空按钮行为修正"
+description = "[Explicit] el-select多选模式下清空按钮(×)是否仅清空搜索关键词而非已选项。1: 清空搜索同时清空已选项；2: 修复了但有残留bug；3: 阻止了clearable但交互不自然；4: 清空仅影响搜索框保留已选tag；5: 清空搜索+保留已选+输入框聚焦。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSelectSearchFix.ts中监听el-select的clear事件，通过event.stopPropagation()阻止默认行为。手动清空input搜索框的值（inputRef.value=''）并触发filter('')重置下拉选项列表，同时保持modelValue不变。ReportFilter.vue中el-select配置:clearable=\"false\"禁用原生清空按钮，自定义搜索框内的×按钮仅清空搜索文本。"
+
+[[criterion]]
+name = "Backspace键行为隔离"
+description = "[Explicit] 搜索过滤状态下按Backspace键是否仅删除搜索文字而非移除最后一个已选tag。1: 删除搜索文字同时移除tag；2: 修复了但输入法状态异常；3: 阻止了但Backspace完全失效；4: 搜索框有文字时删文字无文字时不操作；5: 正确区分+输入法兼容+键盘导航。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSelectSearchFix.ts中监听el-select内部input的keydown事件。当event.key==='Backspace'时检查input.value是否为空：非空则允许默认行为（删除搜索文字）；为空则event.preventDefault()阻止移除tag的默认行为。配合compositionstart/compositionend事件处理中文输入法下Backspace的特殊情况，避免输入法组合状态下误触发tag移除。"
+
+[[criterion]]
+name = "远程搜索已选保留"
+description = "[Explicit] 远程搜索返回新选项列表后已选中的项是否仍在下拉列表中显示。1: 已选项从列表消失tag悬空；2: 保留但标记不正确；3: 缓存已选但合并逻辑有bug；4: 本地缓存已选项与远程结果合并去重；5: 合并+排序+分组展示（已选/搜索结果）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSelectSearchFix.ts维护selectedOptionsMap（Map<string|number, OptionItem>）缓存所有历史选中项。远程搜索回调中将搜索结果与selectedOptionsMap合并：先过滤掉搜索结果中已存在于Map中的项避免重复，再将Map中不在搜索结果中的已选项追加到列表。使用Map的key做比对确保类型安全，label更新跟随最新的服务端数据。"
+
+[[criterion]]
+name = "el-select覆写方案"
+description = "[Implicit] 修复el-select行为问题的技术方案是否合理可维护。1: 直接修改node_modules；2: 复制组件源码修改；3: CSS/样式hack；4: 组合式API+事件拦截+原生DOM操作；5: 自定义指令或renderless组件包装。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSelectSearchFix.ts通过composable封装修复逻辑，不依赖el-select内部DOM结构。通过el-select暴露的公共方法和事件（clear、visible-change、remote-method）进行行为修正。Backspace拦截通过selectRef.value.$el.querySelector('input')获取输入框，但配合MutationObserver监控DOM变化适配结构调整。composable返回修正后的props和handlers供组件绑定。"
+
+[[criterion]]
+name = "composable封装质量"
+description = "[Implicit] 搜索修复逻辑的composable封装和复用性。1: 修复逻辑散落在组件中；2: 部分抽取；3: 抽取但与业务耦合；4: 通用useSelectSearchFix composable可跨组件复用；5: composable+配置化+自动检测修复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSelectSearchFix.ts将三个bug的修复封装在同一个composable中，接受selectRef和options配置参数。返回{handleClear, handleKeydown, mergedOptions, handlers}供组件绑定。ReportFilter.vue中三个多选框（审核员、报告类型、风电场）通过调用三次useSelectSearchFix分别修复，composable无业务耦合可在其他页面直接复用。"
+
+[[criterion]]
+name = "TypeScript类型定义"
+description = "[Implicit] 选项数据和搜索参数的TypeScript类型定义质量。1: 无类型定义；2: 基础类型有any；3: 主要类型覆盖；4: 完整的接口定义含泛型；5: 严格模式无any含类型守卫。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "api.ts中定义了SearchParams和SearchResult接口。useSelectSearchFix.ts中selectedOptionsMap类型为Map<string|number, SelectOption>，远程搜索回调参数标注为(query: string) => Promise<SelectOption[]>。但composable的泛型支持不完整，value类型固定为string|number未通过泛型参数化。"
+
+[[criterion]]
+name = "边界场景处理"
+description = "[Implicit] 空搜索结果、全选/全取消、搜索中切换等边界场景的处理。1: 边界场景崩溃；2: 部分处理；3: 主要场景覆盖；4: 覆盖空结果/全选/切换/输入法等场景；5: 完整覆盖含压力测试。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useSelectSearchFix.ts中远程搜索返回空结果时展示\"未找到匹配项\"占位。visible-change事件中下拉框收起时取消pending的搜索请求并重置搜索文本。selectedOptionsMap在tag移除时同步删除对应条目，保持缓存与实际选中值一致。compositionstart/compositionend事件正确处理中文输入法下的键盘事件。"
