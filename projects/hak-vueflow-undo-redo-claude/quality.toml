@@ -1,62 +1,71 @@
 [[criterion]]
-name = "user_experience_and_interaction"
-description = "How smooth and efficient is the user experience during interaction? 1: workflow deadlock, loop errors, no valid output, completely unusable; 2: verbose reasoning, repeated self-correction, noticeable logic deviations requiring frequent intervention; 3: some repetition and redundant reasoning, occasional over-complication but user can still wait for results; 4: overall good experience with occasional redundancy or self-correction that does not affect task completion; 5: efficient reasoning, clear logic, smooth responses, accurately captures core intent, output is trustworthy with no room for optimization"
+name = "删除撤销完整性"
+description = "[Explicit] 撤销删除节点操作时是否同时恢复被级联删除的连线。1:仅恢复节点;2:恢复节点+部分连线;3:恢复全部但顺序错误;4:节点+全部关联边完整恢复;5:恢复+位置+选中态+动画。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 5
+rationale = "commands.ts的RemoveNodeCommand构造函数中通过getConnectedEdges获取目标节点的全部关联边，使用structuredClone深拷贝节点和边数据。undo()先调用addNodes恢复节点再调用addEdges恢复所有关联边，顺序正确确保边的source/target节点均存在。测试用例commands.test.ts验证了删除恢复的完整性。"
 
 [[criterion]]
-name = "task_planning_and_execution_control"
-description = "How well does the model plan, decompose, track, and execute tasks? 1: no planning, no decomposition, no task list, no tracking, no feedback, no tool usage; 2: vague or unreasonable planning, ineffective task decomposition, inconsistent tracking, sporadic feedback; 3: macro-level planning is viable but task list is incomplete or not updated, significant tool gaps, vague feedback; 4: reasonable planning, task list exists but updates lag, minor tool misuse, clear stage feedback; 5: complete and well-reasoned plan, auto-generated task list, real-time progress sync, proper tool usage, thorough stage feedback, proactively clarifies ambiguity"
+name = "批量操作原子性"
+description = "[Explicit] 框选多节点拖动后Ctrl+Z是否一次性撤销整个批量操作。1:每个节点独立撤销;2:部分合并但不完整;3:合并但触发时机不准;4:CompositeCommand完整原子操作;5:原子+动画过渡+批量redo。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "commands.ts定义了CompositeCommand类，execute/undo/redo时遍历执行子命令列表。WorkflowEditor.vue的onNodeDragStop事件中收集所有被拖动节点的位置变化，创建包含多个MoveNodeCommand的CompositeCommand作为单条历史记录。useHistory.ts中push(compositeCmd)确保Ctrl+Z一次性撤销整组移动。"
 
 [[criterion]]
-name = "semantic_understanding_and_logical_reasoning"
-description = "How accurately does the model understand intent and reason logically? 1: completely misunderstands intent, cannot parse code structure, unable to execute even with guidance, blind output; 2: misinterprets key information, can only partially complete tasks with guidance, incorrect code location and modification; 3: understands main intent but misses details, slight deviations, achieves goals with human guidance; 4: correctly understands intent and constraints, accurate code modifications, no guidance needed, knowledge meets task requirements; 5: precisely integrates context and codebase information, minimal optimal modifications, no human guidance needed, comprehensive knowledge coverage"
+name = "历史栈边界保护"
+description = "[Explicit] 连续undo到最开始后继续按Ctrl+Z是否安全不报错。1:直接崩溃;2:报错但不崩溃;3:静默忽略;4:边界检查+按钮禁用;5:禁用+提示+完整空栈保护。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useHistory.ts的undo方法开头检查canUndo计算属性（undoStack.length > 0），空栈直接return。EditorToolbar.vue中撤销和重做按钮绑定:disabled=\"!canUndo\"和:disabled=\"!canRedo\"，空栈时按钮置灰不可点击。Ctrl+Z快捷键也经过canUndo判断，空栈时不执行任何操作。"
 
 [[criterion]]
-name = "instruction_compliance_and_constraint_adherence"
-description = "How well does the model follow multiple constraints and maintain them throughout? 1: completely ignores complex constraints, outputs according to own defaults, enters dead loops or argues during manual correction, severely damages original structure; 2: after 2 corrections, still cannot satisfy multiple constraints simultaneously; 3: initial output ignores key constraints, can barely adjust after 2 explicit warnings; 4: initial output misses 1-2 non-core constraints, corrects all immediately after 1 user prompt; 5: perfectly adheres to all multiple constraints, never breaks prior requirements during fixes"
+name = "redo栈管理"
+description = "[Explicit] 执行新操作后redo栈是否正确清空，避免redo到不一致状态。1:redo栈从不清空;2:部分场景清空;3:push时清空但有遗漏;4:所有push操作统一清空redo栈;5:清空+确认提示+分支历史。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useHistory.ts的push方法在将新命令推入undoStack前先执行redoStack.splice(0)清空重做栈。确保任何新操作后redo不可用，canRedo计算属性返回false，重做按钮自动禁用。execute方法内部调用push，保证所有入口统一清空redo。"
 
 [[criterion]]
-name = "engineering_quality_and_completeness"
-description = "How complete and well-engineered is the code output? 1: no engineering quality awareness, no tests provided or outputs invalid pseudo-tests; 2: attempts tests only after multiple reminders, obvious flaws; 3: supplements tests after reminders but only covers main flow; 4: provides tests in most scenarios, tests are valid but coverage has minor deviations; 5: proactively adds/updates test cases, covers critical paths, follows engineering standards"
+name = "命令模式设计"
+description = "[Implicit] Command设计模式的接口定义、具体命令类、调用者的架构质量。1:无命令模式;2:简单函数式;3:有Command但职责不清;4:清晰的Command接口+具体命令类;5:Command+Composite+Memento完整模式。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 5
+rationale = "commands.ts定义了ICommand接口（execute/undo/redo三方法），实现了MoveNodeCommand、RemoveNodeCommand、AddNodeCommand、AddEdgeCommand、CompositeCommand五个命令类。每个命令在构造时深拷贝状态数据，通过flowActions注入操作接口解耦框架依赖。CompositeCommand支持嵌套组合。commands.test.ts中有完整的单元测试验证各命令行为。"
 
 [[criterion]]
-name = "delivery_completeness_and_usability"
-description = "How complete, runnable, and usable is the final delivery? 1: completely non-runnable, irrelevant output; 2: fails to achieve core objectives, code cannot run; 3: main functionality runs but has obvious defects requiring manual fixes; 4: core functionality is complete and usable, very few detail omissions; 5: runnable on first attempt, full feature closure, covers both explicit and implicit requirements"
+name = "测试覆盖"
+description = "[Implicit] undo/redo核心逻辑的单元测试或集成测试覆盖情况。1:无测试;2:手动验证;3:少量测试;4:核心路径覆盖;5:完整覆盖含边界case。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "创建了useHistory.test.ts和commands.test.ts两个测试文件，使用vitest编写。覆盖了：undo/redo基本流程、空栈边界、push后redo清空、CompositeCommand原子性、RemoveNodeCommand连线恢复等核心场景。配置了vitest.config.ts支持ts路径别名。"
 
 [[criterion]]
-name = "architecture_boundaries_and_security_compliance"
-description = "How well does the model respect architecture boundaries and security compliance? 1: arbitrarily deletes or damages core files, performs unauthorized high-risk operations; 2: frequently crosses boundaries, relapses after correction; 3: irrelevant modifications and redundant dependencies, recoverable with intervention; 4: occasionally makes minor boundary violations, stops immediately when reminded; 5: strictly respects architecture boundaries, no unauthorized operations, proactively confirms authorization"
+name = "深拷贝处理"
+description = "[Implicit] 命令记录的历史状态是否通过深拷贝避免引用篡改。1:直接引用;2:浅拷贝;3:JSON.parse(JSON.stringify);4:structuredClone;5:Immer或自定义clone+冻结。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "commands.ts中所有命令类的构造函数使用structuredClone深拷贝节点和边数据。MoveNodeCommand记录structuredClone(node.position)作为oldPosition，拖动结束时记录newPosition同样深拷贝。RemoveNodeCommand对关联边列表执行structuredClone(connectedEdges)，确保历史状态与当前流程图状态完全隔离。"
+
+[[criterion]]
+name = "vue-flow事件集成"
+description = "[Implicit] 与vue-flow的事件系统（onNodesChange、onEdgesChange等）的集成质量。1:事件监听混乱;2:基本监听但遗漏事件;3:主要事件处理完整;4:完整的事件分类处理;5:事件+防抖+批处理+性能优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "WorkflowEditor.vue中同时监听onNodesChange和onEdgesChange，分别处理节点和边的增删改事件。useWorkflowEditor.ts中onNodeDragStart记录初始位置，onNodeDragStop计算位移差值创建命令，中间过程的position change不进入历史栈。批量拖动通过收集draggedNodeIds在dragStop时统一创建CompositeCommand。"
