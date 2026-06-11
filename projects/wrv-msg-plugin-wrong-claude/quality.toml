@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位登录warning提示不显示的根本原因：MessagePlugin被当作函数调用传入配置对象，但TDesign的MessagePlugin应使用静态方法调用。1: 未定位；2: 知道提示不显示但不知原因；3: 找到MessagePlugin调用但未分析API差异；4: 准确定位第73行MessagePlugin({type:'warning',message:...})是Element Plus调用方式，TDesign应使用MessagePlugin.warning(msg)；5: 定位根因并对比了Element Plus与TDesign的Message API差异"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取login/index.vue第73行发现MessagePlugin({type:'warning',message:data.warning})采用Element Plus的ElMessage配置对象调用方式，但项目使用TDesign组件库，MessagePlugin的正确调用方式是MessagePlugin.warning(data.warning)静态方法"
+
+[[criterion]]
+name = "API调用修复"
+description = "[Explicit] 将MessagePlugin从配置对象调用改为正确的TDesign静态方法调用。1: 未修复；2: 改了但方法名不对；3: 方法名对了但参数格式不对；4: 正确改为MessagePlugin.warning(data.warning)；5: 修复加统一全局Message调用方式"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "login/index.vue第73行将MessagePlugin({type:'warning',message:data.warning})精准替换为MessagePlugin.warning(data.warning)，参数从配置对象简化为直接传入提示文本字符串"
+
+[[criterion]]
+name = "TDesign规范"
+description = "[Implicit] 修复后的调用方式是否完全符合TDesign MessagePlugin的API规范。1: 仍不符合；2: 基本调用对了但选项不对；3: 正确但未考虑duration等选项；4: MessagePlugin.warning(msg)完全符合TDesign文档规范；5: 符合规范且配置了duration、placement等选项"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "MessagePlugin.warning(data.warning)完全符合TDesign MessagePlugin文档的静态方法签名，warning方法接受字符串参数作为提示内容，自动使用warning样式和默认3000ms持续时间"
+
+[[criterion]]
+name = "调用一致性"
+description = "[Implicit] 修复后login/index.vue中所有MessagePlugin调用方式是否统一一致。1: 其他位置仍有错误调用；2: 部分统一；3: 主要位置统一但有遗漏；4: 所有MessagePlugin调用都使用相同的静态方法模式；5: 统一且提取为通用工具方法"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复第73行后与同文件第86行的MessagePlugin.error(data.msg)调用方式完全一致，login/index.vue中所有MessagePlugin调用都统一为TDesign静态方法模式"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "2次工具调用（1次Read+1次Edit），直接读取login/index.vue并精准修改第73行一处调用，最小改动完成修复"
