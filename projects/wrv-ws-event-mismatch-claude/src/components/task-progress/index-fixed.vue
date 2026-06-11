@@ -205,22 +205,6 @@ const formatTime = (time) => {
 	return time.toLocaleTimeString()
 }
 
-const handleWebSocketMessage = (data) => {
-	try {
-		const message = typeof data === 'string' ? JSON.parse(data) : data
-		
-		if (message.type === 'task_progress') {
-			handleTaskProgress(message)
-		} else if (message.type === 'task_completed') {
-			handleTaskCompleted(message)
-		} else if (message.type === 'task_failed') {
-			handleTaskFailed(message)
-		}
-	} catch (error) {
-		console.error('处理WebSocket消息失败:', error)
-	}
-}
-
 const handleTaskProgress = (message) => {
 	const { taskId, progress, currentItem } = message
 	
@@ -269,21 +253,34 @@ const handleConnectionStatusChange = (status) => {
 	addLog(`连接状态变更: ${status}`, 'info')
 }
 
+// 连接状态事件处理
+const onConnected = () => handleConnectionStatusChange('connected')
+const onDisconnected = () => handleConnectionStatusChange('disconnected')
+const onError = () => handleConnectionStatusChange('disconnected')
+
 // 生命周期
 onMounted(() => {
 	if (props.autoConnect) {
 		wsManager.connect()
 	}
-	
+
 	// 监听WebSocket事件
-	wsManager.on('message', handleWebSocketMessage)
-	wsManager.on('statusChange', handleConnectionStatusChange)
+	wsManager.on('taskProgress', handleTaskProgress)
+	wsManager.on('taskCompleted', handleTaskCompleted)
+	wsManager.on('taskFailed', handleTaskFailed)
+	wsManager.on('connected', onConnected)
+	wsManager.on('disconnected', onDisconnected)
+	wsManager.on('error', onError)
 })
 
 onUnmounted(() => {
 	// 清理事件监听
-	wsManager.off('message', handleWebSocketMessage)
-	wsManager.off('statusChange', handleConnectionStatusChange)
+	wsManager.off('taskProgress', handleTaskProgress)
+	wsManager.off('taskCompleted', handleTaskCompleted)
+	wsManager.off('taskFailed', handleTaskFailed)
+	wsManager.off('connected', onConnected)
+	wsManager.off('disconnected', onDisconnected)
+	wsManager.off('error', onError)
 })
 
 // 暴露方法给父组件
