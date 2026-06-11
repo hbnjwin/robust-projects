@@ -41,6 +41,5 @@ export default {
 	},
 	remove() {
 		Cookies.remove(KEY)
-		localStorage.clear()
 	}
 }
