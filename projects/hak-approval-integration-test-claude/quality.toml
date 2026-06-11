@@ -51,12 +51,3 @@ points = 5
 weight = 1.0
 score = 4
 rationale = "MainLayout.vue的router-view通过onVnodeMounted自动将新渲染的组件加入tagsView。router/index.ts的beforeEach守卫中检查目标路由是否需要缓存（meta.noCache !== true），自动调用tagsViewStore.addView。组件内beforeRouteLeave守卫中处理未保存数据的确认提示。路由守卫和标签管理的职责划分明确，组件无需手动调用addView。"
-
-[[criterion]]
-name = "代码组织清晰度"
-description = "[Implicit] keep-alive缓存管理相关代码的文件组织和模块化程度。1:逻辑散落各处;2:集中但混乱;3:基本模块化;4:store+composable+组件职责分离;5:完整的插件化架构。"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "tagsView.ts作为Pinia store集中管理所有缓存状态和操作方法。TagsView.vue负责标签栏UI渲染和交互事件。MainLayout.vue中router-view+keep-alive配置保持简洁。dynamicRoutes.ts管理动态路由注册。四个文件职责单一、依赖方向明确（组件→store→路由），Pinia store提供完整的TypeScript类型推断。"
