@@ -1,0 +1,62 @@
+[[criterion]]
+name = "根因定位准确性"
+description = "[Explicit] 能否准确识别fileTypeToImage映射缺少xlsx键导致img src为undefined从而破图的根因，以及两处重复映射未复用全局函数的设计问题。1:未定位到问题;2:仅定位到表层现象;3:定位到映射缺失但未关联复用;4:完整定位根因和复用问题;5:快速精准定位根因并制定正确修复策略。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "读取upload-dialog.vue后立即识别到第75行fileTypeToImage映射缺少xlsx键，同时关联到common-function.js的fileTypeIcon函数已有完整映射（含xlsx），快速确定修复策略为删除本地映射、复用全局函数，并在同一轮中对两个vue文件执行了正确的修改。"
+
+[[criterion]]
+name = "upload-dialog.vue修复"
+description = "[Explicit] upload-dialog.vue中上传xlsx文件后图标破图的核心bug是否被修复，fileTypeToImage映射是否补全或替换为可用的全局函数调用。1:未修改文件;2:修改了但引入新问题;3:仅补了xlsx键未复用;4:复用了但有小瑕疵;5:正确复用fileTypeIcon并清理本地映射。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "将第68-75行的6个本地图片import和fileTypeToImage对象整体替换为import { fileTypeIcon } from \"@/utils/common-function\"，模板第46行从fileTypeToImage[...split(\".\").pop()]改为fileTypeIcon(dialog.form.filesList?.name)。fileTypeIcon内部自动执行split(\".\").pop().toLowerCase()，xlsx文件名能正确匹配到映射，破图问题彻底解决。"
+
+[[criterion]]
+name = "index.vue修复"
+description = "[Explicit] index.vue文件列表中fileTypeToImage使用大写键（DOC/DOCX/XLS等）但缺少XLSX键的问题是否被修复，表格中xlsx类型文件的图标能否正常显示。1:未修改文件;2:修改了但引入新问题;3:仅补了XLSX键;4:复用了但有小瑕疵;5:正确复用fileTypeIcon替换本地映射。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "将第87-101行的本地import和fileTypeToImage映射替换为import { fileTypeIcon } from \"@/utils/common-function\"，模板第53行从fileTypeToImage[row.fileType]改为fileTypeIcon(row.fileType)。由于fileTypeIcon内部有toLowerCase()处理，传入大写的row.fileType（如\"XLSX\"）也能正确匹配到小写的xlsx键，兼容性良好。"
+
+[[criterion]]
+name = "全局工具函数复用"
+description = "[Explicit] 题目明确要求考虑复用common-function.js的fileTypeIcon全局工具函数，而非继续各自维护不完整的映射。是否成功用fileTypeIcon替代了两处本地的fileTypeToImage。1:未复用;2:仅一处复用;3:两处都复用但调用方式有误;4:正确复用但未清理旧代码;5:两处都正确复用且清理了冗余代码。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "两个vue文件都正确添加了import { fileTypeIcon } from \"@/utils/common-function\"，模板中分别用fileTypeIcon(dialog.form.filesList?.name)和fileTypeIcon(row.fileType)替代了fileTypeToImage的直接映射查找。同时删除了6个本地图片import语句和fileTypeToImage对象定义，彻底消除了重复映射维护的问题。"
+
+[[criterion]]
+name = "冗余代码清理"
+description = "[Implicit] 复用全局函数后，原有的本地图片import语句（doc/jpg/docx/pdf/png/xls共6个）和fileTypeToImage对象定义已成为死代码，是否被清理。1:全部保留;2:部分清理;3:清理了但残留import;4:基本清理但有遗漏;5:完全清理干净。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "upload-dialog.vue中删除了第68-75行全部6个本地图片import和const fileTypeToImage = { doc, jpg, docx, pdf, png, xls }，替换为单行的fileTypeIcon导入。index.vue同样删除了第87-101行的6个import和大写键映射对象。两个文件共减少约20行冗余代码。"
+
+[[criterion]]
+name = "全局映射完整性"
+description = "[Implicit] 复用fileTypeIcon后需确认全局函数的映射能覆盖原有本地映射支持的所有类型。原本地映射包含doc和xls，但fileTypeIcon的iconList中只有docx和xlsx，缺少doc和xls的独立映射，可能导致.doc/.xls文件fallback到txt图标。1:引入严重回归;2:有明显遗漏;3:注意到但未完全处理;4:补全了大部分;5:全面检查并补全映射。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "成功复用了fileTypeIcon，xlsx/docx/pdf/png/jpg均能正确匹配。但未检查fileTypeIcon的iconList是否覆盖了原有本地映射的所有类型——原来upload-dialog.vue和index.vue都支持doc和xls图标，而fileTypeIcon中只有docx和xlsx，没有doc和xls的独立映射。上传.doc或.xls文件时会fallback到txt图标而非显示对应图标，存在轻微的功能回归。"
+
+[[criterion]]
+name = "交付可靠性"
+description = "[Implicit] 代码修改是否确实写入了目标文件并在最终交付中生效。Edit/Write操作是否成功执行且结果持久化，不存在修改丢失或被覆盖的情况。1:修改全部未生效;2:部分生效;3:生效但有覆盖;4:基本生效有小问题;5:所有修改均正确生效。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "4次Edit操作（upload-dialog.vue 2次、index.vue 2次）全部正确写入目标文件。读取最终文件确认：upload-dialog.vue中fileTypeIcon已替代fileTypeToImage，index.vue中同样完成替换，本地import和映射对象已删除。所有修改均持久化生效。"
