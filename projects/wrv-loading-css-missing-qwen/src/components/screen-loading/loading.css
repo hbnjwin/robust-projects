@@ -1,0 +1,171 @@
+/* ========== Full-screen gear loading animation ========== */
+
+/* --- Keyframes --- */
+@keyframes clockwise {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+@keyframes counter-clockwise {
+  0%   { transform: rotate(0deg); }
+  100% { transform: rotate(-360deg); }
+}
+
+/* --- Root wrapper --- */
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* --- Semi-transparent overlay --- */
+.loader_overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.85);
+}
+
+/* --- Cogs container --- */
+.loader_cogs {
+  position: relative;
+  z-index: 1;
+  width: 200px;
+  height: 200px;
+}
+
+/* ============================================================
+   Gear base styles — each gear is built from 3 rotated "parts"
+   (rectangles with rounded ends) plus a centre "hole" circle.
+   ============================================================ */
+
+/* --- Shared gear-part base --- */
+.loader_cogs__top .top_part,
+.loader_cogs__left .left_part,
+.loader_cogs__bottom .bottom_part {
+  position: absolute;
+  width: 70px;
+  height: 18px;
+  border-radius: 6px;
+}
+
+/* --- Shared hole base --- */
+.loader_cogs__top .top_hole,
+.loader_cogs__left .left_hole,
+.loader_cogs__bottom .bottom_hole {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #fff;
+}
+
+/* ===================== TOP GEAR (large, dark) ===================== */
+.loader_cogs__top {
+  position: absolute;
+  top: 10px;
+  left: 55px;
+  width: 90px;
+  height: 90px;
+  animation: clockwise 2s linear infinite;
+}
+
+.loader_cogs__top .top_part {
+  background: #4a4a4a;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+}
+
+.loader_cogs__top .top_part:nth-child(1) {
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+.loader_cogs__top .top_part:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(60deg);
+}
+.loader_cogs__top .top_part:nth-child(3) {
+  transform: translate(-50%, -50%) rotate(120deg);
+}
+
+.loader_cogs__top .top_hole {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid #4a4a4a;
+}
+
+/* ===================== LEFT GEAR (medium, blue) ===================== */
+.loader_cogs__left {
+  position: absolute;
+  top: 95px;
+  left: 10px;
+  width: 76px;
+  height: 76px;
+  animation: counter-clockwise 1.7s linear infinite;
+}
+
+.loader_cogs__left .left_part {
+  background: #3b82f6;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+}
+
+.loader_cogs__left .left_part:nth-child(1) {
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+.loader_cogs__left .left_part:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(60deg);
+}
+.loader_cogs__left .left_part:nth-child(3) {
+  transform: translate(-50%, -50%) rotate(120deg);
+}
+
+.loader_cogs__left .left_hole {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid #3b82f6;
+}
+
+/* ===================== BOTTOM GEAR (medium, teal) ===================== */
+.loader_cogs__bottom {
+  position: absolute;
+  top: 95px;
+  left: 110px;
+  width: 76px;
+  height: 76px;
+  animation: counter-clockwise 1.7s linear infinite;
+}
+
+.loader_cogs__bottom .bottom_part {
+  background: #14b8a6;
+  top: 50%;
+  left: 50%;
+  transform-origin: center;
+}
+
+.loader_cogs__bottom .bottom_part:nth-child(1) {
+  transform: translate(-50%, -50%) rotate(0deg);
+}
+.loader_cogs__bottom .bottom_part:nth-child(2) {
+  transform: translate(-50%, -50%) rotate(60deg);
+}
+.loader_cogs__bottom .bottom_part:nth-child(3) {
+  transform: translate(-50%, -50%) rotate(120deg);
+}
+
+.loader_cogs__bottom .bottom_hole {
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  border: 3px solid #14b8a6;
+}

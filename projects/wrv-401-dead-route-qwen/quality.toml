@@ -1,0 +1,44 @@
+[[criterion]]
+name = "死路由识别"
+description = "[Explicit] 准确识别Auth.Send路由未注册导致401跳转失败的问题。1: 未识别；2: 只看到跳转失败但不知原因；3: 知道路由不存在但未找到auth-center.js模块文件；4: 准确定位auth-center.js存在但未在router/index.js中import和注册；5: 定位根因并验证了模块文件内容和路由命名的匹配关系"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read检查router/index.js发现缺少AuthCenterRoute的import，通过3次Edit添加了导入和注册，但反复修改说明首次代码有语法或结构问题"
+
+[[criterion]]
+name = "路由注册修复"
+description = "[Explicit] 在router/index.js中正确导入并注册AuthCenterRoute模块。1: 未注册；2: import了但未加入routes数组；3: 加入了但位置或展开方式不对；4: 正确import并在routes数组中展开AuthCenterRoute；5: 注册并验证路由可达性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "router/index.js中添加import AuthCenterRoute from './modules/auth-center'并在routes数组中展开，3次Edit说明import路径或数组展开语法经过修正"
+
+[[criterion]]
+name = "401跳转链路"
+description = "[Explicit] 修复后app-request.js响应拦截器中的router.push({name:'Auth.Send'})能成功跳转到登录页。1: 仍无法跳转；2: 跳转但显示空白页；3: 跳转到了但组件未正确渲染；4: 完整链路打通，401→拦截器→Auth.Send路由→登录组件；5: 链路打通并包含重登录后回原页面的逻辑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "注册了AuthCenterRoute后401跳转链路理论上打通，但未验证auth-center.js中send组件的import路径和实际文件是否存在"
+
+[[criterion]]
+name = "路由模块完整性"
+description = "[Implicit] 检查auth-center.js模块中引用的子组件文件是否存在。1: 引用了不存在的组件；2: 部分组件存在；3: 主要组件存在但部分子路由组件缺失；4: 所有引用的组件文件都存在；5: 组件存在且import路径和命名规范正确"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "注册了auth-center.js模块但未进一步检查send.vue和receive.vue组件文件是否存在于views/auth-center/目录下，可能存在组件缺失导致运行时错误"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于路由注册修复。1: 大量无关修改；2: 修改了不必要的文件；3: 修改集中但有冗余编辑操作；4: 精准修改目标文件；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "6次工具调用中3次Edit修改router/index.js，反复Edit说明首次代码有误需要修正，但最终改动范围正确集中在路由文件"
