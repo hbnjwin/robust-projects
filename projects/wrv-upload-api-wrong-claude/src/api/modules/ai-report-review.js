@@ -36,6 +36,11 @@ export default {
 		return appRequest.get('/api/task-progress/active')
 	},
 
+	// 报告文档列表
+	getDocumentsList(params) {
+		return appRequest.get('/api/documents/list', { params })
+	},
+
 	// 报告上传相关接口
 	postDocumentsUploadFile(params) {
 		return appRequest.post('/api/documents/uploadFile', params)
