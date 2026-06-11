@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位API请求无限等待的根本原因：axios实例的timeout设置为0表示无超时限制。1: 未定位；2: 知道请求卡住但不知原因；3: 找到timeout但未理解0的含义；4: 准确定位app-request.js第11行timeout:0表示axios不设超时限制；5: 定位根因并分析了axios timeout的完整工作机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取app-request.js发现第11行timeout:0，理解了axios中0表示无超时限制，导致后端不可用时请求永远挂起"
+
+[[criterion]]
+name = "超时值设置"
+description = "[Explicit] 将timeout从0改为合理的超时时间使请求能在有限时间内失败。1: 仍为0；2: 改了但值不合理；3: 设置了但偏大或偏小；4: 设置为30000ms（30秒）符合Web应用常见超时标准；5: 30秒加根据请求类型动态设置不同超时"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将timeout:0改为timeout:30000（30秒），符合Web应用的常见超时配置标准"
+
+[[criterion]]
+name = "错误反馈链路"
+description = "[Explicit] 超时后axios触发错误是否能通过响应拦截器正确传递到用户界面显示错误提示。1: 超时后无反馈；2: 控制台有错误但用户无感知；3: 有提示但内容不友好；4: 超时触发error interceptor显示用户可理解的错误提示；5: 友好提示加重试按钮加不同错误类型区分"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "timeout后axios抛出错误进入响应拦截器的err回调（第54行），但未验证err回调中的错误处理逻辑是否包含用户提示（如MessagePlugin）"
+
+[[criterion]]
+name = "NProgress状态"
+description = "[Implicit] 超时后NProgress进度条是否正确停止。1: 仍在滚动；2: 停止但有延迟；3: 停止但样式残留；4: 超时后NProgress.done()立即停止进度条；5: 停止加过渡动画自然结束"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复了timeout使请求能超时，但未验证响应拦截器的err回调中是否调用了NProgress.done()来停止进度条"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "3次工具调用（2次Read+1次Edit），其中2次Read可能包含对同一文件的重复读取，最终1次Edit修改一行代码"
