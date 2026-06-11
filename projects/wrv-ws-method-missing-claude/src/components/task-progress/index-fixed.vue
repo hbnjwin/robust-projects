@@ -148,7 +148,7 @@ const refreshTasks = async () => {
 
 const subscribeTask = (taskId) => {
 	selectedTaskId.value = taskId
-	wsManager.subscribeToTask(taskId)
+	wsManager.subscribeTaskProgress(taskId)
 	addLog(`已订阅任务: ${taskId}`, 'info')
 }
 
@@ -156,7 +156,7 @@ const unsubscribeTask = (taskId) => {
 	if (selectedTaskId.value === taskId) {
 		selectedTaskId.value = null
 	}
-	wsManager.unsubscribeFromTask(taskId)
+	wsManager.unsubscribeTaskProgress()
 	addLog(`已取消订阅任务: ${taskId}`, 'info')
 }
 
