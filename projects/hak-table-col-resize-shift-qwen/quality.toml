@@ -1,62 +1,62 @@
 [[criterion]]
-name = "列宽拖拽实现"
-description = "[Explicit] 表格列宽拖拽是否流畅，拖拽过程中列宽是否实时更新。1: 拖拽无响应；2: 拖拽卡顿或跳跃；3: 基本流畅但存在抖动；4: 流畅拖拽且实时预览；5: 流畅+吸附对齐+性能优化。"
+name = "列宽拖拽后表头数据对齐"
+description = "[Explicit] 拖拽调整列宽后表头与数据行单元格是否保持对齐，不出现像素偏移错位。1: 拖拽后右侧所有列表头与数据严重错位；2: 错位明显但不影响阅读；3: 部分列对齐但边缘列仍有偏移；4: 所有列表头与数据行完全对齐无偏移；5: 对齐+doLayout自动修正+窗口resize后仍对齐。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "el-table使用border属性开启列宽拖拽，但header-dragend事件中直接修改column.width导致渲染延迟。拖拽过程中列宽先跳到目标值再弹回，视觉上出现抖动闪烁现象。"
+rationale = "el-table的header-dragend事件回调中仅更新了column.width属性值，但未调用this..table.doLayout()触发表格重新计算布局。拖拽报告名称列加宽后，右侧的审核状态列、操作列的表头th宽度未同步更新，而tbody的td根据新column.width渲染导致th和td宽度差约3-5px，表格从第三列开始表头与数据行错位。"
 
 [[criterion]]
-name = "相邻列宽度联动"
-description = "[Explicit] 拖拽某列边框时相邻列是否同步调整宽度，总表宽是否保持不变。1: 相邻列不联动导致错位；2: 联动但总宽变化；3: 总宽不变但非相邻列偏移；4: 正确的相邻列反向调整；5: 联动+最小宽约束+比例分配。"
+name = "最小列宽限制"
+description = "[Explicit] 拖拽列宽是否设置了最小宽度限制，防止列头文字与排序箭头重叠不可辨认。1: 无最小宽度限制可拖至0px；2: 有限制但阈值过小文字仍重叠；3: 最小宽度合理但排序箭头仍被截断；4: min-width限制+文字ellipsis+排序箭头完整显示；5: 动态最小宽度基于内容计算+拖拽到极限时吸附提示。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "el-table的header-dragend仅更新当前列宽度，未同步调整右侧相邻列。拖宽左列后右侧所有列向右偏移，表格总宽度超出容器出现横向滚动条，与用户预期的固定总宽列宽交换不符。"
+rationale = "el-table-column未设置min-width属性，用户可将报告名称列拖窄至20px以下。列宽低于50px时表头的中文文字与el-table-column的sortable排序箭头图标在水平方向重叠，文字被截断且排序箭头覆盖在残留文字上方，无法辨认列标题也无法正确点击排序。"
 
 [[criterion]]
-name = "列宽持久化存储"
-description = "[Explicit] 用户调整后的列宽是否保存到本地存储，刷新页面后恢复。1: 不保存刷新即丢失；2: 保存但恢复时机错误；3: localStorage保存但未处理表结构变化；4: 持久化+版本管理+过期清理；5: 持久化+云端同步+用户偏好导出。"
+name = "列宽配置持久化"
+description = "[Explicit] 用户调整后的列宽是否保存到本地存储，刷新页面后自动恢复用户配置。1: 刷新后列宽恢复默认值；2: 保存了但恢复时机不对导致闪烁；3: localStorage保存但key设计不合理导致页面间冲突；4: 按表格标识存储+mounted时恢复+防闪烁；5: 持久化+版本管理+列增减时自动适配旧配置。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 1
-rationale = "el-table的列宽调整结果仅存在于组件内存中，页面刷新后恢复为columns定义中的默认宽度。用户每次打开报告审核页面都需重新调整列宽，体验不佳。"
+rationale = "报告列表页面的el-table列宽调整结果仅存在于组件内存的column.width属性中，未保存到localStorage或sessionStorage。页面刷新后Vue组件重新创建，所有列宽恢复为el-table-column标签上定义的默认width值。用户调整好的列宽配置完全丢失，需要重新拖拽调整。"
 
 [[criterion]]
-name = "固定列与拖拽兼容"
-description = "[Implicit] 表格存在固定列（fixed）时拖拽是否正常工作，固定列阴影是否正确。1: 固定列下拖拽完全失效；2: 拖拽可用但固定列阴影错位；3: 基本兼容但滚动时异常；4: 完整兼容且阴影正确；5: 兼容+固定列可拖拽+动态切换。"
+name = "拖拽交互连贯性"
+description = "[Implicit] 拖拽列宽过程中表格整体表现是否流畅连贯，无卡顿抖动或视觉异常。1: 拖拽过程中表格频繁抖动；2: 有明显的渲染延迟或列宽跳跃；3: 基本流畅但释放瞬间有一次跳动；4: 全程流畅无跳动无闪烁；5: 流畅+拖拽参考线+实时宽度数值提示。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "el-table的操作列设置fixed=\"right\"，拖拽其他列宽后固定列的left/right偏移值未重新计算，固定列位置与实际内容列错位。表格横向滚动时固定列阴影的box-shadow位置偏移。"
+rationale = "el-table在header-dragend触发时一次性更新列宽，但拖拽过程中的mousemove事件未节流，每帧触发Vue响应式更新导致表格频繁重渲染。100行数据表格拖拽时帧率下降到约30fps，视觉上有明显的卡顿感。释放鼠标后列宽从拖拽中间值跳到最终值有一次可见的宽度跳变。"
 
 [[criterion]]
-name = "双击自适应列宽"
-description = "[Implicit] 双击列边框是否自动调整为内容最佳宽度。1: 不支持双击调整；2: 双击有响应但宽度计算错误；3: 正确计算但不含表头宽度；4: 内容+表头取最大值；5: 自适应+动画过渡+批量调整。"
+name = "多列连续拖拽稳定性"
+description = "[Implicit] 连续拖拽调整多列宽度后表格布局是否持续保持稳定，不出现累积偏移。1: 连续拖拽3列后错位严重；2: 单次拖拽正常但连续拖拽后累积偏移；3: 基本稳定但特定列序组合出现偏移；4: 任意顺序连续拖拽均保持稳定对齐；5: 稳定+撤销/重做+一键恢复默认。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "先拖宽报告名称列再拖窄审核状态列后，操作列的表头向右偏移了约8px。每次拖拽后未调用doLayout导致colgroup的宽度偏差逐次累积，连续拖拽3列后最右侧列的表头与数据行错位可达15px以上，需要刷新页面才能恢复。"
+
+[[criterion]]
+name = "列宽恢复时机与防闪烁"
+description = "[Implicit] 从localStorage恢复列宽时是否避免先显示默认宽度再跳变到保存宽度的视觉闪烁。1: 明显闪烁先窄后宽；2: 闪烁时间短于500ms但可察觉；3: 通过v-cloak或loading遮挡闪烁；4: mounted阶段在首次渲染前完成列宽恢复无闪烁；5: SSR预渲染+列宽内联+零闪烁。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 1
-rationale = "el-table不支持双击列边框自适应列宽的功能，用户只能手动拖拽调整。对于内容长度差异大的列（如报告类型名称列），用户需要多次拖拽才能找到合适宽度。"
+rationale = "未实现列宽持久化，此项不适用。即使实现了持久化，当前el-table-column的width属性是静态值，运行时动态修改需要在mounted后通过ref操作column对象，可能产生先渲染默认宽度再跳变到保存宽度的闪烁。"
 
 [[criterion]]
-name = "拖拽光标与视觉反馈"
-description = "[Implicit] 拖拽过程中鼠标光标、列边框高亮等视觉反馈是否完善。1: 无任何视觉反馈；2: 仅光标变化；3: 光标+拖拽区域高亮；4: 光标+高亮+参考线+尺寸提示；5: 完整视觉反馈+动画过渡。"
+name = "TypeScript类型安全"
+description = "[Implicit] 列宽管理相关代码的类型定义是否完整，避免any和运行时类型错误。1: 无类型标注大量any；2: 基础类型但列宽为any；3: 主要类型完整但事件回调参数缺失；4: 完整类型定义含ColumnWidth接口和事件类型；5: 严格模式无any+泛型列定义+编译时校验。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "el-table默认在列边框hover时显示col-resize光标，但拖拽过程中无其他视觉反馈。用户拖拽时无法直观看到目标宽度，缺少参考线或宽度数值提示。"
-
-[[criterion]]
-name = "性能与渲染优化"
-description = "[Implicit] 大数据量表格下列宽拖拽是否保持流畅，是否避免不必要的重渲染。1: 大数据量下严重卡顿；2: 有优化但效果不明显；3: 基本流畅但DOM操作过多；4: requestAnimationFrame+虚拟渲染；5: RAF+GPU加速+增量更新。"
-type = "likert"
-points = 5
-weight = 1.0
-score = 2
-rationale = "el-table的header-dragend触发后整个表格重新渲染，100行数据时拖拽响应延迟约200ms。每次mousemove都触发Vue响应式更新和DOM重绘，未使用节流或虚拟渲染优化。"
+rationale = "header-dragend事件的回调参数newWidth、oldWidth、column均无TypeScript类型标注，column被隐式推断为any。columnWidths存储使用Record<string, any>类型，localStorage读取的JSON.parse结果未做类型校验，可能在列定义变更后读取到不兼容的旧格式数据导致运行时错误。"
