@@ -80,7 +80,6 @@ const signOut = () => {
 	router.push({ name: 'Login' })
 	oauth2.remove()
 	userInfo.value = null
-	localStorage.clear()
 }
 
 const changeHandler = (active) => {

@@ -3,7 +3,7 @@ import RouterView from '@/layout/router-view.vue'
 
 export default [
 	{
-		path: '/',
+		path: '/home',
 		auth: 'Home',
 		name: 'Home',
 		redirect: { name: 'Home.CreateReview' }, // 重定向到子路由
