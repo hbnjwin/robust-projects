@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位NProgress进度条卡住的根本原因：baseRouterNames分支在nprogress.start()之后直接return next()而未调用nprogress.done()。1: 未定位到根因；2: 定位到router但未找到具体分支；3: 找到beforeEach但未区分分支差异；4: 准确定位到baseRouterNames分支缺少done()调用；5: 定位根因并分析了所有分支的NProgress状态流转"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取router/index.js后发现beforeEach中baseRouterNames分支直接return next()缺少nprogress.done()，但过程中经过4次Edit反复修改同一文件，说明首次修复不够精准"
+
+[[criterion]]
+name = "进度条修复"
+description = "[Explicit] 在baseRouterNames分支添加nprogress.done()使进度条正常结束。1: 未添加；2: 添加位置不对导致闪烁；3: 添加了但时序不正确；4: 在return next()前正确调用nprogress.done()；5: 修复并覆盖所有提前return的分支"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在baseRouterNames分支的return next()前添加了nprogress.done()，但4次Edit说明修改过程存在试错，可能首次修改的代码位置或语法有误"
+
+[[criterion]]
+name = "兜底机制"
+description = "[Explicit] 添加router.afterEach钩子作为NProgress的全局兜底保障。1: 无兜底；2: 添加了但钩子类型不对；3: afterEach中调用done()但未考虑嵌套路由；4: 完整的afterEach兜底确保任何路由完成后进度条都结束；5: afterEach兜底加异常路由的错误处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "添加了router.afterEach(() => nprogress.done())作为兜底机制，确保即使有遗漏分支也能结束进度条"
+
+[[criterion]]
+name = "路由守卫完整性"
+description = "[Implicit] 修复后beforeEach所有分支（登录检查、权限检查、baseRouterNames）的NProgress状态是否闭合。1: 多个分支仍缺done()；2: 只修了一个分支；3: baseRouterNames修了但其他分支靠afterEach兜底；4: 所有分支的start/done配对完整；5: 配对完整且有状态机保证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "仅在baseRouterNames分支添加了done()，其他提前return的分支（如已登录跳转、权限不足跳转）是否也缺少done()未做排查，依赖afterEach兜底"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于NProgress修复，无冗余改动。1: 大量无关修改；2: 有明显冗余或反复修改；3: 修改集中但有多余操作；4: 精准修改目标文件；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "14次工具调用中4次Edit修改router/index.js，反复修改说明首次代码不正确需要调试，但最终改动范围集中在单文件"
