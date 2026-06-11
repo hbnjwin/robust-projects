@@ -1,0 +1,44 @@
+[[criterion]]
+name = "事件参数修复"
+description = "[Explicit] 修复TDesign t-dropdown的@click事件处理，正确接收dropdown value而非原始row对象。1: 未修复；2: 改了但事件仍不触发；3: 能触发但参数类型不对；4: 正确理解TDesign dropdown @click只传value并做相应处理；5: 修复并添加了类型校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改expert-database/index.vue中t-dropdown的@click事件绑定，将clickHandler(data)改为通过闭包传入row，但过程中25次工具调用（含3次Agent委托和4次TaskUpdate）显示修复过程不够直接"
+
+[[criterion]]
+name = "行数据传递"
+description = "[Explicit] 在dropdown选项点击时能获取到当前表格行的完整数据用于后续操作。1: 无法获取行数据；2: 获取了但数据不完整；3: 通过变量保存了当前行但有竞态风险；4: 通过闭包正确传递行数据到事件处理器；5: 闭包传递加数据校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过修改@click绑定将row传入clickHandler，但额外修改了api/index.js和app-request.js等不直接相关的API配置文件"
+
+[[criterion]]
+name = "删除逻辑实现"
+description = "[Explicit] clickHandler中根据dropdown value判断为删除操作后调用API执行删除并刷新列表。1: 无删除逻辑；2: 有判断但未调用API；3: 调了API但未刷新列表；4: 完整实现value判断→确认弹窗→API删除→刷新列表；5: 完整实现加错误处理加乐观更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实现了删除逻辑的判断和API调用，但额外修改了api/modules/expert-database.js和api/index.js来添加删除接口，这些文件可能在题目骨架中并不需要修改"
+
+[[criterion]]
+name = "TDesign API兼容"
+description = "[Implicit] 修复方案与TDesign Dropdown组件的事件API设计规范一致。1: 破坏了组件功能；2: 绕过组件API的hack方案；3: 兼容但不是最优方案；4: 符合TDesign dropdown @click事件设计规范；5: 最佳实践且处理了多选项场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "原始clickHandler直接使用t-dropdown的@click回调参数data，但未理解TDesign dropdown的@click事件只传递选项value不传row的设计，导致data实际是选项value而非行对象"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于dropdown事件处理修复。1: 大量无关修改；2: 修改了不必要的API文件；3: 核心修复正确但有额外文件变更；4: 精准修改目标组件；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "25次工具调用修改了4个文件（expert-database/index.vue、api/index.js、app-request.js、api/modules/expert-database.js），其中API配置文件的修改超出了dropdown事件处理修复的范围"

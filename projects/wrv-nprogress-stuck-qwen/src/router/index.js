@@ -56,15 +56,17 @@ router.beforeEach(async (to, from, next) => {
 	}
 	// 没有登录
 	if (to.name !== 'Login' && !oauth2.getOauth()) {
-		nprogress.done()
 		return next({ name: 'Login', replace: true })
 	}
 	if (!to.name) {
-		nprogress.done()
 		return next({ name: '404', replace: true })
 	} else {
-		nprogress.done()
 		return next()
 	}
+})
+
+// 兜底：确保路由导航完成后进度条一定消失
+router.afterEach(() => {
+	nprogress.done()
 })
 export default router

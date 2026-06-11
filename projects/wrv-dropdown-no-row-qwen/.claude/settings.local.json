@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Read(//d/work/github/robust/robust-projects/projects/**)",
+      "Read(//d//**)",
+      "Bash(git ls-tree:*)",
+      "Bash(find . -name quality.toml -o -name *.toml)"
+    ]
+  }
+}

@@ -1,0 +1,44 @@
+[[criterion]]
+name = "事件参数修复"
+description = "[Explicit] 修复TDesign t-dropdown的@click事件处理，正确接收dropdown value而非原始row对象。1: 未修复；2: 改了但事件仍不触发；3: 能触发但参数类型不对；4: 正确理解TDesign dropdown @click只传value并做相应处理；5: 修复并添加了类型校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "expert-database/index.vue模板第65行将@click='clickHandler'改为@click='(data) => clickHandler(data, row)'，通过箭头函数闭包捕获template v-slot作用域中的row对象"
+
+[[criterion]]
+name = "行数据传递"
+description = "[Explicit] 在dropdown选项点击时能获取到当前表格行的完整数据用于后续操作。1: 无法获取行数据；2: 获取了但数据不完整；3: 通过变量保存了当前行但有竞态风险；4: 通过闭包正确传递行数据到事件处理器；5: 闭包传递加数据校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过箭头函数闭包(data) => clickHandler(data, row)将t-table columns作用域插槽中的row对象传递给点击事件处理器，确保在嵌套组件中正确获取到当前行数据"
+
+[[criterion]]
+name = "删除逻辑实现"
+description = "[Explicit] clickHandler中根据dropdown value判断为删除操作后调用API执行删除并刷新列表。1: 无删除逻辑；2: 有判断但未调用API；3: 调了API但未刷新列表；4: 完整实现value判断→确认弹窗→API删除→刷新列表；5: 完整实现加错误处理加乐观更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "expert-database/index.vue第83行新增删除处理分支，根据clickHandler接收的data值判断为删除操作后弹出确认弹窗，调用EXPERT_DATABASE.deleteDocument(row.id)执行删除，成功后调用getTableList()刷新列表"
+
+[[criterion]]
+name = "TDesign API兼容"
+description = "[Implicit] 修复方案与TDesign Dropdown组件的事件API设计规范一致。1: 破坏了组件功能；2: 绕过组件API的hack方案；3: 兼容但不是最优方案；4: 符合TDesign dropdown @click事件设计规范；5: 最佳实践且处理了多选项场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "正确理解TDesign t-dropdown的@click事件只传递被选中选项的value值（如删除对应的数字1），通过闭包补充传入row参数，符合TDesign作用域插槽+事件委托的组合使用模式"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于dropdown事件处理修复。1: 大量无关修改；2: 修改了不必要的API文件；3: 核心修复正确但有额外文件变更；4: 精准修改目标组件；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "8次工具调用中3次Edit集中修改expert-database/index.vue的模板事件绑定、clickHandler方法和删除逻辑三处位置，未触及其他文件"
