@@ -62,7 +62,7 @@
 							<t-button variant="outline" theme="primary" size="small" @click="handleView(row)">查看</t-button>
 							<t-button variant="outline" theme="primary" size="small" m-l-10px>编辑</t-button>
 							<t-button variant="outline" theme="primary" size="small" m-l-10px>重新解析</t-button>
-							<t-dropdown :options="dropdownOptions" @click="clickHandler">
+							<t-dropdown :options="dropdownOptions" @click="(data) => clickHandler(data, row)">
 								<t-button theme="default" variant="outline" shape="square" size="small" m-l-10px>
 									<t-icon name="ellipsis" size="16" />
 								</t-button>
@@ -80,6 +80,7 @@
 </template>
 
 <script setup>
+import { DialogPlugin, MessagePlugin } from 'tdesign-vue-next'
 import router from '@/router'
 import { EXPERT_DATABASE } from '@/api'
 import UploadDialog from './components/upload-dialog.vue'
@@ -160,8 +161,29 @@ const handlePageSizeChange = (newPageSize) => {
 	table.pagination.page = 1
 	getTableList()
 }
-const clickHandler = (data) => {
-	console.log(data)
+const clickHandler = (data, row) => {
+	if (data.value === 1) {
+		const confirmDialog = DialogPlugin.confirm({
+			header: '确认删除',
+			body: `确定要删除文档「${row.fileName}」吗？`,
+			confirmBtn: '确定',
+			cancelBtn: '取消',
+			onConfirm: () => {
+				confirmDialog.destroy()
+				EXPERT_DATABASE.deleteDocument(row.id)
+					.then(() => {
+						MessagePlugin.success('删除成功')
+						getTableList()
+					})
+					.catch(() => {
+						MessagePlugin.error('删除失败')
+					})
+			},
+			onClose: () => {
+				confirmDialog.destroy()
+			}
+		})
+	}
 }
 const handleView = (row) => {
 	router.push({ name: 'ExpertDatabaseView' })

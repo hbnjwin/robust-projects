@@ -5,7 +5,7 @@
 		</template>
 		<template #extra>
 			<h1 class="m-b-20">很抱歉，您所访问的页面不存在</h1>
-			<el-button type="text" @click="router.go(-1)">返回首页</el-button>
+			<el-button type="text" @click="router.push('/')">返回首页</el-button>
 		</template>
 	</el-result>
 </template>
