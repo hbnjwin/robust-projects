@@ -7,12 +7,14 @@ import LoginRoute from './modules/login'
 import ExpertDatabaseRoute from './modules/expert-database'
 import AiReportReviewRoute from './modules/ai-report-review'
 import SystemRoute from './modules/system'
+import AuthCenterRoute from './modules/auth-center'
 
 const routerModules = [
 	LoginRoute,
 	ExpertDatabaseRoute,
 	AiReportReviewRoute,
 	SystemRoute,
+	AuthCenterRoute,
 	[
 		{
 			path: '/404',
@@ -46,7 +48,7 @@ const router = createRouter({
 	routes: routes
 })
 // 全局的路由拦截
-const baseRouterNames = ['403', '404']
+const baseRouterNames = ['403', '404', 'Auth.Send', 'Auth.Receive']
 
 router.beforeEach(async (to, from, next) => {
 	nprogress.start()

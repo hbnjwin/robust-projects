@@ -20,7 +20,7 @@
 				</template>
 				<t-space align="center" size="4px">
 					<img :src="avater" width="32px" height="32px" alt="" />
-					<div m-l-5px>{{ userInfo.operatorName }}</div>
+					<div m-l-5px>{{ userInfo?.operatorName }}</div>
 					<i class="iconfont icon-xiala" text="16px" m-r-5px></i>
 				</t-space>
 			</t-popup>
@@ -76,11 +76,11 @@ const handleCommand = (value) => {
 	}
 }
 
-const signOut = () => {
-	router.push({ name: 'Login' })
+const signOut = async () => {
+	await router.push({ name: 'Login' })
 	oauth2.remove()
 	userInfo.value = null
-	localStorage.clear()
+	localStorage.removeItem('userinfo')
 }
 
 const changeHandler = (active) => {
