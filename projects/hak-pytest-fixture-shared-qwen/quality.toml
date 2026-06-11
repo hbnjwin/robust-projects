@@ -1,62 +1,71 @@
 [[criterion]]
-name = "user_experience_and_interaction"
-description = "How smooth and efficient is the user experience during interaction? 1: workflow deadlock, loop errors, no valid output, completely unusable; 2: verbose reasoning, repeated self-correction, noticeable logic deviations requiring frequent intervention; 3: some repetition and redundant reasoning, occasional over-complication but user can still wait for results; 4: overall good experience with occasional redundancy or self-correction that does not affect task completion; 5: efficient reasoning, clear logic, smooth responses, accurately captures core intent, output is trustworthy with no room for optimization"
+name = "手势冲突隔离"
+description = "[Explicit] 双指pinch-to-zoom放大图片时是否阻止浏览器原生页面缩放。1:页面同时缩放;2:preventDefault但passive冲突;3:passive:false但部分场景遗漏;4:passive:false+完整preventDefault+viewport meta;5:完整隔离+手势优先级管理。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useTouchGesture.ts中touchmove事件使用{passive:false}注册并调用e.preventDefault()阻止浏览器原生缩放。但仅在检测到双指手势（touches.length>=2）时才preventDefault，单指快速双击触发的浏览器缩放未被拦截。index.html的viewport meta设置了maximum-scale=1.0但部分移动浏览器忽略该设置。"
 
 [[criterion]]
-name = "task_planning_and_execution_control"
-description = "How well does the model plan, decompose, track, and execute tasks? 1: no planning, no decomposition, no task list, no tracking, no feedback, no tool usage; 2: vague or unreasonable planning, ineffective task decomposition, inconsistent tracking, sporadic feedback; 3: macro-level planning is viable but task list is incomplete or not updated, significant tool gaps, vague feedback; 4: reasonable planning, task list exists but updates lag, minor tool misuse, clear stage feedback; 5: complete and well-reasoned plan, auto-generated task list, real-time progress sync, proper tool usage, thorough stage feedback, proactively clarifies ambiguity"
+name = "滑动穿透防护"
+description = "[Explicit] 在图片查看器中左右滑动切换时底层报告页面是否跟随滚动。1:底层页面跟随滚动;2:overflow:hidden但有弹性;3:body scroll lock但iOS兼容差;4:touch-action:none+body overflow hidden+滚动锁;5:完整防穿透+恢复机制。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "ImageViewer.vue打开时未对body设置overflow:hidden，手指在图片上左右滑动时touchmove事件冒泡到document触发底层报告页面的横向滚动。虽然图片切换了但手指抬起后发现报告内容偏移了。useTouchGesture.ts中的preventDefault仅在双指时执行，单指横滑时未阻止默认行为。"
 
 [[criterion]]
-name = "semantic_understanding_and_logical_reasoning"
-description = "How accurately does the model understand intent and reason logically? 1: completely misunderstands intent, cannot parse code structure, unable to execute even with guidance, blind output; 2: misinterprets key information, can only partially complete tasks with guidance, incorrect code location and modification; 3: understands main intent but misses details, slight deviations, achieves goals with human guidance; 4: correctly understands intent and constraints, accurate code modifications, no guidance needed, knowledge meets task requirements; 5: precisely integrates context and codebase information, minimal optimal modifications, no human guidance needed, comprehensive knowledge coverage"
+name = "缩放边界切换"
+description = "[Explicit] 图片放大后拖动到边界时是否能切换到下一张图片。1:缩放后无法切换;2:边界检测不准;3:能检测但切换条件过于灵敏;4:边界检测+速度阈值+方向锁定;5:边界+惯性+弹性回弹+无缝切换。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "useTouchGesture.ts中缩放状态（scale>1）时手势被识别为pan拖动，左右滑动仅移动图片位置。当图片拖到左边界继续向左滑时不会触发切换到下一张——因为缩放模式和切换模式互斥，pan处理器中未检测边界溢出条件。用户必须先双击缩小到原始大小才能左右切换。"
 
 [[criterion]]
-name = "instruction_compliance_and_constraint_adherence"
-description = "How well does the model follow multiple constraints and maintain them throughout? 1: completely ignores complex constraints, outputs according to own defaults, enters dead loops or argues during manual correction, severely damages original structure; 2: after 2 corrections, still cannot satisfy multiple constraints simultaneously; 3: initial output ignores key constraints, can barely adjust after 2 explicit warnings; 4: initial output misses 1-2 non-core constraints, corrects all immediately after 1 user prompt; 5: perfectly adheres to all multiple constraints, never breaks prior requirements during fixes"
+name = "横屏布局适配"
+description = "[Explicit] iPad/手机横屏时图片查看器的布局和手势是否正确适配。1:横屏布局错乱;2:部分适配;3:布局正确但手势区域偏移;4:useOrientation监听+布局重算+手势重校准;5:完整适配+旋转动画+安全区域。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "ImageViewer.vue使用固定的100vw*100vh全屏布局，横屏时图片容器尺寸随viewport自动变化但图片的缩放基准点和拖动边界仍按竖屏参数计算。横屏后双指缩放的中心点偏移，图片拖动范围与可视区域不匹配。未监听orientationchange事件重新计算布局参数。"
 
 [[criterion]]
-name = "engineering_quality_and_completeness"
-description = "How complete and well-engineered is the code output? 1: no engineering quality awareness, no tests provided or outputs invalid pseudo-tests; 2: attempts tests only after multiple reminders, obvious flaws; 3: supplements tests after reminders but only covers main flow; 4: provides tests in most scenarios, tests are valid but coverage has minor deviations; 5: proactively adds/updates test cases, covers critical paths, follows engineering standards"
+name = "手势状态机"
+description = "[Implicit] 触摸手势（idle/pan/pinch/swipe）的状态管理是否清晰无冲突。1:多种手势判断混乱;2:if-else判断但易冲突;3:基本状态变量;4:清晰的状态机设计;5:状态机+手势优先级+中断恢复。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useTouchGesture.ts通过isPinching、isPanning布尔变量判断当前手势类型。但两个标志可能同时为true——双指缩放中一个手指抬起变成单指，isPinching未重置导致后续单指滑动同时触发缩放和平移逻辑。touchend中的状态重置依赖touches.length判断，多指交替抬起时状态切换不准确。"
 
 [[criterion]]
-name = "delivery_completeness_and_usability"
-description = "How complete, runnable, and usable is the final delivery? 1: completely non-runnable, irrelevant output; 2: fails to achieve core objectives, code cannot run; 3: main functionality runs but has obvious defects requiring manual fixes; 4: core functionality is complete and usable, very few detail omissions; 5: runnable on first attempt, full feature closure, covers both explicit and implicit requirements"
+name = "性能优化"
+description = "[Implicit] 手势响应和图片变换的性能优化措施。1:频繁DOM操作;2:基本requestAnimationFrame;3:rAF+transform替代top/left;4:transform+will-change+rAF节流;5:GPU合成层+Worker计算+120fps适配。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 2
+rationale = "useTouchGesture.ts中touchmove每次触发直接修改图片元素的style.transform，未使用requestAnimationFrame节流。高频触摸事件（60-120次/秒）直接触发样式重计算和重绘，在iPad上缩放大图时出现明显卡顿。图片元素未设置will-change:transform提示浏览器GPU加速。"
 
 [[criterion]]
-name = "architecture_boundaries_and_security_compliance"
-description = "How well does the model respect architecture boundaries and security compliance? 1: arbitrarily deletes or damages core files, performs unauthorized high-risk operations; 2: frequently crosses boundaries, relapses after correction; 3: irrelevant modifications and redundant dependencies, recoverable with intervention; 4: occasionally makes minor boundary violations, stops immediately when reminded; 5: strictly respects architecture boundaries, no unauthorized operations, proactively confirms authorization"
+name = "惯性滑动"
+description = "[Implicit] 手指快速滑动松开后图片是否有惯性滚动效果。1:松开立即停止;2:简单的速度延续;3:基于velocity的惯性计算;4:velocity+摩擦系数+边界回弹;5:物理引擎级别的惯性+弹性。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 1
+rationale = "useTouchGesture.ts中touchend时直接将当前transform状态固定，无任何惯性滑动效果。用户快速滑动查看大图的不同区域需要反复拖动，体验生硬。未记录touchmove的时间和位移用于计算手指离开时的速度。"
+
+[[criterion]]
+name = "composable设计"
+description = "[Implicit] 手势处理逻辑的composable抽取和职责分离质量。1:所有逻辑在组件中;2:单一composable过于庞大;3:抽取了但接口不清晰;4:useTouch+useOrientation职责分离;5:微内核+插件式手势扩展。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useTouchGesture.ts将所有手势处理逻辑抽取为单一composable，包含缩放、拖动、滑动切换、边界检测等全部功能。但composable接近400行代码，内部状态和方法耦合严重，无法单独测试缩放或切换功能。接口返回过多的响应式变量和方法，使用方需要了解内部实现细节。"

@@ -1,62 +1,71 @@
 [[criterion]]
-name = "user_experience_and_interaction"
-description = "How smooth and efficient is the user experience during interaction? 1: workflow deadlock, loop errors, no valid output, completely unusable; 2: verbose reasoning, repeated self-correction, noticeable logic deviations requiring frequent intervention; 3: some repetition and redundant reasoning, occasional over-complication but user can still wait for results; 4: overall good experience with occasional redundancy or self-correction that does not affect task completion; 5: efficient reasoning, clear logic, smooth responses, accurately captures core intent, output is trustworthy with no room for optimization"
+name = "手势冲突隔离"
+description = "[Explicit] 双指pinch-to-zoom放大图片时是否阻止浏览器原生页面缩放。1:页面同时缩放;2:preventDefault但passive冲突;3:passive:false但部分场景遗漏;4:passive:false+完整preventDefault+viewport meta;5:完整隔离+手势优先级管理。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useTouch.ts中所有touch事件均以{passive:false}注册。touchmove回调中只要图片查看器处于激活状态就调用e.preventDefault()，无论单指还是双指，彻底阻止浏览器原生手势。配合CSS的touch-action:none声明在图片容器上禁用浏览器默认触摸行为。viewport meta中设置user-scalable=no+maximum-scale=1作为兜底。"
 
 [[criterion]]
-name = "task_planning_and_execution_control"
-description = "How well does the model plan, decompose, track, and execute tasks? 1: no planning, no decomposition, no task list, no tracking, no feedback, no tool usage; 2: vague or unreasonable planning, ineffective task decomposition, inconsistent tracking, sporadic feedback; 3: macro-level planning is viable but task list is incomplete or not updated, significant tool gaps, vague feedback; 4: reasonable planning, task list exists but updates lag, minor tool misuse, clear stage feedback; 5: complete and well-reasoned plan, auto-generated task list, real-time progress sync, proper tool usage, thorough stage feedback, proactively clarifies ambiguity"
+name = "滑动穿透防护"
+description = "[Explicit] 在图片查看器中左右滑动切换时底层报告页面是否跟随滚动。1:底层页面跟随滚动;2:overflow:hidden但有弹性;3:body scroll lock但iOS兼容差;4:touch-action:none+body overflow hidden+滚动锁;5:完整防穿透+恢复机制。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "ImageViewer.vue的onMounted中设置document.body.style.overflow='hidden'锁定页面滚动，onUnmounted中恢复。useTouch.ts中图片查看器激活时所有touchmove均preventDefault，阻止事件冒泡到底层页面。CSS层面容器设置touch-action:none+overscroll-behavior:contain双重防护，彻底隔离手势事件。"
 
 [[criterion]]
-name = "semantic_understanding_and_logical_reasoning"
-description = "How accurately does the model understand intent and reason logically? 1: completely misunderstands intent, cannot parse code structure, unable to execute even with guidance, blind output; 2: misinterprets key information, can only partially complete tasks with guidance, incorrect code location and modification; 3: understands main intent but misses details, slight deviations, achieves goals with human guidance; 4: correctly understands intent and constraints, accurate code modifications, no guidance needed, knowledge meets task requirements; 5: precisely integrates context and codebase information, minimal optimal modifications, no human guidance needed, comprehensive knowledge coverage"
+name = "缩放边界切换"
+description = "[Explicit] 图片放大后拖动到边界时是否能切换到下一张图片。1:缩放后无法切换;2:边界检测不准;3:能检测但切换条件过于灵敏;4:边界检测+速度阈值+方向锁定;5:边界+惯性+弹性回弹+无缝切换。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useTouch.ts中pan处理器在每次移动时计算当前图片的边界偏移量。当scale>1且拖动到达左/右边界（translateX超出可视区域宽度*scale范围）后继续同方向滑动超过50px阈值时，触发switchToNext/switchToPrev切换图片。切换时重置scale和translate，新图片从1倍开始显示。配合velocityX速度判断，快速横扫时直接切换不需要到达边界。"
 
 [[criterion]]
-name = "instruction_compliance_and_constraint_adherence"
-description = "How well does the model follow multiple constraints and maintain them throughout? 1: completely ignores complex constraints, outputs according to own defaults, enters dead loops or argues during manual correction, severely damages original structure; 2: after 2 corrections, still cannot satisfy multiple constraints simultaneously; 3: initial output ignores key constraints, can barely adjust after 2 explicit warnings; 4: initial output misses 1-2 non-core constraints, corrects all immediately after 1 user prompt; 5: perfectly adheres to all multiple constraints, never breaks prior requirements during fixes"
+name = "横屏布局适配"
+description = "[Explicit] iPad/手机横屏时图片查看器的布局和手势是否正确适配。1:横屏布局错乱;2:部分适配;3:布局正确但手势区域偏移;4:useOrientation监听+布局重算+手势重校准;5:完整适配+旋转动画+安全区域。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useOrientation.ts通过window.matchMedia('(orientation: landscape)')和screen.orientation.addEventListener监听方向变化，导出isLandscape响应式变量。ImageViewer.vue的容器样式通过CSS媒体查询@media(orientation:landscape)适配横屏布局。useTouch.ts中缩放基准点和拖动边界基于容器实际clientWidth/clientHeight动态计算，方向变化时自动重置transform参数。"
 
 [[criterion]]
-name = "engineering_quality_and_completeness"
-description = "How complete and well-engineered is the code output? 1: no engineering quality awareness, no tests provided or outputs invalid pseudo-tests; 2: attempts tests only after multiple reminders, obvious flaws; 3: supplements tests after reminders but only covers main flow; 4: provides tests in most scenarios, tests are valid but coverage has minor deviations; 5: proactively adds/updates test cases, covers critical paths, follows engineering standards"
+name = "手势状态机"
+description = "[Implicit] 触摸手势（idle/pan/pinch/swipe）的状态管理是否清晰无冲突。1:多种手势判断混乱;2:if-else判断但易冲突;3:基本状态变量;4:清晰的状态机设计;5:状态机+手势优先级+中断恢复。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useTouch.ts定义gestureState枚举：IDLE/PAN/PINCH/SWIPE四种互斥状态。touchstart根据touches.length设置初始状态（1指→PAN，2指→PINCH），touchmove中按当前状态分发到对应处理器。状态转换明确：PINCH中一指抬起→切换到PAN并重置pinch参数，所有手指抬起→回到IDLE。避免了多种手势同时激活的冲突。"
 
 [[criterion]]
-name = "delivery_completeness_and_usability"
-description = "How complete, runnable, and usable is the final delivery? 1: completely non-runnable, irrelevant output; 2: fails to achieve core objectives, code cannot run; 3: main functionality runs but has obvious defects requiring manual fixes; 4: core functionality is complete and usable, very few detail omissions; 5: runnable on first attempt, full feature closure, covers both explicit and implicit requirements"
+name = "性能优化"
+description = "[Implicit] 手势响应和图片变换的性能优化措施。1:频繁DOM操作;2:基本requestAnimationFrame;3:rAF+transform替代top/left;4:transform+will-change+rAF节流;5:GPU合成层+Worker计算+120fps适配。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useTouch.ts中touchmove通过requestAnimationFrame节流，同一帧内多次touchmove只应用最后一次的计算结果。图片容器设置CSS will-change:transform提示浏览器创建合成层，transform变换在GPU中执行不触发重排。使用CSS transform: translate3d(x,y,0) scale(s)代替translate+scale，强制GPU加速。"
 
 [[criterion]]
-name = "architecture_boundaries_and_security_compliance"
-description = "How well does the model respect architecture boundaries and security compliance? 1: arbitrarily deletes or damages core files, performs unauthorized high-risk operations; 2: frequently crosses boundaries, relapses after correction; 3: irrelevant modifications and redundant dependencies, recoverable with intervention; 4: occasionally makes minor boundary violations, stops immediately when reminded; 5: strictly respects architecture boundaries, no unauthorized operations, proactively confirms authorization"
+name = "惯性滑动"
+description = "[Implicit] 手指快速滑动松开后图片是否有惯性滚动效果。1:松开立即停止;2:简单的速度延续;3:基于velocity的惯性计算;4:velocity+摩擦系数+边界回弹;5:物理引擎级别的惯性+弹性。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useTouch.ts在touchmove中记录最近3次事件的时间戳和位置，touchend时计算velocityX和velocityY。松手后通过requestAnimationFrame持续按velocity*friction衰减移动图片，直到速度低于阈值停止。摩擦系数0.95实现平滑减速，但未实现边界处的弹性回弹效果。"
+
+[[criterion]]
+name = "composable设计"
+description = "[Implicit] 手势处理逻辑的composable抽取和职责分离质量。1:所有逻辑在组件中;2:单一composable过于庞大;3:抽取了但接口不清晰;4:useTouch+useOrientation职责分离;5:微内核+插件式手势扩展。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useTouch.ts专注于手势识别和坐标计算（约200行），导出transform状态和onSwipe/onPinch等事件回调。useOrientation.ts独立处理屏幕方向检测（约40行）。ImageViewer.vue组合两个composable，通过回调连接手势事件和图片切换逻辑。职责分离清晰，可独立测试和复用。"
