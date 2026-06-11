@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位'返回首页'按钮行为不符的根本原因：router.go(-1)是浏览器后退而非跳转首页。1: 未定位；2: 知道按钮不跳首页但不知具体代码位置；3: 找到click事件但未分析go(-1)的语义；4: 准确定位not-found/index.vue中click绑定的router.go(-1)与按钮文字'返回首页'语义不匹配；5: 定位根因并分析了go(-1)在直接输入URL和外部链接场景下的行为差异"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read和Grep读取not-found/index.vue找到click事件绑定的router.go(-1)，确认需要改为router.push('/')，但5次工具调用中Grep和Glob各1次用于搜索文件位置显示定位过程不够直接"
+
+[[criterion]]
+name = "路由跳转修复"
+description = "[Explicit] 将router.go(-1)改为router.push('/')使按钮点击后跳转到首页路由。1: 未修改；2: 改了但目标路由不对；3: push正确但未用命名路由；4: router.push('/')正确跳转到首页；5: 使用命名路由router.push({name:'Home'})并验证首页路由存在"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将not-found/index.vue中的router.go(-1)改为router.push('/')，修复了按钮跳转行为，1次Edit完成核心修改"
+
+[[criterion]]
+name = "按钮语义一致性"
+description = "[Explicit] 修复后按钮文字'返回首页'与实际跳转行为完全一致。1: 文字和行为仍不一致；2: 行为改了但文字未验证；3: 基本一致但edge case有差异；4: 按钮文字和跳转行为完全语义一致；5: 语义一致加icon图标和hover提示也匹配"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后router.push('/')与按钮文字'返回首页'语义一致，但未检查按钮的icon或title属性是否也需要同步调整"
+
+[[criterion]]
+name = "边界场景处理"
+description = "[Implicit] 修复后直接输入错误URL到达404、从外部链接进入404等场景的按钮行为是否正确。1: 边界场景仍有问题；2: 部分场景正确；3: 常见场景正确但极端场景未覆盖；4: 直接输入URL和外部链接场景按钮都能正确跳转首页；5: 所有场景正确加无历史记录时的降级处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "router.push('/')在直接输入错误URL的场景下能正确跳转首页（go(-1)在此场景下会跳出站外），但未验证浏览器历史为空时push('/')的行为"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "5次工具调用（2次Read+1次Grep+1次Glob+1次Edit），其中Grep搜索router.go和Glob搜索not-found文件属于必要定位步骤，但整体效率一般"
