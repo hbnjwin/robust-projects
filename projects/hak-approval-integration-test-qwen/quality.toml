@@ -51,12 +51,3 @@ points = 5
 weight = 1.0
 score = 3
 rationale = "index.js中router.beforeEach负责权限检查和页面标题设置，但未与tagsView状态同步——路由跳转时未自动调用addView将新页面加入标签列表。view.vue中手动在created/watch(route)中调用store.dispatch('addView')，组件与路由守卫的职责边界不清晰。动态路由组件销毁时的缓存清理逻辑分散在多处。"
-
-[[criterion]]
-name = "代码组织清晰度"
-description = "[Implicit] keep-alive缓存管理相关代码的文件组织和模块化程度。1:逻辑散落各处;2:集中但混乱;3:基本模块化;4:store+composable+组件职责分离;5:完整的插件化架构。"
-type = "likert"
-points = 5
-weight = 1.0
-score = 2
-rationale = "keep-alive缓存管理逻辑分散在tagsView.js（Vuex store）、view.vue（视图容器）、ai-report-review.js（路由配置）、index.js（路由守卫）等多个文件中。修改缓存策略需要同时改动4+个文件，且文件间的调用关系隐式依赖难以追踪。部分缓存操作直接通过$store.dispatch字符串调用，缺少类型安全。"
