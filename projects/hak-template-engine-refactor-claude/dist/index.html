@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>风电报告审核系统</title>
+    <!--
+      Bug4修复：FOUC防闪烁
+      在DOM解析前同步读取localStorage中的主题设置，立即应用dark class。
+      这段脚本必须是同步的、放在head中，在任何CSS和body渲染之前执行，
+      这样浏览器首次绘制时就已经有正确的主题class。
+    -->
+    <script>
+      ;(function () {
+        var theme = localStorage.getItem('wind-report-theme')
+        if (theme === 'dark') {
+          document.documentElement.classList.add('dark')
+        }
+      })()
+    </script>
+    <script type="module" crossorigin src="/assets/index-D2zYvfBB.js"></script>
+    <link rel="stylesheet" crossorigin href="/assets/index-N5KAEx_2.css">
+  </head>
+  <body>
+    <div id="app"></div>
+  </body>
+</html>
