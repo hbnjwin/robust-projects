@@ -9,7 +9,7 @@
 		<!-- 任务进度列表 -->
 		<div v-if="activeTasks.length > 0" class="active-tasks">
 			<div class="tasks-header">
-				<h4>正在执行的任�?({{ activeTasks.length }})</h4>
+				<h4>正在执行的任�?({{ activeTasks.length }})</h4>
 				<t-button size="small" variant="text" @click="refreshTasks">
 					<i class="iconfont icon-shuaxin"></i>
 				</t-button>
@@ -36,7 +36,7 @@
 								@click="subscribeTask(task.taskId)"
 								:disabled="selectedTaskId === task.taskId"
 							>
-								{{ selectedTaskId === task.taskId ? '已订�? : '订阅' }}
+								{{ selectedTaskId === task.taskId ? '已订�? : '订阅' }}
 							</t-button>
 							<t-button
 								size="small"
@@ -50,11 +50,11 @@
 						</div>
 					</div>
 
-					<!-- 任务进度�?-->
+					<!-- 任务进度�?-->
 					<div v-if="task.progress !== undefined" class="task-progress">
 						<div class="progress-info">
 							<span>进度: {{ task.progress }}%</span>
-							<span v-if="task.currentItem">当前�? {{ task.currentItem }}</span>
+							<span v-if="task.currentItem">当前�? {{ task.currentItem }}</span>
 						</div>
 						<div class="progress-bar">
 							<div class="progress-fill" :style="{ width: task.progress + '%' }"></div>
@@ -72,10 +72,10 @@
 			</div>
 		</div>
 
-		<!-- 无活跃任务时的提�?-->
+		<!-- 无活跃任务时的提�?-->
 		<div v-else class="no-tasks">
 			<i class="iconfont icon-wujieguo"></i>
-			<p>暂无正在执行的任�?/p>
+			<p>暂无正在执行的任�?/p>
 		</div>
 
 		<!-- 消息日志 -->
@@ -112,12 +112,12 @@ const props = defineProps({
 
 const emit = defineEmits(['taskProgress', 'taskCompleted', 'taskFailed', 'connectionChange'])
 
-// 响应式数�?const connectionStatus = ref('CLOSED')
+// 响应式数�?const connectionStatus = ref('CLOSED')
 const activeTasks = ref([])
 const selectedTaskId = ref(null)
 const messageLogs = ref([])
 
-// 计算属�?const connectionStatusClass = computed(() => {
+// 计算属�?const connectionStatusClass = computed(() => {
 	return {
 		'status-connected': connectionStatus.value === 'OPEN',
 		'status-connecting': connectionStatus.value === 'CONNECTING',
@@ -128,13 +128,13 @@ const messageLogs = ref([])
 const connectionStatusText = computed(() => {
 	switch (connectionStatus.value) {
 		case 'OPEN':
-			return '已连�?
+			return '已连�?
 		case 'CONNECTING':
-			return '连接�?..'
+			return '连接�?..'
 		case 'CLOSED':
-			return '未连�?
+			return '未连�?
 		default:
-			return '未知状�?
+			return '未知状�?
 	}
 })
 
@@ -162,9 +162,9 @@ const subscribeTask = (taskId) => {
 			wsManager.unsubscribeTaskProgress()
 		}
 
-		// 订阅新任�?		wsManager.subscribeTaskProgress(taskId)
+		// 订阅新任�?		wsManager.subscribeTaskProgress(taskId)
 		selectedTaskId.value = taskId
-		addLog('info', `已订阅任�? ${taskId}`)
+		addLog('info', `已订阅任�? ${taskId}`)
 	} else {
 		ElMessage.warning('WebSocket未连接，请先连接')
 	}
@@ -174,7 +174,7 @@ const unsubscribeTask = () => {
 	if (wsManager.isConnected()) {
 		wsManager.unsubscribeTaskProgress()
 		selectedTaskId.value = null
-		addLog('info', '已取消任务订�?)
+		addLog('info', '已取消任务订�?)
 	}
 }
 
@@ -203,26 +203,27 @@ const getStatusTheme = (status) => {
 const getStatusText = (status) => {
 	switch (status) {
 		case 'completed':
-			return '已完�?
+			return '已完�?
 		case 'failed':
 			return '失败'
 		case 'processing':
 		case 'started':
-			return '处理�?
+			return '处理�?
 		case 'queued':
-			return '排队�?
+			return '排队�?
 		default:
 			return '未知'
 	}
 }
 
-const formatTime = (timeStr) => {
-	if (!timeStr) return ''
+const formatTime = (time) => {
+	if (!time) return ''
 	try {
-		const date = new Date(timeStr)
+		const date = time instanceof Date ? time : new Date(time)
+		if (isNaN(date.getTime())) return String(time)
 		return date.toLocaleTimeString()
 	} catch (error) {
-		return timeStr
+		return String(time)
 	}
 }
 
@@ -230,7 +231,7 @@ const addLog = (type, message) => {
 	const log = {
 		type,
 		message,
-		time: new Date().toLocaleTimeString()
+		time: new Date()
 	}
 	messageLogs.value.unshift(log)
 
@@ -251,7 +252,7 @@ const updateTaskProgress = (progressData) => {
 		// 更新现有任务
 		activeTasks.value[taskIndex] = { ...activeTasks.value[taskIndex], ...progressData }
 	} else {
-		// 添加新任�?		activeTasks.value.push(progressData)
+		// 添加新任�?		activeTasks.value.push(progressData)
 	}
 
 	emit('taskProgress', progressData)
@@ -271,11 +272,11 @@ const handleTaskFailed = (data) => {
 
 const handleTaskStarted = (data) => {
 	updateTaskProgress({ ...data, taskStatus: 'started' })
-	addLog('info', `任务开�? ${data.taskId}`)
+	addLog('info', `任务开�? ${data.taskId}`)
 }
 
 const handleTaskItemCompleted = (data) => {
-	addLog('info', `任务项完�? ${data.taskId} - ${data.itemName}`)
+	addLog('info', `任务项完�? ${data.taskId} - ${data.itemName}`)
 }
 
 // WebSocket事件处理

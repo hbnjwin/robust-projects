@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位debounce包装后this丢失和参数变undefined的原因：wrapper内部直接调用func()未用apply/call转发执行上下文和参数。1: 未定位；2: 只看到报错但不知原因；3: 找到func()但未分析apply/call的必要性；4: 准确定位func()调用缺少apply(this, arguments)导致上下文和参数丢失；5: 定位根因并分析了JavaScript严格模式下this绑定规则"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "1次Read读取common-function.js，直接定位debounce函数第62-76行wrapper内部func()调用未用apply转发this和arguments"
+
+[[criterion]]
+name = "apply/call修复"
+description = "[Explicit] 将func()改为func.apply(this, arguments)或func.call(this, ...args)转发执行上下文和参数。1: 未修复；2: 只加了apply但参数不对；3: apply正确但只改了一处；4: 两处func()都改为func.apply(this, arguments)；5: 使用rest params(...args)替代arguments并处理箭头函数场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将第66行和第72行的func()都改为func.apply(this, arguments)，两处修复正确，但wrapper未使用rest params现代语法"
+
+[[criterion]]
+name = "参数传递完整性"
+description = "[Implicit] 修复后debounce包装的函数能否正确接收到调用时传入的所有参数。1: 参数仍丢失；2: 只传第一个参数；3: 传了但有时序问题；4: 完整传递所有参数；5: 完整传递且在连续调用时参数不混淆"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "func.apply(this, arguments)将wrapper收到的所有参数转发给func，参数传递正确，但未验证setTimeout延迟调用时arguments的闭包捕获是否正确"
+
+[[criterion]]
+name = "immediate分支处理"
+description = "[Implicit] debounce的immediate模式（首次立即执行）在修复后是否正确工作。1: immediate模式失效；2: 立即执行但后续不防抖；3: 基本正确但连续触发有问题；4: immediate模式正确工作；5: immediate模式正确且有完善的取消/重置机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了func.apply并额外修正了immediate条件判断（if (immediate)改为if (!timer && immediate)），增强了immediate模式的正确性，但修改依据未在summary中充分说明"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "2次工具调用（1次Read+1次Edit），直接读取文件并一次Edit修复3处（两处func.apply+immediate条件），效率很高但额外修改了immediate条件属于范围扩大"
