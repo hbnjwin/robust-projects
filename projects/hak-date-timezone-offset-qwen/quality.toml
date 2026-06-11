@@ -1,0 +1,62 @@
+[[criterion]]
+name = "日期提交时区校正"
+description = "[Explicit] DatePicker选择的本地日期提交到后端时是否保持日期不变不因UTC转换偏移。1: 日期偏移一天；2: 部分场景偏移；3: 手动补偿但硬编码时区；4: toLocalDateString提取本地年月日避免UTC转换；5: 完整的时区策略含服务端协商。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "date.ts中toLocalDateString函数通过date.getFullYear()/getMonth()/getDate()提取本地日期分量拼接为YYYY-MM-DD字符串，避免了JSON.stringify时的UTC转换。但useReportFilter.ts中仅对审核日期字段使用了该函数，截止日期和创建时间字段仍使用Date对象直接传给axios，提交时被toISOString()转换为UTC可能偏移一天。"
+
+[[criterion]]
+name = "范围筛选边界处理"
+description = "[Explicit] 日期范围筛选是否包含结束日期当天的完整24小时数据。1: 结束日期当天数据全部遗漏；2: 部分遗漏；3: 手动加1天但有副作用；4: 结束日期设置为23:59:59.999或次日00:00:00；5: 完整边界处理含时区感知。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "useReportFilter.ts中日期范围筛选直接将DatePicker返回的Date对象传给后端，结束日期为2026-06-10T00:00:00，后端SQL查询WHERE created_at <= '2026-06-10T00:00:00'只包含6月10日零点整的数据，当天的其余数据（00:00:01~23:59:59）被遗漏。用户选择的6月1日~6月10日实际只查到6月1日~6月9日的数据。"
+
+[[criterion]]
+name = "时间格式解析容错"
+description = "[Explicit] 后端返回的各种时间格式（ISO/时间戳/自定义格式）是否能正确解析显示。1: 非标准格式显示NaN或Invalid Date；2: 部分格式解析失败；3: 主要格式覆盖；4: ISO/时间戳/自定义格式全覆盖+容错；5: 完整解析+本地化格式化+相对时间。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ReportList.vue中时间列直接使用new Date(timestamp).toLocaleDateString()格式化。后端返回的时间格式不统一——部分接口返回ISO 8601格式（2026-06-10T08:30:00Z），部分返回Unix毫秒时间戳（1718006400000），部分返回自定义格式（2026/06/10 08:30）。new Date('2026/06/10 08:30')在Safari中返回Invalid Date，时间线组件显示NaN:NaN。"
+
+[[criterion]]
+name = "日期工具函数设计"
+description = "[Implicit] 日期处理工具函数的设计质量和覆盖度。1: 无工具函数直接操作Date；2: 少量工具函数；3: 基本工具覆盖；4: 完整的date.ts工具库覆盖格式化/解析/比较/范围；5: 工具库+国际化+日历系统支持。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "date.ts导出了toLocalDateString、parseDate两个工具函数，覆盖了日期提交和解析两个主要场景。但缺少日期比较（isBefore/isAfter）、日期范围计算（daysBetween）、相对时间（如\"3小时前\"）等常用功能。useReportFilter.ts中仍有手动的Date操作代码（如new Date(d.getTime() + 86400000)加一天），未统一使用工具函数。"
+
+[[criterion]]
+name = "DatePicker配置"
+description = "[Implicit] el-date-picker的value-format、default-time等配置是否正确设置以减少时区问题。1: 默认配置不处理；2: 设置了value-format但不完整；3: value-format+default-time配置；4: 完整配置含禁用未来日期/快捷选项等；5: 完整配置+自定义面板+国际化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ReportList.vue中el-date-picker配置了value-format='YYYY-MM-DD'让组件返回字符串而非Date对象，一定程度上避免了时区转换问题。但日期范围选择器未配置default-time属性，结束日期仍返回当天00:00:00。未设置disabled-date限制不能选择未来日期，审核员可以选择超出合理范围的日期。"
+
+[[criterion]]
+name = "国际化时区适配"
+description = "[Implicit] 日期处理方案是否考虑了不同时区用户的使用场景。1: 硬编码东八区；2: 依赖浏览器本地时区；3: 本地时区+格式化正确；4: 支持时区感知的日期处理；5: 完整的i18n时区方案含日历本地化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "date.ts中toLocalDateString依赖JavaScript的getFullYear()/getMonth()/getDate()获取浏览器本地时区的日期分量，在东八区用户环境下工作正常。但如果审核员出差到其他时区（如UTC+5），选择的\"6月10日\"对应的本地时间与东八区不同，提交后后端存储的日期可能与用户预期不一致。未提供时区选择或强制使用服务端时区的机制。"
+
+[[criterion]]
+name = "日期相关测试"
+description = "[Implicit] 日期时区处理逻辑的测试覆盖情况。1: 无测试；2: 手动验证；3: 少量测试；4: 覆盖主要时区场景；5: 完整覆盖含跨时区/夏令时/闰年。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "项目中未创建date.ts的测试文件。日期时区修复的验证完全依赖手动在浏览器中选择日期并检查提交数据。未覆盖边界日期（如12月31日UTC+8的23:00在UTC中已是次年1月1日）、闰年2月29日、夏令时切换等特殊场景的测试。"
