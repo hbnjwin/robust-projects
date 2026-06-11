@@ -9,7 +9,7 @@
 					<scrollbar height="calc(100vh - 60px)">
 						<router-view v-slot="{ Component, route }">
 							<transition name="slide-right" mode="out-in">
-								<div :key="route.path">
+								<div :key="route.fullPath">
 									<component :is="Component" />
 								</div>
 							</transition>
