@@ -1,0 +1,62 @@
+[[criterion]]
+name = "LRU淘汰修复"
+description = "[Explicit] keep-alive的max淘汰策略是否正确按LRU（最近最少使用）淘汰最旧组件。1:淘汰最新的;2:随机淘汰;3:修复了但边界case有问题;4:组件name与include一致+LRU正确生效;5:LRU+自定义淘汰策略+淘汰前提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "每个路由组件通过defineOptions({name:'ReportDetail'})显式声明组件name，tagsView.ts中cachedViews存储的是组件name而非路由name，与keep-alive的include属性完全对齐。MainLayout.vue中<keep-alive :include=\"cachedViews\" :max=\"10\">确保include列表中的name与实际缓存的组件name一致，Vue内置的LRU策略正确按访问顺序淘汰最旧组件。"
+
+[[criterion]]
+name = "缓存同步清除"
+description = "[Explicit] 关闭标签页时keep-alive的缓存实例是否同步销毁，下次打开显示最新数据。1:缓存残留显示旧数据;2:从include移除但实例未销毁;3:实例销毁但有延迟;4:cachedViews移除+组件实例销毁+下次重新加载;5:销毁+数据预加载+过渡动画。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "tagsView.ts的closeView方法同时从visitedViews和cachedViews中移除记录。cachedViews是computed属性映射到keep-alive的include prop，移除后Vue自动销毁对应的缓存组件实例。下次路由到该页面时组件重新创建，触发onMounted生命周期从服务端获取最新数据。ApprovalDetail.vue和ReportDetail.vue中onActivated钩子也会检查数据版本决定是否刷新。"
+
+[[criterion]]
+name = "动态路由name匹配"
+description = "[Explicit] 通过addRoute动态添加的路由组件name是否能被keep-alive的include正确匹配缓存。1:动态路由组件不被缓存;2:缓存了但name不匹配;3:手动注册name但不一致;4:dynamicRoutes配置+组件name对齐include;5:自动同步+懒加载组件name提取。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "dynamicRoutes.ts中动态路由配置明确指定meta.componentName字段对应组件的defineOptions name。addRoute时同步将componentName加入cachedViews。Home.vue的router-view使用:key=\"route.meta.componentName || route.name\"确保keep-alive按组件name而非路由path缓存。懒加载组件在defineOptions中声明的name与meta.componentName保持一致。"
+
+[[criterion]]
+name = "TagsView管理"
+description = "[Implicit] 标签页视图的状态管理质量，包括访问记录、缓存控制、激活状态。1:简单数组管理;2:基本CRUD;3:Vuex/Pinia store但逻辑散乱;4:完整的tagsView store含缓存/访问/固定视图;5:store+持久化+拖拽排序+右键菜单。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "tagsView.ts使用Pinia store管理三个响应式状态：visitedViews（所有打开的标签列表）、cachedViews（keep-alive缓存名称集合）、activeView（当前激活标签）。addView时将组件name加入cachedViews并更新visitedViews的lastAccessTime维护LRU顺序。closeView同步移除visited和cached。提供closeOthers、closeAll、closeRight等批量操作，TagsView.vue通过右键菜单触发。"
+
+[[criterion]]
+name = "缓存失效策略"
+description = "[Implicit] 缓存组件数据过期或需要强制刷新的机制设计。1:缓存永不过期;2:手动刷新按钮;3:onActivated中条件刷新;4:版本号/时间戳驱动的自动失效;5:细粒度失效+预加载+乐观更新。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ApprovalDetail.vue和ReportDetail.vue在onActivated钩子中检查距上次数据加载的时间间隔，超过5分钟自动重新请求数据。tagsView.ts提供refreshView方法，从cachedViews中临时移除组件name再重新添加，触发组件销毁重建实现强制刷新。但无服务端推送的数据版本变更通知机制。"
+
+[[criterion]]
+name = "路由守卫集成"
+description = "[Implicit] 路由导航守卫与标签页/缓存系统的集成质量。1:无路由守卫;2:基本beforeEach;3:beforeEach+组件内守卫;4:全局守卫+组件守卫+标签同步;5:完整的导航流程控制。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "MainLayout.vue的router-view通过onVnodeMounted自动将新渲染的组件加入tagsView。router/index.ts的beforeEach守卫中检查目标路由是否需要缓存（meta.noCache !== true），自动调用tagsViewStore.addView。组件内beforeRouteLeave守卫中处理未保存数据的确认提示。路由守卫和标签管理的职责划分明确，组件无需手动调用addView。"
+
+[[criterion]]
+name = "代码组织清晰度"
+description = "[Implicit] keep-alive缓存管理相关代码的文件组织和模块化程度。1:逻辑散落各处;2:集中但混乱;3:基本模块化;4:store+composable+组件职责分离;5:完整的插件化架构。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "tagsView.ts作为Pinia store集中管理所有缓存状态和操作方法。TagsView.vue负责标签栏UI渲染和交互事件。MainLayout.vue中router-view+keep-alive配置保持简洁。dynamicRoutes.ts管理动态路由注册。四个文件职责单一、依赖方向明确（组件→store→路由），Pinia store提供完整的TypeScript类型推断。"
