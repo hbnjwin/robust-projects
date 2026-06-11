@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "auth-center.js中将appRequest.get()改为appRequest.post()，params改为data，凭证移至请求体，但过程中29次工具调用(14次Bash)效率较低"
+rationale = "auth-center.js的getVerifyUser方法中将appRequest.get()改为appRequest.post()，参数传递方式从params（URL查询参数）改为data（请求体），凭证不再出现在URL中，但POST请求未显式设置Content-Type头确保application/json格式"
 
 [[criterion]]
 name = "哈希算法升级"
@@ -22,8 +22,8 @@ description = "[Explicit] 登录凭证在传输过程中的整体保护水平。
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "GET改POST+MD5改SHA-256两项修复都完成了，但14次Bash操作中包含了git commit/push等非必要操作（执行了robust-commit逻辑），偏离了修复本身"
+score = 3
+rationale = "POST请求将userName和password从URL查询参数移至请求体，SHA-256替代MD5提升了哈希抗碰撞强度，两项修复形成基本的传输层凭证保护，但未添加HTTPS强制约束或CSRF token等额外防护措施"
 
 [[criterion]]
 name = "代码精准度"
@@ -31,8 +31,8 @@ description = "[Implicit] 修改范围和效率。1:大量无关修改;2:有明�
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "29次工具调用中14次Bash（含git操作和robust-commit），6次Glob用于文件搜索，实际修复只需2次Edit，过程严重冗余"
+score = 3
+rationale = "代码修改集中在auth-center.js的getVerifyUser方法（get改post、params改data）和login/index.vue的handleLogin方法（CryptoJS.MD5改CryptoJS.SHA256）两处核心位置，修改范围与安全修复目标基本吻合"
 
 [[criterion]]
 name = "安全意识"
@@ -40,5 +40,5 @@ description = "[Implicit] 对Web安全最佳实践的理解和应用。1:无安�
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "完成了GET改POST和MD5升SHA-256两项修复，但将大量精力花在git操作上而非安全分析"
+score = 3
+rationale = "正确识别了GET请求凭证暴露（OWASP A02敏感数据暴露）和MD5弱哈希（彩虹表攻击风险）两个安全问题，分别采取POST请求体传输和SHA-256升级两种标准对策，但未深入分析盐值、PBKDF2等进阶哈希加固方案"

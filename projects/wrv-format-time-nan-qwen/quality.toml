@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位日志时间戳显示Invalid Date的根因：addLog存储toLocaleTimeString()格式化字符串，formatTime再次new Date()解析导致双重格式化。1: 未定位；2: 只看到Invalid Date但不知原因；3: 找到formatTime的问题但未分析addLog的存储方式；4: 完整定位addLog存储格式化字符串+formatTime二次解析的双重格式化链路；5: 定位根因并分析了中文locale下Date构造函数无法解析的具体原因"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read两次读取task-progress/index.vue，找到addLog第234行time存储为toLocaleTimeString()返回值，formatTime第222行用new Date(timeStr)解析，定位了双重格式化问题"
+
+[[criterion]]
+name = "时间存储修复"
+description = "[Explicit] 修改addLog的time字段存储方式，使formatTime能正确解析。1: 未修复；2: 修了但仍有格式问题；3: 存储Date对象但formatTime未适配；4: 存储Date对象且formatTime正确调用toLocaleTimeString()；5: 存储ISO字符串或时间戳，跨序列化场景也能正确解析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将addLog中time从new Date().toLocaleTimeString()改为new Date()存储Date对象，formatTime接收Date对象后调用toLocaleTimeString()正确显示"
+
+[[criterion]]
+name = "formatTime兼容性"
+description = "[Implicit] formatTime函数在接收不同类型输入（Date对象、字符串、undefined）时的容错处理。1: 无容错；2: 只处理null；3: 处理null和异常Date但不处理字符串；4: 处理null/Date/字符串多种输入；5: 完善的类型判断和降级策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "formatTime中try-catch保留，但new Date(dateObj)对Date对象会返回有效值，对已格式化字符串仍返回Invalid Date但被catch捕获返回原字符串，基本容错"
+
+[[criterion]]
+name = "日志显示正确性"
+description = "[Implicit] 修复后消息日志区域的时间戳是否正确显示本地化时间格式。1: 仍显示Invalid Date；2: 显示但格式异常；3: 显示正确但时区有偏差；4: 正确显示本地化时间格式；5: 正确显示且在不同locale下表现一致"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复后addLog存储Date对象，formatTime正确调用toLocaleTimeString()，理论上时间戳显示正常，但未验证中文环境下的实际渲染效果"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "4次工具调用（2次Read+2次Edit），两次Read读取同一文件（第二次确认行号），2次Edit分别修改addLog和formatTime，有一次冗余读取"
