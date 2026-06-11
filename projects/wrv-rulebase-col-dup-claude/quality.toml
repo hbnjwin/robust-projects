@@ -1,0 +1,44 @@
+[[criterion]]
+name = "colKey映射修正"
+description = "[Explicit] 将tableColumns中重复/错误的colKey修正为正确的字段名。1:未修正;2:只改了部分;3:改了但新值不准确;4:所有列的colKey都映射到正确字段;5:映射+类型校验+运行时检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "rulebase/index.vue中修正所有colKey映射：ruleName/ruleType/status/createTime/creator/version/remark/operation，修正完整"
+
+[[criterion]]
+name = "字段覆盖完整性"
+description = "[Explicit] 修正后覆盖规则库所有必要字段。1:遗漏多个;2:覆盖大部分;3:全覆盖但有冗余;4:精确覆盖所有字段无遗漏;5:覆盖+动态列配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Glob和Read先确认组件结构，再1次Edit完成所有列的colKey修正，字段名基于规则库业务逻辑推断准确"
+
+[[criterion]]
+name = "数据展示正确性"
+description = "[Explicit] 修复后版本号和备注列不再显示相同数据。1:仍重复;2:不重复但数据不对;3:数据正确但顺序不对;4:所有列数据正确显示;5:正确显示+格式化+排序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修正后每列colKey唯一对应后端字段，版本号显示version、备注显示remark，消除了数据重复问题"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度。1:大量无关修改;2:有冗余;3:基本精准;4:精准修改;5:最小改动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "4次工具调用(2次Glob+1次Read+1次Edit)，1次Edit精准修改tableColumns中所有colKey"
+
+[[criterion]]
+name = "TDesign数据绑定"
+description = "[Implicit] 修复与TDesign Table组件colKey数据绑定机制的兼容性。1:绑定错误;2:绑定正确但有warning;3:绑定正确;4:符合TDesign colKey规范;5:规范+自定义render"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "colKey值准确对应后端ExtractionRules实体的字段名，TDesign Table按colKey从rowData中取值渲染"
