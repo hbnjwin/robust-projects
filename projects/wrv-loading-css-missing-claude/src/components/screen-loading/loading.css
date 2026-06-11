@@ -1,0 +1,178 @@
+/* Full-screen loader */
+.loader {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  z-index: 9999;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* Semi-transparent overlay background */
+.loader_overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+  background: rgba(255, 255, 255, 0.9);
+}
+
+/* Cogs container */
+.loader_cogs {
+  position: relative;
+  width: 200px;
+  height: 200px;
+  z-index: 1;
+}
+
+/* ===== Top gear (largest) ===== */
+.loader_cogs__top {
+  position: absolute;
+  width: 100px;
+  height: 100px;
+  top: 6px;
+  left: 50%;
+  transform-origin: 50% 50%;
+  animation: rotate-cw 5s linear infinite;
+}
+
+.top_part {
+  position: absolute;
+  width: 40px;
+  height: 100px;
+  top: 0;
+  left: 50%;
+  margin-left: -20px;
+  background: #f49e4c;
+  border-radius: 10px;
+}
+
+.top_part:nth-child(2) {
+  transform: rotate(60deg);
+}
+
+.top_part:nth-child(3) {
+  transform: rotate(120deg);
+}
+
+.top_hole {
+  position: absolute;
+  width: 20px;
+  height: 20px;
+  top: 50%;
+  left: 50%;
+  margin-top: -10px;
+  margin-left: -10px;
+  background: #fff;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* ===== Left gear (medium) ===== */
+.loader_cogs__left {
+  position: absolute;
+  width: 80px;
+  height: 80px;
+  bottom: 28px;
+  left: 22px;
+  transform-origin: 50% 50%;
+  animation: rotate-ccw 3.75s linear infinite;
+}
+
+.left_part {
+  position: absolute;
+  width: 32px;
+  height: 80px;
+  top: 0;
+  left: 50%;
+  margin-left: -16px;
+  background: #47ec19;
+  border-radius: 8px;
+}
+
+.left_part:nth-child(2) {
+  transform: rotate(60deg);
+}
+
+.left_part:nth-child(3) {
+  transform: rotate(120deg);
+}
+
+.left_hole {
+  position: absolute;
+  width: 16px;
+  height: 16px;
+  top: 50%;
+  left: 50%;
+  margin-top: -8px;
+  margin-left: -8px;
+  background: #fff;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* ===== Bottom gear (smallest) ===== */
+.loader_cogs__bottom {
+  position: absolute;
+  width: 60px;
+  height: 60px;
+  bottom: 30px;
+  right: 28px;
+  transform-origin: 50% 50%;
+  animation: rotate-cw 2.5s linear infinite;
+}
+
+.bottom_part {
+  position: absolute;
+  width: 24px;
+  height: 60px;
+  top: 0;
+  left: 50%;
+  margin-left: -12px;
+  background: #eb6b56;
+  border-radius: 6px;
+}
+
+.bottom_part:nth-child(2) {
+  transform: rotate(60deg);
+}
+
+.bottom_part:nth-child(3) {
+  transform: rotate(120deg);
+}
+
+.bottom_hole {
+  position: absolute;
+  width: 12px;
+  height: 12px;
+  top: 50%;
+  left: 50%;
+  margin-top: -6px;
+  margin-left: -6px;
+  background: #fff;
+  border-radius: 50%;
+  z-index: 1;
+}
+
+/* ===== Animations ===== */
+@keyframes rotate-cw {
+  from {
+    transform: translate(-50%) rotate(0deg);
+  }
+  to {
+    transform: translate(-50%) rotate(360deg);
+  }
+}
+
+@keyframes rotate-ccw {
+  from {
+    transform: rotate(0deg);
+  }
+  to {
+    transform: rotate(-360deg);
+  }
+}

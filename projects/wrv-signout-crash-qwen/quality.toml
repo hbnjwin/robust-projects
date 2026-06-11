@@ -1,0 +1,44 @@
+[[criterion]]
+name = "崩溃根因定位"
+description = "[Explicit] 准确定位退出登录崩溃的根本原因：signOut方法中router.push未await导致路由过渡期间userInfo被清空，模板仍访问null.operatorName。1: 未定位；2: 只看到TypeError但不知原因；3: 知道userInfo为null但未分析时序；4: 完整分析router.push异步执行与clearUserInfo的时序竞争；5: 分析时序竞争并识别了所有可能的null引用路径"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read检查nav-bar/index.vue的signOut方法，识别到router.push({name:'Login'})是异步操作但未await，紧接着同步执行clearUserInfo导致模板在路由过渡期间访问null.operatorName崩溃，但33次工具调用中Write了8个文件说明修复严重偏离了核心问题"
+
+[[criterion]]
+name = "空引用防护"
+description = "[Explicit] 模板中对userInfo添加可选链或空值判断防止null引用崩溃。1: 未添加防护；2: 添加了但覆盖不全面；3: 主要引用处添加了可选链；4: 所有userInfo引用处都添加了userInfo?.属性的可选链；5: 可选链加v-if条件渲染双重防护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在模板中将userInfo.operatorName改为可选链形式防止null引用，但修改过程中Write了8个文件（含store/modules/userinfo.js、router/index.js、App.vue等），大幅超出了模板防御的修复范围"
+
+[[criterion]]
+name = "异步时序修复"
+description = "[Explicit] signOut方法中router.push添加await确保路由跳转完成后再清理用户状态。1: 未修复时序；2: 加了await但位置不对；3: await router.push正确但未加async声明；4: async signOut中await router.push后再clearUserInfo；5: await跳转加try/catch错误处理加loading状态"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将signOut改为async方法并await router.push，确保路由跳转完成后再执行clearUserInfo和localStorage.clear()，但额外修改了pages/login/index.vue和pages/home/index.vue等不相关页面"
+
+[[criterion]]
+name = "修复范围控制"
+description = "[Implicit] 修复操作是否限制在必要的范围内，不修改无关文件。1: 大幅超出范围修改了多个无关文件；2: 修改了3-4个额外文件；3: 修改了1-2个额外文件；4: 严格限制在问题文件范围内；5: 最小改动且不影响其他模块"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "33次工具调用中Write了8个文件（nav-bar/index.vue、store/modules/userinfo.js、src/utils/oauth2.js、src/router/index.js、App.vue、pages/home/index.vue、pages/login/index.vue、router/modules/auth-center.js），严重超出了修复范围，属于过度工程"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改和冗余操作；2: 有明显冗余；3: 核心修复正确但过程冗长；4: 精准高效完成修复；5: 最小改动最少调用完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 1
+rationale = "33次工具调用（13次Bash+8次Write+5次Read+3次Grep+2次Glob+2次Edit），Write操作占比最高说明大量创建或重写文件，修复过程严重偏离单文件bug修复的本质"

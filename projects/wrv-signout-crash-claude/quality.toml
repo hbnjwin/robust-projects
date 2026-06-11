@@ -1,0 +1,44 @@
+[[criterion]]
+name = "崩溃根因定位"
+description = "[Explicit] 准确定位退出登录崩溃的根本原因：signOut方法中router.push未await导致路由过渡期间userInfo被清空，模板仍访问null.operatorName。1: 未定位；2: 只看到TypeError但不知原因；3: 知道userInfo为null但未分析时序；4: 完整分析router.push异步执行与clearUserInfo的时序竞争；5: 分析时序竞争并识别了所有可能的null引用路径"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "5次工具调用快速定位根因：nav-bar/index.vue的signOut方法中router.push({name:'Login'})未await，紧接着store.clearUserInfo()将userInfo置为null，在0.3秒路由过渡动画期间模板仍尝试渲染{{userInfo.operatorName}}导致TypeError"
+
+[[criterion]]
+name = "空引用防护"
+description = "[Explicit] 模板中对userInfo添加可选链或空值判断防止null引用崩溃。1: 未添加防护；2: 添加了但覆盖不全面；3: 主要引用处添加了可选链；4: 所有userInfo引用处都添加了userInfo?.属性的可选链；5: 可选链加v-if条件渲染双重防护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "nav-bar/index.vue第23行将userInfo.operatorName改为userInfo?.operatorName，使用可选链防止signOut过程中userInfo被清空后模板渲染崩溃"
+
+[[criterion]]
+name = "异步时序修复"
+description = "[Explicit] signOut方法中router.push添加await确保路由跳转完成后再清理用户状态。1: 未修复时序；2: 加了await但位置不对；3: await router.push正确但未加async声明；4: async signOut中await router.push后再clearUserInfo；5: await跳转加try/catch错误处理加loading状态"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "nav-bar/index.vue第79-84行将signOut改为async方法，await router.push({name:'Login'})等待路由跳转完成后，再依次执行store.clearUserInfo()和localStorage.clear()，消除了时序竞争"
+
+[[criterion]]
+name = "修复范围控制"
+description = "[Implicit] 修复操作是否限制在必要的范围内，不修改无关文件。1: 大幅超出范围修改了多个无关文件；2: 修改了3-4个额外文件；3: 修改了1-2个额外文件；4: 严格限制在问题文件范围内；5: 最小改动且不影响其他模块"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "5次工具调用中2次Edit仅修改nav-bar/index.vue一个文件的两处位置（模板可选链和signOut方法），未触及任何其他文件"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改和冗余操作；2: 有明显冗余；3: 核心修复正确但过程冗长；4: 精准高效完成修复；5: 最小改动最少调用完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "5次工具调用（2次Read+2次Edit+1次Agent）精准定位nav-bar/index.vue并完成可选链和async/await两处修改，效率极高"
