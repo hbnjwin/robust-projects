@@ -1,62 +1,62 @@
 [[criterion]]
-name = "user_experience_and_interaction"
-description = "How smooth and efficient is the user experience during interaction? 1: workflow deadlock, loop errors, no valid output, completely unusable; 2: verbose reasoning, repeated self-correction, noticeable logic deviations requiring frequent intervention; 3: some repetition and redundant reasoning, occasional over-complication but user can still wait for results; 4: overall good experience with occasional redundancy or self-correction that does not affect task completion; 5: efficient reasoning, clear logic, smooth responses, accurately captures core intent, output is trustworthy with no room for optimization"
+name = "节点去重机制"
+description = "[Explicit] 展开收起再展开时是否正确防止子节点重复加载追加。1:完全未处理;2:有去重但仍偶发重复;3:resolve前清空旧节点;4:基于loaded标志+节点ID Map去重;5:去重+增量更新+动画过渡。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useDepartmentTree.ts中loadNode先检查node.loaded标志，已加载过的节点直接return不再请求。首次加载时resolve后设置node.loaded=true。配合节点ID的Set去重，即使filter操作重置了loaded也能通过缓存Map避免重复数据。"
 
 [[criterion]]
-name = "task_planning_and_execution_control"
-description = "How well does the model plan, decompose, track, and execute tasks? 1: no planning, no decomposition, no task list, no tracking, no feedback, no tool usage; 2: vague or unreasonable planning, ineffective task decomposition, inconsistent tracking, sporadic feedback; 3: macro-level planning is viable but task list is incomplete or not updated, significant tool gaps, vague feedback; 4: reasonable planning, task list exists but updates lag, minor tool misuse, clear stage feedback; 5: complete and well-reasoned plan, auto-generated task list, real-time progress sync, proper tool usage, thorough stage feedback, proactively clarifies ambiguity"
+name = "勾选状态持久化"
+description = "[Explicit] 展开的节点收起再展开后勾选状态是否保持。1:勾选全部丢失;2:部分保持;3:通过外部数组记忆但不完整;4:checkedKeys缓存+展开后恢复;5:完整持久化含半选状态。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useDepartmentTree.ts维护checkedKeysCache响应式Set，在check-change事件中同步更新缓存。节点重新加载后调用tree.setCheckedKeys(Array.from(checkedKeysCache))恢复勾选。支持父子关联模式下的半选状态通过getHalfCheckedKeys额外存储。"
 
 [[criterion]]
-name = "semantic_understanding_and_logical_reasoning"
-description = "How accurately does the model understand intent and reason logically? 1: completely misunderstands intent, cannot parse code structure, unable to execute even with guidance, blind output; 2: misinterprets key information, can only partially complete tasks with guidance, incorrect code location and modification; 3: understands main intent but misses details, slight deviations, achieves goals with human guidance; 4: correctly understands intent and constraints, accurate code modifications, no guidance needed, knowledge meets task requirements; 5: precisely integrates context and codebase information, minimal optimal modifications, no human guidance needed, comprehensive knowledge coverage"
+name = "搜索过滤展开"
+description = "[Explicit] 搜索过滤后匹配节点的父节点链路是否自动展开。1:过滤后父节点不展开;2:仅展开一级父节点;3:递归展开但有延迟;4:完整递归展开路径+高亮匹配;5:展开+高亮+滚动定位。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useDepartmentTree.ts中搜索时先通过API获取匹配节点列表及其parentId链路，然后自顶向下依次调用node.expand()展开路径上的每个祖先节点。filter-node-method配合展开逻辑，确保匹配节点可见并高亮关键字。"
 
 [[criterion]]
-name = "instruction_compliance_and_constraint_adherence"
-description = "How well does the model follow multiple constraints and maintain them throughout? 1: completely ignores complex constraints, outputs according to own defaults, enters dead loops or argues during manual correction, severely damages original structure; 2: after 2 corrections, still cannot satisfy multiple constraints simultaneously; 3: initial output ignores key constraints, can barely adjust after 2 explicit warnings; 4: initial output misses 1-2 non-core constraints, corrects all immediately after 1 user prompt; 5: perfectly adheres to all multiple constraints, never breaks prior requirements during fixes"
+name = "懒加载缓存策略"
+description = "[Implicit] 已加载过的节点是否缓存避免重复请求，以及缓存失效机制。1:每次展开都请求;2:缓存但无失效;3:loaded标志+手动刷新;4:TTL缓存+主动刷新按钮;5:增量同步+WebSocket推送更新。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useDepartmentTree.ts通过node.loaded标志判断是否需要重新请求。已加载节点展开时直接使用缓存的childNodes，不再发起请求。提供了refreshNode方法手动刷新指定节点数据，但无自动的缓存过期机制。"
 
 [[criterion]]
-name = "engineering_quality_and_completeness"
-description = "How complete and well-engineered is the code output? 1: no engineering quality awareness, no tests provided or outputs invalid pseudo-tests; 2: attempts tests only after multiple reminders, obvious flaws; 3: supplements tests after reminders but only covers main flow; 4: provides tests in most scenarios, tests are valid but coverage has minor deviations; 5: proactively adds/updates test cases, covers critical paths, follows engineering standards"
+name = "composable抽取"
+description = "[Implicit] 树形操作逻辑是否从组件中抽取为独立composable。1:所有逻辑在模板组件中;2:部分抽取;3:抽取了但接口不清晰;4:完整的useDepartmentTree composable;5:通用useTreeLazy composable。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "useDepartmentTree.ts将loadNode、搜索过滤、勾选缓存、节点刷新等逻辑封装为composable，返回treeRef、checkedKeys、filterText等响应式数据和expandPath、refreshNode等方法。DepartmentTree.vue仅负责模板渲染和事件绑定。"
 
 [[criterion]]
-name = "delivery_completeness_and_usability"
-description = "How complete, runnable, and usable is the final delivery? 1: completely non-runnable, irrelevant output; 2: fails to achieve core objectives, code cannot run; 3: main functionality runs but has obvious defects requiring manual fixes; 4: core functionality is complete and usable, very few detail omissions; 5: runnable on first attempt, full feature closure, covers both explicit and implicit requirements"
+name = "性能优化"
+description = "[Implicit] 大数据量下的虚拟化、节流、防抖等性能措施。1:无优化;2:搜索防抖;3:防抖+懒加载;4:虚拟滚动+防抖+懒加载;5:完整性能方案含骨架屏。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useDepartmentTree.ts中搜索输入通过watchDebounced(filterText, 300ms)防抖后再触发过滤。但未采用虚拟滚动方案，大数据量下仍存在渲染性能瓶颈。懒加载本身减轻了初始渲染压力。"
 
 [[criterion]]
-name = "architecture_boundaries_and_security_compliance"
-description = "How well does the model respect architecture boundaries and security compliance? 1: arbitrarily deletes or damages core files, performs unauthorized high-risk operations; 2: frequently crosses boundaries, relapses after correction; 3: irrelevant modifications and redundant dependencies, recoverable with intervention; 4: occasionally makes minor boundary violations, stops immediately when reminded; 5: strictly respects architecture boundaries, no unauthorized operations, proactively confirms authorization"
+name = "交互反馈"
+description = "[Implicit] 展开加载、搜索中、操作完成等状态的用户反馈。1:无反馈;2:仅控制台日志;3:loading状态展示;4:loading+空状态+错误提示;5:完整的交互反馈体系。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "DepartmentTree.vue中el-tree的lazy模式自带展开加载的loading图标。搜索框配置了clearable和placeholder提示。useDepartmentTree.ts中searchLoading变量控制搜索期间的加载状态展示。空搜索结果展示\"未找到匹配的部门或人员\"占位。"
