@@ -1,0 +1,8 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(find /Users/tulin/Documents/GitHub/robust/robust-projects/projects/ -name *.vue -type f)",
+      "Bash(npx vite:*)"
+    ]
+  }
+}

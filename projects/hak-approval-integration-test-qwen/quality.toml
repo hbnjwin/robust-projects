@@ -1,0 +1,62 @@
+[[criterion]]
+name = "LRU淘汰修复"
+description = "[Explicit] keep-alive的max淘汰策略是否正确按LRU（最近最少使用）淘汰最旧组件。1:淘汰最新的;2:随机淘汰;3:修复了但边界case有问题;4:组件name与include一致+LRU正确生效;5:LRU+自定义淘汰策略+淘汰前提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ai-report-review.js中修改了router-view的key策略，但keep-alive的include列表中存储的是路由name而非组件name，当路由name与组件name不一致时（如路由name为report-detail但组件name为ReportDetail），include匹配失效导致keep-alive无法正确跟踪组件缓存顺序，LRU淘汰的是include匹配不上的组件而非最旧的。"
+
+[[criterion]]
+name = "缓存同步清除"
+description = "[Explicit] 关闭标签页时keep-alive的缓存实例是否同步销毁，下次打开显示最新数据。1:缓存残留显示旧数据;2:从include移除但实例未销毁;3:实例销毁但有延迟;4:cachedViews移除+组件实例销毁+下次重新加载;5:销毁+数据预加载+过渡动画。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "tagsView.js的closeTab方法从visitedViews数组中移除标签页记录，但未同步从cachedViews中移除组件name。keep-alive的include列表未变化，关闭的组件缓存仍然存在。下次通过路由重新打开同一页面时，keep-alive命中缓存返回旧的组件实例，显示关闭前的编辑状态而非从服务端加载最新数据。"
+
+[[criterion]]
+name = "动态路由name匹配"
+description = "[Explicit] 通过addRoute动态添加的路由组件name是否能被keep-alive的include正确匹配缓存。1:动态路由组件不被缓存;2:缓存了但name不匹配;3:手动注册name但不一致;4:dynamicRoutes配置+组件name对齐include;5:自动同步+懒加载组件name提取。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "index.js中通过router.addRoute动态注册的路由，其component使用()=>import()懒加载。懒加载的组件在未渲染前name为undefined，添加到cachedViews时keep-alive无法匹配。首次打开动态路由页面不被缓存，第二次打开才生效——因为首次渲染后组件name才被Vue解析出来。"
+
+[[criterion]]
+name = "TagsView管理"
+description = "[Implicit] 标签页视图的状态管理质量，包括访问记录、缓存控制、激活状态。1:简单数组管理;2:基本CRUD;3:Vuex/Pinia store但逻辑散乱;4:完整的tagsView store含缓存/访问/固定视图;5:store+持久化+拖拽排序+右键菜单。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "tagsView.js使用Vuex模块管理visitedViews和cachedViews两个数组。addView、delView等mutation实现了基本的增删功能，但缺少updateVisitedView（刷新访问时间戳维护LRU顺序）方法。fixedViews（固定不可关闭的标签）的逻辑与普通标签混在同一数组中通过affix字段区分，增加了过滤复杂度。"
+
+[[criterion]]
+name = "缓存失效策略"
+description = "[Implicit] 缓存组件数据过期或需要强制刷新的机制设计。1:缓存永不过期;2:手动刷新按钮;3:onActivated中条件刷新;4:版本号/时间戳驱动的自动失效;5:细粒度失效+预加载+乐观更新。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "缓存的组件实例在keep-alive中长期驻留，即使底层数据已被其他用户修改也不会自动刷新。审核员打开报告详情后切到其他标签再切回，看到的仍是之前缓存的数据版本。未在onActivated钩子中检查数据是否需要重新加载，也无定时刷新机制。"
+
+[[criterion]]
+name = "路由守卫集成"
+description = "[Implicit] 路由导航守卫与标签页/缓存系统的集成质量。1:无路由守卫;2:基本beforeEach;3:beforeEach+组件内守卫;4:全局守卫+组件守卫+标签同步;5:完整的导航流程控制。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "index.js中router.beforeEach负责权限检查和页面标题设置，但未与tagsView状态同步——路由跳转时未自动调用addView将新页面加入标签列表。view.vue中手动在created/watch(route)中调用store.dispatch('addView')，组件与路由守卫的职责边界不清晰。动态路由组件销毁时的缓存清理逻辑分散在多处。"
+
+[[criterion]]
+name = "代码组织清晰度"
+description = "[Implicit] keep-alive缓存管理相关代码的文件组织和模块化程度。1:逻辑散落各处;2:集中但混乱;3:基本模块化;4:store+composable+组件职责分离;5:完整的插件化架构。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "keep-alive缓存管理逻辑分散在tagsView.js（Vuex store）、view.vue（视图容器）、ai-report-review.js（路由配置）、index.js（路由守卫）等多个文件中。修改缓存策略需要同时改动4+个文件，且文件间的调用关系隐式依赖难以追踪。部分缓存操作直接通过$store.dispatch字符串调用，缺少类型安全。"
