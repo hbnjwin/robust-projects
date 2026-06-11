@@ -52,6 +52,7 @@ router.beforeEach(async (to, from, next) => {
 	nprogress.start()
 	// 可以直接访问
 	if (baseRouterNames.includes(to.name)) {
+		nprogress.done()
 		return next()
 	}
 	// 没有登录
@@ -67,4 +68,9 @@ router.beforeEach(async (to, from, next) => {
 		return next()
 	}
 })
+
+router.afterEach(() => {
+	nprogress.done()
+})
+
 export default router

@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位Bearer undefined的根本原因：getOauth()解析cookie失败返回空字符串，getAccessToken()取空字符串的access_token属性得到undefined。1: 未定位；2: 只看到Bearer拼接问题；3: 找到拦截器但未追溯getOauth；4: 完整追溯cookie解析→getAccessToken→拦截器的调用链；5: 完整追溯并分析了所有相关的认证状态"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Read读取app-request.js第17-26行请求拦截器和oauth2.js的getOauth()方法，准确追溯到getOauth()在cookie不存在时catch返回空字符串''，''.access_token为undefined，拼接后变成'Bearer undefined'，服务端视为格式合法但无效的token返回400"
+
+[[criterion]]
+name = "token空值防护"
+description = "[Explicit] 在拼接Authorization头之前检查token是否有效，无效时不添加该头。1: 仍无条件拼接；2: 检查了但判断条件不全面；3: if(token)判断但未处理空字符串；4: 完整判断token存在且非空后才添加Authorization头；5: 判断有效性加token格式校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "app-request.js第17-26行重构请求拦截器：先调用getAccessToken()取值，用if(token)判断非null/undefined/空字符串后才设置config.headers.Authorization = 'Bearer ' + token，无效token时完全不添加该头"
+
+[[criterion]]
+name = "请求拦截器修复"
+description = "[Explicit] 修复后未登录状态的请求不携带Authorization头，服务端能正确返回401。1: 仍返回400；2: 不携带头但其他配置受影响；3: 基本修复但条件分支不完整；4: 完整修复拦截器逻辑，未登录时请求无Authorization头；5: 修复加请求重试和token刷新机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后的请求拦截器在token为undefined或空时跳过Authorization头设置，未登录用户发出的API请求不携带认证信息，后端根据缺少token正确响应401 Unauthorized"
+
+[[criterion]]
+name = "401响应处理"
+description = "[Implicit] 修复Bearer问题后401响应拦截器能否正确触发跳转到登录页。1: 401无法触发跳转；2: 跳转了但路由不对；3: 跳转正确但用户体验差；4: 401正确触发登录页跳转并清理token；5: 跳转加错误提示加重登录后回原页面"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复Bearer拼接后，响应拦截器中已有的401处理逻辑能正确触发，检查了router.push({name:'Auth.Send'})的跳转路径与auth-center.js路由模块的对应关系"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于认证拦截器修复。1: 大量无关修改；2: 修改了不必要的文件；3: 核心修复正确但有额外文件变更；4: 精准修改目标文件；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "28次工具调用中除了修改app-request.js和oauth2.js的核心文件外，还Write了README.md和package.json等非修复相关的项目描述文件，增加了不必要的变更范围"

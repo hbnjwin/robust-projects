@@ -1,0 +1,44 @@
+[[criterion]]
+name = "消息加载修复"
+description = "[Explicit] 修复import.meta.glob获取的模块经过Object.values().flat()后变成数组而非对象的问题。1: 未修复；2: 修了但合并方式不正确；3: 改用reduce但未处理嵌套结构；4: 正确用Object.values().reduce((acc,val)=>({...acc,...val}),{})合并为单一对象；5: reduce合并加深度合并处理嵌套locale"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改lang/index.js第7-13行，将Object.values(modules).flat(1)替换为Object.values(modules).reduce((acc, val) => ({...acc, ...val}), {})，将多个locale模块正确合并为单一消息对象供createI18n使用"
+
+[[criterion]]
+name = "模块default值处理"
+description = "[Explicit] 处理import.meta.glob lazy加载模块的.default属性取值问题。1: 未处理default；2: 处理了但条件判断不对；3: 取了default但未考虑eager模式差异；4: 正确判断模块值类型取.default或直接值；5: 处理default加模块热更新支持"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在reduce回调中对每个模块值做val.default || val判断，兼容import.meta.glob的eager和lazy两种模式下模块导出格式的差异"
+
+[[criterion]]
+name = "locale结构正确性"
+description = "[Explicit] 修复后传入createI18n的messages对象结构符合vue-i18n的{locale: {key: value}}格式。1: 结构仍错误；2: 格式对但key嵌套不正确；3: 基本正确但部分模块丢失；4: 完整的messages结构且所有locale模块都被合并；5: 结构正确加fallbackLocale配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后createI18n接收的messages参数结构为{zh_Hans: {system:{...}, common:{...}}, en: {system:{...}, common:{...}}}，各语言的多个模块文件（system.js、common.js等）被reduce正确合并为单一对象"
+
+[[criterion]]
+name = "多语言覆盖"
+description = "[Implicit] 修复后中文和英文两种语言的翻译都能正确加载和切换。1: 两种语言都不工作；2: 只有一种语言可用；3: 两种都可用但部分key缺失；4: 中英文翻译完整加载且可切换；5: 完整加载加动态切换加缺失key降级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复后zh_Hans和en两个目录下的system.js和common.js模块都通过import.meta.glob被正确扫描和合并，createI18n的locale设置为zh_Hans，fallbackLocale可切换到en"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于i18n加载逻辑修复。1: 大量无关修改；2: 修改了不必要的项目文件；3: 核心修复正确但有额外变更；4: 精准修改目标文件；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "27次工具调用中除了核心修改lang/index.js外，还Write了README.md、package.json和locale文件（lang/en/system.js等），部分locale文件补充可能有必要但README/package.json属于非修复性变更"
