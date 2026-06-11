@@ -63,13 +63,13 @@ export const debounce = (func, wait, immediate = true) => {
 	let timeout
 	return function () {
 		if (immediate && !timeout) {
-			func()
+			func.apply(this, arguments)
 		}
 		clearTimeout(timeout)
 		timeout = setTimeout(() => {
 			// 如果没有设置立即执行，在等待时间后执行
-			if (immediate) {
-				func()
+			if (!immediate) {
+				func.apply(this, arguments)
 			}
 		}, wait)
 	}
