@@ -1,62 +1,62 @@
 [[criterion]]
-name = "列宽拖拽实现"
-description = "[Explicit] 表格列宽拖拽是否流畅，拖拽过程中列宽是否实时更新。1: 拖拽无响应；2: 拖拽卡顿或跳跃；3: 基本流畅但存在抖动；4: 流畅拖拽且实时预览；5: 流畅+吸附对齐+性能优化。"
+name = "列宽拖拽后表头数据对齐"
+description = "[Explicit] 拖拽调整列宽后表头与数据行单元格是否保持对齐，不出现像素偏移错位。1: 拖拽后右侧所有列表头与数据严重错位；2: 错位明显但不影响阅读；3: 部分列对齐但边缘列仍有偏移；4: 所有列表头与数据行完全对齐无偏移；5: 对齐+doLayout自动修正+窗口resize后仍对齐。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "useColumnResize.ts通过mousedown/mousemove/mouseup事件自定义拖拽逻辑，mousemove中使用requestAnimationFrame节流更新列宽。拖拽时显示蓝色参考线指示目标位置，释放后一次性更新column.width避免中间态闪烁。"
+rationale = "useColumnResize.ts的onHeaderDragend回调中在更新column.width后立即调用nextTick(() => tableRef.value?.doLayout())触发表格重新计算所有列的表头和数据行宽度。doLayout内部重新同步thead和tbody的colgroup宽度值，确保所有列表头与数据行完全对齐。拖拽任意列宽后右侧列均保持对齐无偏移。"
 
 [[criterion]]
-name = "相邻列宽度联动"
-description = "[Explicit] 拖拽某列边框时相邻列是否同步调整宽度，总表宽是否保持不变。1: 相邻列不联动导致错位；2: 联动但总宽变化；3: 总宽不变但非相邻列偏移；4: 正确的相邻列反向调整；5: 联动+最小宽约束+比例分配。"
+name = "最小列宽限制"
+description = "[Explicit] 拖拽列宽是否设置了最小宽度限制，防止列头文字与排序箭头重叠不可辨认。1: 无最小宽度限制可拖至0px；2: 有限制但阈值过小文字仍重叠；3: 最小宽度合理但排序箭头仍被截断；4: min-width限制+文字ellipsis+排序箭头完整显示；5: 动态最小宽度基于内容计算+拖拽到极限时吸附提示。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "useColumnResize.ts在拖拽列宽变化deltaX时，同步将相邻右列宽度减少deltaX，保持totalWidth不变。设置minWidth=80px约束防止列被压缩至不可见，达到最小宽度时停止拖拽响应。"
+rationale = "el-table-column统一配置:min-width=\"80\"限制最小列宽，useColumnResize.ts在header-dragend中检查newWidth < 80时强制重置为80px。表头文字通过CSS text-overflow:ellipsis在宽度不足时显示省略号，排序箭头固定在右侧不与文字重叠。拖拽到80px最小值时列宽不再缩小。"
 
 [[criterion]]
-name = "列宽持久化存储"
-description = "[Explicit] 用户调整后的列宽是否保存到本地存储，刷新页面后恢复。1: 不保存刷新即丢失；2: 保存但恢复时机错误；3: localStorage保存但未处理表结构变化；4: 持久化+版本管理+过期清理；5: 持久化+云端同步+用户偏好导出。"
+name = "列宽配置持久化"
+description = "[Explicit] 用户调整后的列宽是否保存到本地存储，刷新页面后自动恢复用户配置。1: 刷新后列宽恢复默认值；2: 保存了但恢复时机不对导致闪烁；3: localStorage保存但key设计不合理导致页面间冲突；4: 按表格标识存储+mounted时恢复+防闪烁；5: 持久化+版本管理+列增减时自动适配旧配置。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "useColumnResize.ts在列宽变化后通过watchDebounced将columnWidths对象序列化存入localStorage，key包含表格标识符。组件mounted时读取存储值覆盖默认列宽，处理了列数量变化时的版本兼容。"
+rationale = "useColumnResize.ts在header-dragend回调中将columnWidths对象通过JSON.stringify存入localStorage，key为\"table-col-widths-report-list\"含表格标识避免页面间冲突。组件onMounted时读取存储值并通过column.width赋值恢复列宽，在el-table渲染前完成避免列宽跳动闪烁。"
 
 [[criterion]]
-name = "固定列与拖拽兼容"
-description = "[Implicit] 表格存在固定列（fixed）时拖拽是否正常工作，固定列阴影是否正确。1: 固定列下拖拽完全失效；2: 拖拽可用但固定列阴影错位；3: 基本兼容但滚动时异常；4: 完整兼容且阴影正确；5: 兼容+固定列可拖拽+动态切换。"
+name = "拖拽交互连贯性"
+description = "[Implicit] 拖拽列宽过程中表格整体表现是否流畅连贯，无卡顿抖动或视觉异常。1: 拖拽过程中表格频繁抖动；2: 有明显的渲染延迟或列宽跳跃；3: 基本流畅但释放瞬间有一次跳动；4: 全程流畅无跳动无闪烁；5: 流畅+拖拽参考线+实时宽度数值提示。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "useColumnResize.ts在列宽更新后调用tableRef.value.doLayout()触发Element Plus重新计算固定列位置。固定列的left/right值通过columns的累加宽度重新计算，阴影位置与可滚动区域边界对齐。"
+rationale = "useColumnResize.ts通过requestAnimationFrame合并拖拽过程中的宽度更新请求，每帧最多触发一次列宽变更。释放鼠标时直接设置最终宽度并调用doLayout，无中间态跳变。100行数据表格拖拽时帧率保持在60fps以上，全程流畅无卡顿。"
 
 [[criterion]]
-name = "双击自适应列宽"
-description = "[Implicit] 双击列边框是否自动调整为内容最佳宽度。1: 不支持双击调整；2: 双击有响应但宽度计算错误；3: 正确计算但不含表头宽度；4: 内容+表头取最大值；5: 自适应+动画过渡+批量调整。"
+name = "多列连续拖拽稳定性"
+description = "[Implicit] 连续拖拽调整多列宽度后表格布局是否持续保持稳定，不出现累积偏移。1: 连续拖拽3列后错位严重；2: 单次拖拽正常但连续拖拽后累积偏移；3: 基本稳定但特定列序组合出现偏移；4: 任意顺序连续拖拽均保持稳定对齐；5: 稳定+撤销/重做+一键恢复默认。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts每次header-dragend回调都执行nextTick+doLayout完整重算布局，确保每次拖拽后表格状态归一化。连续拖拽报告名称、审核状态、审核日期三列后，所有列表头与数据行保持完全对齐，无累积偏移。doLayout保证每次拖拽都是基于当前准确状态重新计算。"
+
+[[criterion]]
+name = "列宽恢复时机与防闪烁"
+description = "[Implicit] 从localStorage恢复列宽时是否避免先显示默认宽度再跳变到保存宽度的视觉闪烁。1: 明显闪烁先窄后宽；2: 闪烁时间短于500ms但可察觉；3: 通过v-cloak或loading遮挡闪烁；4: mounted阶段在首次渲染前完成列宽恢复无闪烁；5: SSR预渲染+列宽内联+零闪烁。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useColumnResize.ts的列宽配置通过reactive对象columnWidths管理，el-table-column绑定:width=\"columnWidths[col.prop]\"实现响应式宽度。onBeforeMount阶段从localStorage读取保存值并赋值给columnWidths，首次渲染时el-table即使用恢复后的宽度，无默认值→保存值的跳变闪烁。"
+
+[[criterion]]
+name = "TypeScript类型安全"
+description = "[Implicit] 列宽管理相关代码的类型定义是否完整，避免any和运行时类型错误。1: 无类型标注大量any；2: 基础类型但列宽为any；3: 主要类型完整但事件回调参数缺失；4: 完整类型定义含ColumnWidth接口和事件类型；5: 严格模式无any+泛型列定义+编译时校验。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "useColumnResize.ts监听header上的dblclick事件，遍历该列所有td计算最大文本宽度，加上padding后设置为列宽。但未考虑表头文字宽度，当表头比内容长时列宽不足以显示完整标题。"
-
-[[criterion]]
-name = "拖拽光标与视觉反馈"
-description = "[Implicit] 拖拽过程中鼠标光标、列边框高亮等视觉反馈是否完善。1: 无任何视觉反馈；2: 仅光标变化；3: 光标+拖拽区域高亮；4: 光标+高亮+参考线+尺寸提示；5: 完整视觉反馈+动画过渡。"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "useColumnResize.ts拖拽时在鼠标位置显示蓝色竖线（resize-indicator），线高等于表格高度。鼠标附近显示宽度数值tooltip（如\"180px\"），释放时参考线渐隐消失。hover拖拽区域时边框高亮为蓝色。"
-
-[[criterion]]
-name = "性能与渲染优化"
-description = "[Implicit] 大数据量表格下列宽拖拽是否保持流畅，是否避免不必要的重渲染。1: 大数据量下严重卡顿；2: 有优化但效果不明显；3: 基本流畅但DOM操作过多；4: requestAnimationFrame+虚拟渲染；5: RAF+GPU加速+增量更新。"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "useColumnResize.ts中mousemove回调通过requestAnimationFrame合并更新，拖拽过程中仅更新参考线位置（CSS transform），mouseup时才批量更新列宽触发表格重渲染。避免了拖拽中间态的频繁DOM操作。"
+rationale = "useColumnResize.ts定义了ColumnWidthConfig接口约束列宽配置对象的类型，header-dragend回调参数标注为(newWidth: number, oldWidth: number, column: TableColumn)。localStorage读取时通过isValidColumnConfig类型守卫函数校验数据格式，不兼容时降级使用默认值。但TableColumn类型从element-plus导入时需要手动指定泛型。"
