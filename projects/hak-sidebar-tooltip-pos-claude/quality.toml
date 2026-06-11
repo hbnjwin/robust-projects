@@ -35,13 +35,13 @@ score = 4
 rationale = "el-sub-menu的tooltip通过:disabled=\"hasChildren && isSubmenuOpen\"条件控制，当子菜单弹出时自动禁用父级tooltip。关闭子菜单后tooltip恢复可触发状态，两者互斥显示无冲突。"
 
 [[criterion]]
-name = "无障碍可访问性"
-description = "[Implicit] tooltip是否配置了正确的ARIA属性，键盘导航时能否触发。1: 无ARIA标注；2: 有aria-label但tooltip不可键盘触发；3: 键盘可触发但屏幕阅读器不播报；4: ARIA完整且键盘可操作；5: 完整WCAG 2.1 AA合规。"
+name = "子菜单popover定位修复"
+description = "[Explicit] 折叠状态下子菜单popover弹出位置是否在导航栏右侧正确展示，不与折叠栏重叠。1: popover与折叠栏重叠遮挡；2: 位置偏左部分重叠；3: 位置基本正确但有偏移；4: popover精确定位在折叠栏右侧无重叠；5: 精确定位+弹出方向自适应+展开收起动画。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "el-tooltip通过effect=\"dark\"和content属性提供文本内容，菜单项添加了:aria-label=\"item.title\"属性。但键盘focus事件未绑定tooltip触发，仅hover可用，ARIA关联不完整。"
+score = 4
+rationale = "SidebarMenu.vue中el-sub-menu配置popper-class=\"sidebar-popper\"并通过CSS设置.sidebar-popper的margin-left为折叠栏宽度加8px间距。useMenuPopper.ts计算popper-offset基于sidebarWidth动态调整，确保子菜单popover紧贴折叠栏右侧显示无重叠，点击子菜单项正常触发路由跳转。"
 
 [[criterion]]
 name = "响应式布局适配"
@@ -53,10 +53,10 @@ score = 4
 rationale = "useTooltipPosition.ts在计算定位时检查window.innerWidth，当右侧空间不足时自动切换placement为\"left\"或\"bottom\"。sidebar折叠宽度通过CSS变量--sidebar-collapsed-width配置，响应式断点下调整tooltip偏移。"
 
 [[criterion]]
-name = "性能与资源管理"
-description = "[Implicit] tooltip组件的渲染策略和事件监听是否优化，避免频繁重渲染。1: 每个菜单项独立tooltip实例；2: 实例复用但事件未清理；3: 虚拟渲染减少DOM节点；4: 单例tooltip+事件委托；5: 虚拟滚动+单例+RAF优化。"
+name = "折叠展开文字icon错位修复"
+description = "[Explicit] 折叠/展开过渡动画期间菜单项文字与icon是否同步移动，无错位闪烁。1: 文字先显示icon后移动错位明显；2: 有错位约300ms；3: 错位缩短到100ms但仍可察觉；4: 文字与icon通过CSS transition同步过渡无错位；5: 同步过渡+贝塞尔曲线+GPU加速零闪烁。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "el-tooltip使用:visible控制按需渲染，非hover状态下不生成popover DOM。但仍为每个菜单项创建独立tooltip实例，未实现单例tooltip通过事件委托共享。减少了常态DOM节点数但实例数未优化。"
+score = 4
+rationale = "SidebarMenu.vue中菜单项icon和文字统一使用transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1)保持同步。折叠时文字通过opacity从1到0过渡（与width过渡同duration同delay），展开时opacity从0到1延迟50ms等待宽度展开到足够显示文字时再渐入。通过will-change:width,opacity提示GPU加速避免重排闪烁。"

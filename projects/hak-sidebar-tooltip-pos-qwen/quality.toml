@@ -35,13 +35,13 @@ score = 2
 rationale = "el-sub-menu折叠态下tooltip与弹出的子菜单面板位置重叠，tooltip显示在子菜单面板上方造成遮挡。未实现tooltip在子菜单弹出时自动隐藏的联动逻辑。"
 
 [[criterion]]
-name = "无障碍可访问性"
-description = "[Implicit] tooltip是否配置了正确的ARIA属性，键盘导航时能否触发。1: 无ARIA标注；2: 有aria-label但tooltip不可键盘触发；3: 键盘可触发但屏幕阅读器不播报；4: ARIA完整且键盘可操作；5: 完整WCAG 2.1 AA合规。"
+name = "子菜单popover定位修复"
+description = "[Explicit] 折叠状态下子菜单popover弹出位置是否在导航栏右侧正确展示，不与折叠栏重叠。1: popover与折叠栏重叠遮挡；2: 位置偏左部分重叠；3: 位置基本正确但有偏移；4: popover精确定位在折叠栏右侧无重叠；5: 精确定位+弹出方向自适应+展开收起动画。"
 type = "likert"
 points = 5
 weight = 1.0
-score = 1
-rationale = "SidebarMenu.vue中tooltip未配置aria-describedby关联，折叠态菜单项缺少aria-label备用文本。键盘Tab导航焦点到菜单项时不触发tooltip显示，屏幕阅读器用户无法获知完整菜单名称。"
+score = 2
+rationale = "SidebarMenu.vue中el-sub-menu折叠态的popover使用Element Plus默认定位，popper-offset未配置导致弹出菜单的left值等于折叠栏宽度64px而非紧贴右边缘。popover部分区域与折叠导航栏重叠约20px，点击重叠区域的子菜单项时事件被导航栏拦截无法触发路由跳转。"
 
 [[criterion]]
 name = "响应式布局适配"
@@ -53,10 +53,10 @@ score = 2
 rationale = "SidebarMenu.vue的sidebar宽度通过CSS固定值设置，折叠态宽度64px硬编码。tooltip的placement=\"right\"在窄屏设备上可能超出视口右边界，未实现自动翻转或位置调整。"
 
 [[criterion]]
-name = "性能与资源管理"
-description = "[Implicit] tooltip组件的渲染策略和事件监听是否优化，避免频繁重渲染。1: 每个菜单项独立tooltip实例；2: 实例复用但事件未清理；3: 虚拟渲染减少DOM节点；4: 单例tooltip+事件委托；5: 虚拟滚动+单例+RAF优化。"
+name = "折叠展开文字icon错位修复"
+description = "[Explicit] 折叠/展开过渡动画期间菜单项文字与icon是否同步移动，无错位闪烁。1: 文字先显示icon后移动错位明显；2: 有错位约300ms；3: 错位缩短到100ms但仍可察觉；4: 文字与icon通过CSS transition同步过渡无错位；5: 同步过渡+贝塞尔曲线+GPU加速零闪烁。"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "SidebarMenu.vue中每个el-menu-item内嵌独立的el-tooltip组件，20个菜单项产生20个tooltip DOM节点。折叠/展开时所有tooltip实例同时更新，触发不必要的重渲染。"
+rationale = "SidebarMenu.vue的折叠动画通过CSS width transition实现，但菜单项内的el-icon和span文字使用不同的transition-delay：icon为0ms而文字为150ms，导致展开时文字先于icon显示约300ms。收起时文字opacity过渡与宽度收缩不同步，文字在容器宽度不足时换行闪烁后才被overflow:hidden裁剪。"
