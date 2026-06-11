@@ -1,0 +1,9 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(src/utils/oauth2.js:*)",
+      "Bash(package.json:*)",
+      "Bash(README.md:*)"
+    ]
+  }
+}
