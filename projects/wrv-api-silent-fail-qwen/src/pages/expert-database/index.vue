@@ -80,6 +80,7 @@
 </template>
 
 <script setup>
+import { MessagePlugin } from 'tdesign-vue-next'
 import router from '@/router'
 import { EXPERT_DATABASE } from '@/api'
 import UploadDialog from './components/upload-dialog.vue'
@@ -141,9 +142,15 @@ const getTableList = () => {
 	}
 	EXPERT_DATABASE.getDocumentsList(params)
 		.then(({ data }) => {
-			const { list, total } = data.data
+			const { list = [], total = 0 } = data?.data || {}
 			table.bodys = list
 			table.pagination.total = total
+		})
+		.catch((err) => {
+			console.error('获取专家库列表失败:', err)
+			MessagePlugin.error('获取数据失败，请稍后重试')
+			table.bodys = []
+			table.pagination.total = 0
 		})
 		.finally(() => {
 			table.loading = false

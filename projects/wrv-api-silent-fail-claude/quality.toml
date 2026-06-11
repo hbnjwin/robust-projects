@@ -1,0 +1,44 @@
+[[criterion]]
+name = "错误捕获修复"
+description = "[Explicit] 为getTableList的promise链添加.catch()捕获API请求失败的异常。1: 仍无.catch()；2: 添加了但未处理错误；3: catch中有console.error但无用户提示；4: catch中弹出错误提示MessagePlugin并记录日志；5: catch加重试机制加降级策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "expert-database/index.vue第149-151行为getTableList的API调用promise链添加.catch((err) => { MessagePlugin.error('获取数据失败'); console.error(err) })，用户可见的错误提示替代了静默失败"
+
+[[criterion]]
+name = "用户错误提示"
+description = "[Explicit] API请求失败时向用户展示可理解的错误提示信息而非空白列表。1: 仍无提示；2: 提示了但信息不友好；3: 友好提示但无操作建议；4: 友好提示并建议刷新重试；5: 分级提示（网络错误/服务端错误/超时）加自动重试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用TDesign的MessagePlugin.error()组件展示'获取数据失败，请稍后重试'的友好提示，提示信息清晰可理解且与项目已有的错误提示风格一致"
+
+[[criterion]]
+name = "防御性解构"
+description = "[Explicit] 对API响应数据做防御性解构避免后端返回异常数据时TypeError。1: 无防御；2: 简单if判断但不全面；3: 可选链或默认值但覆盖不完整；4: data?.data配合{list=[], total=0}默认值的完整防御；5: 防御加响应数据schema校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "expert-database/index.vue第145行将原始解构改为const {list = [], total = 0} = data?.data || {}，当后端返回null、undefined或缺少data字段时均有安全的默认值兜底"
+
+[[criterion]]
+name = "finally状态清理"
+description = "[Implicit] 无论请求成功或失败都正确清理loading状态，避免表格永远显示加载中。1: loading状态残留；2: 只在成功时清理；3: 在then和catch中都清理但有重复代码；4: 使用.finally()统一清理loading状态；5: finally清理加超时保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "添加.finally(() => { loading.value = false })确保无论API请求成功、失败还是网络超时，表格loading状态都被正确清理，用户不会看到永久的加载动画"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改范围是否精准聚焦于错误处理修复。1: 大量无关修改；2: 有明显冗余操作；3: 核心修复正确但过程冗长；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "9次工具调用（4次Grep+2次Read+2次Edit+1次Glob），先用Grep搜索getTableList和catch关键字确认问题位置，2次Edit精准修改expert-database/index.vue的防御性解构和错误处理"
