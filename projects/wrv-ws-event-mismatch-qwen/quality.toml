@@ -1,0 +1,44 @@
+[[criterion]]
+name = "根因定位"
+description = "[Explicit] 准确定位WebSocket事件监听无响应的原因：组件监听的'message'和'statusChange'事件名与WebSocketManager发射的'taskProgress'/'connected'/'disconnected'等事件名不匹配。1: 未定位；2: 只看到UI不更新但不知原因；3: 找到事件监听但未对比发射端；4: 完整对比监听端和发射端的事件名差异；5: 定位差异并分析了WebSocketManager的完整事件发射机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Read读取websocket-manager.js和index-fixed.vue，识别出on('message')应为on('taskProgress'/'taskCompleted'等)、on('statusChange')应为on('connected'/'disconnected'/'error')，但用了Agent增加了调用开销"
+
+[[criterion]]
+name = "事件名修正"
+description = "[Explicit] 将组件中的事件监听名修正为WebSocketManager实际发射的事件名。1: 未修正；2: 只改部分事件；3: 改了但遗漏某些事件类型；4: 所有事件名都正确修改匹配实际发射名；5: 修正事件名并优化了事件处理架构"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将'message'改为'taskProgress'等具体事件，'statusChange'改为'connected'/'disconnected'/'error'，但4次Edit说明修改过程有反复或遗漏"
+
+[[criterion]]
+name = "事件处理器重构"
+description = "[Implicit] 是否移除了不必要的中间分发函数handleWebSocketMessage，改为直接绑定具体事件处理器。1: 保留了死代码分发函数；2: 注释掉但未删除；3: 删除了但新绑定不完整；4: 完全移除中间分发函数并直接绑定各事件处理器；5: 重构事件处理且添加了对应的off清理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修改了事件监听名但保留了handleWebSocketMessage函数结构，在函数内部根据消息类型分发，没有将其拆解为独立的事件处理器直接绑定，存在不必要的中间层"
+
+[[criterion]]
+name = "死代码清理"
+description = "[Implicit] 修复后是否清理了因事件名错误导致的死代码（永远不会触发的回调函数）。1: 全部保留；2: 部分清理；3: 清理了但引入新的未使用代码；4: 完全清理死代码；5: 清理死代码并整理了相关的注释和类型声明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修正了事件名使回调可以被触发，但handleWebSocketMessage作为中间分发函数仍然存在，且内部的switch-case结构在直接事件绑定方案下属于冗余代码"
+
+[[criterion]]
+name = "代码精准度"
+description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "8次工具调用（3次Read+4次Edit+1次Agent），使用Agent子代理增加了开销，4次Edit说明修改过程有反复修正，效率较低"
