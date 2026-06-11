@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Tab级状态隔离"
+description = "[Explicit] 筛选条件等UI状态是否按Tab隔离，避免多Tab间通过localStorage互相覆盖。1:所有状态共享localStorage;2:部分隔离;3:sessionStorage但封装不完整;4:tabStorage封装+tabId标识;5:完整隔离+状态迁移。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "storage.ts中tabStorage使用sessionStorage存储，天然按Tab隔离。reviewFilter.ts的Pinia store配置persist.storage为sessionStorage，筛选条件仅在当前Tab生效。tabId通过sessionStorage自身的会话特性保证同一Tab刷新后不变。不同Tab打开同一页面各自维护独立的筛选状态。"
+
+[[criterion]]
+name = "编辑草稿保护"
+description = "[Explicit] 未保存的编辑内容在切Tab后是否能恢复，不被其他Tab覆盖。1:切Tab后编辑丢失;2:localStorage存但被覆盖;3:sessionStorage保存草稿;4:独立的draft store+防覆盖;5:草稿+冲突检测+合并提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "reviewDraft.ts作为独立Pinia store管理编辑草稿，persist配置使用sessionStorage确保每个Tab的草稿独立。草稿数据结构包含reportId、content、lastModified时间戳。Tab2编辑同一报告不会覆盖Tab1的草稿。visibilitychange事件中检查草稿是否存在未保存内容并提示用户。"
+
+[[criterion]]
+name = "登出状态同步"
+description = "[Explicit] 一个Tab登出后其他Tab是否同步跳转到登录页，避免使用过期会话。1:其他Tab不受影响;2:刷新后才跳转;3:BroadcastChannel但不完整;4:storage事件监听+自动跳转;5:同步+会话清理+优雅提示。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "auth.ts中logout时先通过localStorage.setItem('logout_event', Date.now())触发storage事件。App.vue中window.addEventListener('storage')监听logout_event键变化，检测到后自动清除本Tab的token和状态并跳转登录页。storage事件是所有浏览器原生支持的跨Tab通信机制，不依赖BroadcastChannel。LoginView.vue中登录成功后移除logout_event。"
+
+[[criterion]]
+name = "存储分层策略"
+description = "[Implicit] localStorage和sessionStorage的使用是否有清晰的分层设计。1:混用无规则;2:大部分用localStorage;3:有分层但不一致;4:明确的分层策略+封装;5:分层+加密+容量管理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "storage.ts中明确定义三类存储：sharedStorage（localStorage，用于auth token等跨Tab共享数据）、tabStorage（sessionStorage，用于筛选条件等Tab级UI状态）、draftStorage（sessionStorage，用于编辑草稿）。每个Pinia store的persist配置根据数据类型选择对应的storage封装，分层清晰。"
+
+[[criterion]]
+name = "状态恢复机制"
+description = "[Implicit] 页面刷新或Tab切回后状态是否正确恢复。1:刷新后状态全丢;2:部分恢复;3:主要状态恢复;4:完整恢复+visibilitychange处理;5:恢复+冲突检测+版本同步。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "reviewFilter.ts使用sessionStorage persist，刷新后恢复的是当前Tab自己的筛选状态，不受其他Tab影响。App.vue中监听visibilitychange事件，Tab切回时检查auth token是否仍有效（可能被其他Tab登出），无效则跳转登录。草稿在Tab切回时检查lastModified与服务端版本是否冲突。"
+
+[[criterion]]
+name = "冲突检测"
+description = "[Implicit] 多Tab同时编辑同一数据时是否有冲突检测和提示。1:无检测静默覆盖;2:最后写入胜出;3:时间戳比较;4:版本号+提示用户;5:OT/CRDT实时协作。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "reviewDraft.ts中草稿包含lastModified时间戳，但跨Tab的冲突检测仅在visibilitychange时简单比较本地草稿时间。未实现服务端乐观锁（ETag/version）机制，保存时仍可能覆盖其他Tab的修改。对于已知的草稿冲突场景会ElMessageBox.confirm提示用户选择保留哪份。"
+
+[[criterion]]
+name = "代码架构清晰度"
+description = "[Implicit] store模块划分、文件组织和职责分配的清晰程度。1:单一store堆砌;2:多store但职责重叠;3:基本模块化;4:store模块化+清晰职责;5:领域驱动+状态机设计。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "store目录下按领域划分：auth.ts管理认证状态、reviewFilter.ts管理筛选条件、reviewDraft.ts管理编辑草稿，职责单一不重叠。storage.ts作为存储适配层统一管理localStorage和sessionStorage的使用。跨Tab通信通过storage事件在App.vue中集中处理，不分散到各store中。"
