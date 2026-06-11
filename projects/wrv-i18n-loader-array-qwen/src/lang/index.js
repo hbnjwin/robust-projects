@@ -5,9 +5,11 @@ const langModules = import.meta.glob('./**/*.js', { eager: true })
 const messages = {}
 
 for (const [path, modules] of Object.entries(langModules)) {
-	const values = Object.values(modules).flat(1)
-	const lang = path.split('/')[1]
-	messages[lang] = values
+	const match = path.match(/^\.\/([^/]+)\//)
+	if (!match) continue
+	const lang = match[1]
+	const content = Object.values(modules).reduce((acc, val) => ({ ...acc, ...val }), {})
+	messages[lang] = { ...(messages[lang] || {}), ...content }
 }
 
 const LOCALE_COOKIE_NAME = 'lang'
