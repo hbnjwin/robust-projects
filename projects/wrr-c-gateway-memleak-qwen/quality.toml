@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在gateway.c的config_set函数中找到了总是append不去重的问题，但对config_list链表的内存增长分析不够完整"
+rationale = "在gateway.c的config_set函数中找到了总是append不去重的问题，定位到config_list链表无限增长的根因"
 
 [[criterion]]
 name = "内存所有权修复"
@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在config_set中使用strdup复制新值并free旧值，但strdup和free的顺序处理需要更谨慎"
+rationale = "在config_set中使用strdup复制新值并free旧值，但strdup和free的顺序处理需要更谨慎，涉及config_init和config_set"
 
 [[criterion]]
 name = "realloc安全检查"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在buffer_append函数中使用tmp变量接收realloc返回值，避免了原指针丢失"
+rationale = "在buffer_append函数中使用tmp变量接收realloc返回值，避免了原指针丢失，涉及config_set"
 
 [[criterion]]
 name = "清理函数设计"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "添加了config_destroy函数遍历链表free每个节点，但对节点内key和value字符串的释放不够明确"
+rationale = "添加了config_destroy函数遍历链表free每个节点，包含free(node->key)和free(node->value)的释放逻辑"
 
 [[criterion]]
 name = "修复说明质量"
@@ -41,16 +41,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "以表格形式列出了5处修复点，但对C语言内存所有权和生命周期管理的原理解释深度不够"
+rationale = "以表格形式列出了5处修复点，但对C语言内存所有权和生命周期管理的原理解释深度不够，未能有效修改main.c"
 
 [[criterion]]
 name = "排查执行效率"
-description = "[Explicit] 排查路径效率。1:超过20次工具调用大量无效探索;2:15-20次含多次冗余读取;3:10-15次有部分冗余;4:5-10次路径清晰直达目标;5:5次以内精准定位并修复"
+description = "[Explicit] 排查路径效率。1:超过20次操作大量无效探索;2:15-20次含多次冗余读取;3:10-15次有部分冗余;4:5-10次路径清晰直达目标;5:5次以内精准定位并修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "共4次工具调用：Read gateway.c → 分析config_set → Edit修复 → 验证，路径精准高效"
+rationale = "共4次操作：Read gateway.c → 分析config_set → Edit修复 → 验证，路径精准高效"
 
 [[criterion]]
 name = "代码修复正确性"

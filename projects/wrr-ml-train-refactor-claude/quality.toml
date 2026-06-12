@@ -9,12 +9,12 @@ rationale = "拆分为四个独立模块：config.py管理超参、model.py定�
 
 [[criterion]]
 name = "模块接口设计"
-description = "[Explicit] 模块间接口设计质量。1:模块间接口混乱有循环依赖;2:有import但依赖方向不清;3:清晰的单向import关系;4:模块间通过明确的函数签名通信;5:接口抽象含类型注解和文档"
+description = "[Explicit] 模块间依赖方向是否单向无循环依赖。1:模块间有循环依赖;2:有import但依赖方向不清晰;3:import关系单向无循环;4:单向依赖且层级清晰如train依赖model和data和config;5:严格的单向依赖且有__init__.py控制导出范围"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "模块间通过明确的函数签名通信：create_model(config)、load_data(config)、train(model, dataloader, config)"
+rationale = "模块间通过明确的函数签名通信：create_model(config)、load_data(config)、train(model, dataloader, config)，涉及model.py的修改"
 
 [[criterion]]
 name = "训练一致性验证"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "验证了重构后训练能正常运行和收敛，但未做精确的数值对比"
+rationale = "验证了重构后训练能正常运行和收敛，但未做精确的数值对比，train.py缺少充分验证"
 
 [[criterion]]
 name = "配置管理方案"
@@ -41,16 +41,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "代码整洁，无冗余文件，各模块代码精简"
+rationale = "代码整洁，无冗余文件，各模块代码精简，在forward和__init__中完成修改"
 
 [[criterion]]
 name = "排查执行效率"
-description = "[Explicit] 重构任务的执行效率。1:超过40次工具调用;2:30-40次含大量试错;3:20-30次有冗余;4:10-20次基本合理;5:10次以内高效"
+description = "[Explicit] 重构任务的执行效率。1:超过40次操作;2:30-40次含大量试错;3:20-30次有冗余;4:10-20次基本合理;5:10次以内高效"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "共7次工具调用极其高效：Read原文件→Write四个新模块→运行验证"
+rationale = "共7次操作极其高效：Read原文件→Write四个新模块→运行验证，核心修改集中在__init__和train"
 
 [[criterion]]
 name = "重构范围控制"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "严格按要求拆分模块，训练逻辑、模型结构、数据处理均保持与原始脚本一致"
+rationale = "严格按要求拆分模块，训练逻辑、模型结构、数据处理均保持与原始脚本一致，涉及config.py的处理"

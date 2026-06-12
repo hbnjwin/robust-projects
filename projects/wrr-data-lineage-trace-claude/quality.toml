@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "设计了12个REST端点，在基础CRUD之上增加了批量导入、影响分析等高级接口"
+rationale = "设计了12个REST端点，在基础CRUD之上增加了批量导入、影响分析等高级接口，覆盖了main.py等核心文件"
 
 [[criterion]]
 name = "可视化丰富度"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "使用D3.js实现了完整的交互式血缘可视化：力导向布局+缩放平移+节点tooltip+路径高亮+搜索定位"
+rationale = "使用D3.js实现了完整的交互式血缘可视化：力导向布局+缩放平移+节点tooltip+路径高亮+搜索定位，涉及main.py的修改"
 
 [[criterion]]
 name = "代码模块化"
@@ -41,16 +41,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "同样拆分为多个文件但模块间耦合度略高"
+rationale = "同样拆分为多个文件但模块间耦合度略高，涉及main.py和TableType"
 
 [[criterion]]
 name = "排查执行效率"
-description = "[Explicit] 功能开发效率。1:超过30次工具调用大量试错;2:20-30次含冗余;3:15-20次有部分冗余;4:10-15次基本合理;5:10次以内高效"
+description = "[Explicit] 功能开发效率。1:超过30次操作大量试错;2:20-30次含冗余;3:15-20次有部分冗余;4:10-15次基本合理;5:10次以内高效"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "共11次工具调用路径清晰，按模块顺序逐个创建文件"
+rationale = "共11次操作路径清晰，按模块顺序逐个创建文件，核心修改集中在TableType和main.py"
 
 [[criterion]]
 name = "演示数据可用性"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "提供了丰富的示例数据覆盖ETL管道、报表生成等典型血缘场景"
+rationale = "提供了丰富的示例数据覆盖ETL管道、报表生成等典型血缘场景，涉及main.py的处理"

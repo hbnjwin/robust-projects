@@ -27,7 +27,7 @@ rationale = "修复后formatTime接收Date对象直接调用toLocaleTimeString()
 
 [[criterion]]
 name = "日志显示正确性"
-description = "[Implicit] 修复后消息日志区域的时间戳是否正确显示本地化时间格式。1: 仍显示Invalid Date；2: 显示但格式异常；3: 显示正确但时区有偏差；4: 正确显示本地化时间格式；5: 正确显示且在不同locale下表现一致"
+description = "[Implicit] 修复后消息日志区域的时间戳是否正确显示本地化时间格式。1:仍显示Invalid Date;2:显示但格式异常;3:显示正确但时区有偏差;4:正确显示本地化时间格式如15时45分30秒;5:正确显示且在不同locale下表现一致"
 type = "likert"
 points = 5
 weight = 1.0
@@ -36,9 +36,9 @@ rationale = "修复链路完整：addLog存储Date对象→模板调用formatTim
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
+description = "[Implicit] 修改精准度和操作效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但有额外步骤；4: 精准高效完成修复；5: 最小改动完成修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "2次工具调用（1次Read+1次Edit），直接读取文件定位问题，1次Edit修改addLog第233行将toLocaleTimeString()去掉，是最小改动"
+rationale = "2次操作（1次Read+1次Edit），直接读取文件定位问题，1次Edit修改addLog第233行将toLocaleTimeString()去掉，是最小改动"

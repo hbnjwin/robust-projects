@@ -5,11 +5,11 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "通过Read检查login/index.vue第76-79行发现router.push在setOauth之前执行，识别到路由守卫在token存储前检查导致循环跳转，但19次工具调用中13次Bash属于非修复操作（git和robust-commit）"
+rationale = "通过Read检查login/index.vue第76-79行发现router.push在setOauth之前执行，识别到路由守卫在token存储前检查导致循环跳转，但19次操作中13次Bash属于非修复操作（git和robust-commit）"
 
 [[criterion]]
 name = "执行顺序修复"
-description = "[Explicit] 将router.push移到setOauth和userInfo存储之后执行。1: 顺序未改；2: 改了但仍有部分逻辑在push之后；3: push在最后但解构顺序不对；4: 正确的执行顺序：解构响应→存储userInfo→setOauth→router.push；5: 正确顺序加await router.push加错误处理"
+description = "[Explicit] 登录成功后是否将router.push调整到setOauth与userInfo存储之后执行。1:顺序未改;2:改了但仍有部分逻辑在push之后;3:push在最后但解构顺序不对;4:正确顺序即解构响应然后存储userInfo然后setOauth然后router.push;5:正确顺序且await且有错误处理"
 type = "likert"
 points = 5
 weight = 1.0
@@ -36,9 +36,9 @@ rationale = "执行顺序修复后正常登录流程理论上能通过路由守�
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改和非修复操作；2: 有明显冗余；3: 修改正确但过程冗长；4: 精准高效完成修复；5: 最小改动完成修复"
+description = "[Implicit] 修改精准度和操作效率。1: 大量无关修改和非修复操作；2: 有明显冗余；3: 修改正确但过程冗长；4: 精准高效完成修复；5: 最小改动完成修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 1
-rationale = "19次工具调用（13次Bash+3次Read+2次Edit+1次Skill），13次Bash操作包含git add/commit/push和robust-commit等代码管理操作，Skill调用执行了非修复功能，实际代码修复仅需2次Edit修改一个文件的几行代码"
+rationale = "19次操作（13次Bash+3次Read+2次Edit+1次Skill），13次Bash操作包含git add/commit/push和robust-commit等代码管理操作，Skill调用执行了非修复功能，实际代码修复仅需2次Edit修改一个文件的几行代码"

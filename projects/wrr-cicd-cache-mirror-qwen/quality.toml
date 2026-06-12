@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "通过分支命名空间隔离缓存目录,不同分支缓存物理隔离"
+rationale = "通过分支命名空间隔离缓存目录,不同分支缓存物理隔离，涉及.npmrc的修改，涉及build.sh的处理"
 
 [[criterion]]
 name = "并行构建保护"
@@ -27,21 +27,21 @@ rationale = "build.sh注释中提及并行构建风险但未实现flock文件锁
 
 [[criterion]]
 name = "镜像源配置"
-description = "[Explicit] 是否正确配置国内镜像源替代默认源解决下载超时——仅评估镜像源配置和主备切换,不涉及重试退避。1:未配置任何镜像源;2:配置了镜像但格式或地址有误;3:配置正确但无备用源fallback;4:.npmrc配置镜像+有主备源切换机制;5:主备源+可达性探测+自动切换+配置持久化"
+description = "[Explicit] 是否在.npmrc或构建脚本中正确配置了国内镜像源地址替代默认npm源。1:未配置任何镜像源;2:配置了但地址或格式有误;3:配置正确的镜像地址但无备用源;4:.npmrc配置镜像且有主备源切换;5:镜像配置持久化且有可达性探测自动切换"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = ".npmrc配置npmmirror镜像+build.sh有主备源自动切换机制"
+rationale = ".npmrc配置npmmirror镜像+build.sh有主备源自动切换机制，涉及stage的处理"
 
 [[criterion]]
 name = "重试容错"
-description = "[Explicit] 依赖安装失败时是否有重试退避机制——仅评估npm install层面的重试和退避策略,不涉及镜像源配置。1:失败后直接报错退出;2:简单循环重试无退避;3:有固定间隔重试;4:指数退避重试(如5s-10s-20s);5:指数退避+最大重试次数+超时配置+失败日志"
+description = "[Explicit] npm install命令失败后是否有自动重试和退避等待机制。1:失败后直接报错退出;2:简单循环重试无等待间隔;3:有固定间隔重试;4:指数退避重试如5秒10秒20秒;5:指数退避加最大重试次数加超时配置加失败日志"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "build.sh中有指数退避重试(5s-10s-20s),npm install失败后重试3次"
+rationale = "build.sh中有指数退避重试(5s-10s-20s),npm install失败后重试3次，涉及.npmrc的处理"
 
 [[criterion]]
 name = "缓存命中率提升"
@@ -50,7 +50,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "key正确+缓存存储恢复机制可用,但缺少缓存过期清理和生命周期管理策略"
+rationale = "key正确+缓存存储恢复机制可用,但缺少缓存过期清理和生命周期管理策略，涉及build.sh"
 
 [[criterion]]
 name = "Jenkinsfile集成"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "写了两版Jenkinsfile(先复杂后简化),有返工;最终版直接调用build.sh较合理"
+rationale = "写了两版Jenkinsfile(先复杂后简化),有返工;最终版直接调用build.sh较合理，涉及Jenkinsfile"

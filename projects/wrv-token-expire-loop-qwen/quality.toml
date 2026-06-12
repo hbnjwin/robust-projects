@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "通过Read检查login/index.vue和oauth2.js定位到问题，分析了dayjs().add(undefined)返回当前时间导致token即过期，但过程中用了17次工具调用包含TaskCreate/TaskUpdate等管理性操作"
+rationale = "通过Read检查login/index.vue和oauth2.js定位到问题，分析了dayjs().add(undefined)返回当前时间导致token即过期，但过程中用了17次操作包含TaskCreate/TaskUpdate等管理性操作"
 
 [[criterion]]
 name = "expires_in传递"
@@ -27,12 +27,12 @@ rationale = "oauth2.js的setOauth中对expires_in做了兜底处理，缺失时�
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改范围和效率。1:大量无关修改;2:有冗余;3:基本精准;4:精准高效;5:最小改动"
+description = "[Implicit] 修改是否精准聚焦于目标文件且无大量无关改动。1:大量无关修改;2:有冗余;3:基本精准;4:精准高效;5:最小改动零冗余"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "17次工具调用(6次Read+4次TaskUpdate+2次Bash+2次TaskCreate+2次Edit+1次Agent)，大量任务管理操作占用了不必要的调用次数"
+rationale = "17次操作(6次Read+4次TaskUpdate+2次Bash+2次TaskCreate+2次Edit+1次Agent)，大量任务管理操作占用了不必要的调用次数"
 
 [[criterion]]
 name = "死循环防护"

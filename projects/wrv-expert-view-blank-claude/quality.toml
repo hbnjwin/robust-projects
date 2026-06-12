@@ -9,7 +9,7 @@ rationale = "index.vue第167行恢复路由传参，将router.push({name:'Expert
 
 [[criterion]]
 name = "详情页数据请求"
-description = "[Explicit] view.vue中添加onMounted钩子和API数据请求逻辑。1:无请求;2:有请求但API不对;3:请求正确但数据绑定不完整;4:完整的onMounted+API请求+数据绑定;5:请求+loading+错误处理+骨架屏"
+description = "[Explicit] 是否在view.vue的onMounted中正确发起API请求并完成数据绑定。1:无请求;2:有请求但API不对;3:请求正确但数据绑定不完整;4:完整的onMounted请求和数据绑定;5:请求加loading加错误处理加骨架屏"
 type = "likert"
 points = 5
 weight = 1.0
@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "13次工具调用(6次Read+3次Edit+2次Glob+2次Grep)，修改集中于index.vue和view.vue两个文件"
+rationale = "13次操作，修改精准聚焦于index.vue和view.vue两个文件"
 
 [[criterion]]
 name = "双问题覆盖"

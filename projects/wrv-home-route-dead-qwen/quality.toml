@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "通过Read检查router/index.js发现缺少HomeRoute的import，但需要10次工具调用（7次Read+2次Bash+1次Edit）才完成修复，部分Read属于探索性读取"
+rationale = "通过Read检查router/index.js发现缺少HomeRoute的import，但需要10次操作（7次Read+2次Bash+1次Edit）才完成修复，部分Read属于探索性读取"
 
 [[criterion]]
 name = "路由注册修复"
@@ -18,7 +18,7 @@ rationale = "在router/index.js中添加import HomeRoute和routerModules数组�
 
 [[criterion]]
 name = "子路由完整性"
-description = "[Implicit] home.js中定义的8个功能页面路由配置是否完整且组件引用正确。1: 多个子路由配置错误；2: 部分路由缺少组件引用；3: 配置基本正确但有遗漏；4: 8个子路由路径、名称、组件引用都完整；5: 完整且包含权限控制和懒加载配置"
+description = "[Implicit] 是否在home.js中完整定义8个功能页面的子路由配置且组件引用正确。1:多个子路由配置错误;2:部分路由缺少组件引用;3:配置基本正确但有遗漏;4:8个子路由路径和名称和组件引用都完整;5:完整且包含权限控制和懒加载配置"
 type = "likert"
 points = 5
 weight = 1.0
@@ -36,9 +36,9 @@ rationale = "HomeRoute注册后理论上能正确嵌套在Layout中，但未验�
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
+description = "[Implicit] 修改精准度和操作效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "10次工具调用（7次Read+2次Bash+1次Edit），7次Read中部分是探索性读取其他路由模块文件用于参考格式，最终1次Edit修改router/index.js"
+rationale = "10次操作（7次Read+2次Bash+1次Edit），7次Read中部分是探索性读取其他路由模块文件用于参考格式，最终1次Edit修改router/index.js"

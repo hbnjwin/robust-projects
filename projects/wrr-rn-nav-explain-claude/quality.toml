@@ -36,12 +36,12 @@ rationale = "严格的ParamList参数类型定义如Detail必须传{id,title}，
 
 [[criterion]]
 name = "执行路径效率"
-description = "[Explicit] 任务执行路径效率。1:超过100次工具调用仍未完成;2:大量重复/无效调用(70+);3:中等效率(40-70次调用);4:较高效率(25-40次);5:极高效率(<25次)直达目标"
+description = "[Explicit] 任务执行路径效率。1:超过100次操作仍未完成;2:大量重复/无效调用(70+);3:中等效率(40-70次调用);4:较高效率(25-40次);5:极高效率(<25次)直达目标"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "仅25次工具调用，Write 9次精准修改，Bash仅2次，极其高效"
+rationale = "仅25次操作，Write 9次精准修改，Bash仅2次，极其高效，涉及types.ts的修改"
 
 [[criterion]]
 name = "代码修改质量"
@@ -50,7 +50,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "同样修改9个文件，过程精简无试错，代码结构清晰含错误防御"
+rationale = "同样修改9个文件，过程精简无试错，代码结构清晰含错误防御，在ProfileScreen.tsx和EditProfileScreen.tsx中完成修改"
 
 [[criterion]]
 name = "解决方案文档清晰度"

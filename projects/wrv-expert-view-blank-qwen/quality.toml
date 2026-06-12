@@ -9,7 +9,7 @@ rationale = "index.vue中恢复router.push传入row.id的代码，删除了被�
 
 [[criterion]]
 name = "详情页数据请求"
-description = "[Explicit] view.vue中添加onMounted钩子和API数据请求逻辑。1:无请求;2:有请求但API不对;3:请求正确但数据绑定不完整;4:完整的onMounted+API请求+数据绑定;5:请求+loading+错误处理+骨架屏"
+description = "[Explicit] 是否在view.vue的onMounted中正确发起API请求并完成数据绑定。1:无请求;2:有请求但API不对;3:请求正确但数据绑定不完整;4:完整的onMounted请求和数据绑定;5:请求加loading加错误处理加骨架屏"
 type = "likert"
 points = 5
 weight = 1.0
@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "24次工具调用(6次Read+4次TaskUpdate+4次Grep+3次Edit+3次Bash+2次TaskCreate+1次Agent+1次Glob)，大量任务管理和搜索操作"
+rationale = "24次操作(6次Read+4次TaskUpdate+4次Grep+3次Edit+3次Bash+2次TaskCreate+1次Agent+1次Glob)，大量任务管理和搜索操作"
 
 [[criterion]]
 name = "双问题覆盖"

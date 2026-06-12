@@ -1,6 +1,6 @@
 [[criterion]]
 name = "防作弊机制"
-description = "[Explicit] 防改时间作弊的机制设计。1:完全信任客户端时间;2:概念上使用服务端时间但仅Mock实现;3:有服务端时间但缺少其他防护;4:服务端时间+数据库去重;5:服务端时间+不接受客户端参数+数据库唯一索引+身份自动注入+前端防连点"
+description = "[Explicit] 防改时间作弊的机制设计——是否使用服务端时间而非客户端时间生成签到日期。1:完全信任客户端时间;2:概念上使用服务端时间但仅Mock实现;3:有服务端时间但客户端仍可传入日期参数;4:服务端时间生成日期且不接受客户端日期参数;5:服务端时间且身份自动注入无法伪造且前端防连点"
 type = "likert"
 points = 5
 weight = 1.0
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "里程碑奖励弹窗+签到状态卡片+阶梯奖励，UI反馈完善"
+rationale = "里程碑奖励弹窗+签到状态卡片+阶梯奖励，UI反馈完善，涉及app.json的处理"
 
 [[criterion]]
 name = "日历视图实现"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "个人中心签到日历，今天高亮使用服务端返回日期而非客户端时间，月份切换查询"
+rationale = "个人中心签到日历，今天高亮使用服务端返回日期而非客户端时间，月份切换查询，涉及app.js的修改"
 
 [[criterion]]
 name = "页面结构完整性"
@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "index首页状态卡片+checkin签到页按钮里程碑弹窗+profile个人中心日历，3个完整页面"
+rationale = "index首页状态卡片+checkin签到页按钮里程碑弹窗+profile个人中心日历，3个完整页面，覆盖了package.json等核心文件"
 
 [[criterion]]
 name = "并发与防重复保护"
@@ -50,7 +50,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "数据库{_openid,checkin_date}唯一索引防并发重复+前端loading状态+checking标志位防连点"
+rationale = "数据库{_openid,checkin_date}唯一索引防并发重复+前端loading状态+checking标志位防连点，涉及checkin.js的处理"
 
 [[criterion]]
 name = "代码可部署性"

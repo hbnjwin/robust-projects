@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "设计了10个REST端点覆盖表管理、血缘注册、上下游查询等功能"
+rationale = "设计了12个REST端点覆盖表管理、血缘注册、上下游查询等功能，涉及router.py中的端点定义"
 
 [[criterion]]
 name = "可视化丰富度"
@@ -31,8 +31,8 @@ description = "[Explicit] 血缘关系可视化功能的丰富度。1:无可视�
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "使用D3.js实现了力导向图的基本交互，支持节点拖拽"
+score = 4
+rationale = "使用D3.js实现了完整的力导向图含缩放平移、tooltip、路径高亮、搜索定位，_build_html函数中实现了丰富交互"
 
 [[criterion]]
 name = "代码模块化"
@@ -45,12 +45,12 @@ rationale = "拆分为6个文件：main.py、router.py、service.py、models.py�
 
 [[criterion]]
 name = "排查执行效率"
-description = "[Explicit] 功能开发效率。1:超过30次工具调用大量试错;2:20-30次含冗余;3:15-20次有部分冗余;4:10-15次基本合理;5:10次以内高效"
+description = "[Explicit] 功能开发效率。1:超过30次操作大量试错;2:20-30次含冗余;3:15-20次有部分冗余;4:10-15次基本合理;5:10次以内高效"
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "共22次工具调用含10次Bash命令，在多个文件之间有较多冗余操作"
+score = 3
+rationale = "共22次操作含10次Bash命令用于导入测试和端到端验证，执行路径虽较长但验证步骤多为必要"
 
 [[criterion]]
 name = "演示数据可用性"

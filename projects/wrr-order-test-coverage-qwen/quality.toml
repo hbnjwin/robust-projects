@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "从1个占位测试扩展到6个，覆盖了主要路径但测试数量偏少，部分分支未覆盖"
+rationale = "从1个占位测试扩展到6个，覆盖了主要路径但测试数量偏少，部分分支未覆盖，涉及OrderService.java的修改"
 
 [[criterion]]
 name = "异常分支覆盖"
@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "覆盖了null items、empty items等基本异常，但6个测试难以覆盖所有异常分支"
+rationale = "覆盖了null items、empty items等基本异常，但6个测试难以覆盖所有异常分支，涉及Order.java"
 
 [[criterion]]
 name = "测试代码质量与命名"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "测试代码可用，结构基本合理，但命名规范一般"
+rationale = "测试代码可用，结构基本合理，但命名规范一般，涉及OrderRequest.java和PaymentTestBase.java"
 
 [[criterion]]
 name = "任务规划与系统执行"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "无任务规划，直接开始编码，执行路径不够系统化"
+rationale = "无任务规划，直接开始编码，执行路径不够系统化，对PaymentTestBase.java的处理耗时较多"
 
 [[criterion]]
 name = "工程最小化"
@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "创建了不必要的TESTING_GUIDE.md文档，属于过度工程"
+rationale = "创建了不必要的TESTING_GUIDE.md文档，属于过度工程，TESTING_GUIDE.md相关实现不足，目标文件涉及OrderServiceTest.java未被修改"
 
 [[criterion]]
 name = "测试执行与验证"
@@ -50,16 +50,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "运行mvn test验证6个测试全部通过，BUILD SUCCESS"
+rationale = "运行mvn test验证6个测试全部通过，BUILD SUCCESS，核心修改集中在OrderServiceTest.java和Order"
 
 [[criterion]]
-name = "覆盖率提升有效性"
-description = "[Explicit] 最终测试覆盖率的实际提升效果。1:覆盖率无变化;2:略有提升但仍不足;3:有一定提升覆盖主要路径;4:显著提升系统覆盖核心接口;5:极大提升接近完全覆盖"
+name = "测试文件定位"
+description = "[Explicit] 是否准确定位并在OrderServiceTest.java中编写测试而非创建其他测试文件。1:未修改OrderServiceTest.java;2:创建了新测试类替代OrderServiceTest;3:修改了OrderServiceTest但同时创建了不必要的测试文件;4:准确在OrderServiceTest.java中集中编写所有测试;5:在OrderServiceTest中编写且按业务方法分组组织"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "从30%覆盖率有一定提升，但6个测试的覆盖面有限"
+rationale = "在OrderServiceTest.java中编写了6个测试，但同时创建了TESTING_GUIDE.md等不必要文件"
 
 [[criterion]]
 name = "交付聚焦与范围控制"
@@ -68,4 +68,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "trajectory包含了后续commit/push操作，任务边界控制一般"
+rationale = "trajectory包含了后续commit/push操作，任务边界控制一般，部分完成了OrderServiceTest的处理"

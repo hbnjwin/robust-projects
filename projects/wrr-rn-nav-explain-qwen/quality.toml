@@ -36,12 +36,12 @@ rationale = "创建了types.ts定义ParamList泛型，但覆盖完整性一般"
 
 [[criterion]]
 name = "执行路径效率"
-description = "[Explicit] 任务执行路径效率。1:超过100次工具调用仍未完成;2:大量重复/无效调用(70+);3:中等效率(40-70次调用);4:较高效率(25-40次);5:极高效率(<25次)直达目标"
+description = "[Explicit] 任务执行路径效率。1:超过100次操作仍未完成;2:大量重复/无效调用(70+);3:中等效率(40-70次调用);4:较高效率(25-40次);5:极高效率(<25次)直达目标"
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "73次工具调用，其中Bash调用36次占比过大，执行路径冗长"
+score = 3
+rationale = "73次操作中Bash调用36次比例偏高，但部分探索性调用源于环境配置差异而非无效试错"
 
 [[criterion]]
 name = "代码修改质量"
@@ -50,7 +50,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "修改了9个文件修复正确，但Bash调用过多显示过程中可能有试错"
+rationale = "修改了9个文件修复正确，但Bash调用过多显示过程中可能有试错，涉及LoginScreen.tsx和ProfileScreen.tsx"
 
 [[criterion]]
 name = "解决方案文档清晰度"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "有总结表格列出修复项/问题/方案，但根因分析不够深入"
+rationale = "有总结表格列出修复项/问题/方案，但根因分析不够深入，涉及ProfileScreen.tsx、EditProfileScreen.tsx等文件的分析"

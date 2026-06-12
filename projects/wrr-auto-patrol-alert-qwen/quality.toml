@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "模块化结构(checker/alert/scheduler/api)，但缺少抽象基类和模型层，涉及http_checker.py"
+rationale = "模块化结构(checker/alert/scheduler/api)含5个Pydantic模型(PatrolConfig/RuleConfig/MutePeriodConfig/AggregationConfig/GlobalConfig)，但缺少BaseCheck抽象基类"
 
 [[criterion]]
 name = "通知渠道质量"

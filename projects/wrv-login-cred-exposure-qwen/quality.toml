@@ -27,7 +27,7 @@ rationale = "POST请求将userName和password从URL查询参数移至请求体�
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改范围和效率。1:大量无关修改;2:有明显冗余;3:基本精准;4:精准修改;5:最小改动"
+description = "[Implicit] 修改是否精准聚焦于目标文件且无大量无关改动。1:大量无关修改;2:有明显冗余;3:基本精准但有少量无关改动;4:精准修改仅涉及目标文件;5:最小改动零冗余"
 type = "likert"
 points = 5
 weight = 1.0

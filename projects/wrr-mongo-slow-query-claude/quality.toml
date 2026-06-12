@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "准确诊断query_service.py中的find查询缺少{user_id:1,created_at:1}复合索引导致COLLSCAN全扫描"
+rationale = "准确诊断查询缺少{user_id:1,created_at:1}复合索引导致COLLSCAN全扫描"
 
 [[criterion]]
 name = "索引设计质量"
@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "创建{user_id:1,created_at:-1}复合索引，排序方向与查询一致，同时设置background:true避免阻塞写入"
+rationale = "创建{user_id:1,created_at:-1}复合索引，排序方向与查询一致，同时设置background:true避免阻塞写入，涉及queries.py的修改"
 
 [[criterion]]
 name = "缓存一致性方案"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "实现了完整的cache-aside模式：写入时主动删除缓存key，读取时先查缓存→miss后查DB→回写缓存，含TTL过期兜底"
+rationale = "实现了完整的cache-aside模式：写入时主动删除缓存key，读取时先查缓存→miss后查DB→回写缓存，含TTL过期兜底，涉及queries.py的处理"
 
 [[criterion]]
 name = "查询结果控制"
@@ -32,25 +32,25 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "同样添加了limit限制，但未实现skip分页参数化"
+rationale = "同样添加了limit限制，但未实现skip分页参数化，涉及get_user_stats"
 
 [[criterion]]
-name = "方案深度"
-description = "[Explicit] 解决方案的整体深度。1:仅表面修改一个点;2:修复了索引或缓存其中一个;3:同时处理了索引和查询优化但缓存方案不足;4:索引+查询+缓存三方面综合修复;5:全面方案含慢查询监控、告警阈值和性能基线"
+name = "索引写入影响评估"
+description = "[Implicit] 是否评估了新建索引对写入性能的影响并采取缓解措施。1:未考虑写入影响;2:提及了写入影响但未采取措施;3:设置background建索引但未分析写入放大;4:background建索引且分析了写入放大影响;5:完整评估含写入放大分析和索引维护策略"
 type = "likert"
 points = 5
 weight = 1.0
-score = 4
-rationale = "综合修复了索引设计、结果集控制和缓存一致性三个方面，方案完整"
+score = 3
+rationale = "设置background:true避免建索引时阻塞写入，有基本的写入影响意识但未深入分析写入放大"
 
 [[criterion]]
 name = "排查执行效率"
-description = "[Explicit] 排查路径效率。1:超过20次工具调用;2:15-20次含大量Bash;3:10-15次有冗余但方向正确;4:5-10次路径清晰;5:5次以内精准直达"
+description = "[Explicit] 排查路径效率。1:超过20次操作;2:15-20次含大量Bash;3:10-15次有冗余但方向正确;4:5-10次路径清晰;5:5次以内精准直达"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "共6次工具调用路径清晰，快速定位慢查询并修复索引和缓存"
+rationale = "共6次操作路径清晰，快速定位慢查询并修复索引和缓存，核心修改集中在get_user_stats和queries.py"
 
 [[criterion]]
 name = "代码可维护性"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "代码组织清晰，索引创建幂等，缓存操作封装在独立方法中"
+rationale = "代码组织清晰，索引创建幂等，缓存操作封装在独立方法中，在queries.py和get_user_stats中完成修改"

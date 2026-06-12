@@ -1,20 +1,20 @@
 [[criterion]]
 name = "Cohort新用户筛选"
-description = "[Explicit] 是否正确定义新用户cohort——需要计算每个用户的全局首次活跃日,仅将首次活跃日等于cohort_date的用户纳入cohort,排除之前已活跃的老用户。1:未修改原始cohort逻辑;2:有尝试但WHERE条件限制了范围导致MIN无效,未排除老用户;3:排除了部分老用户但逻辑有边界问题;4:正确使用全局MIN筛选新用户但实现冗余;5:简洁正确的新用户筛选+边界处理"
+description = "[Explicit] 是否正确定义新用户cohort,仅将全局首次活跃日等于cohort_date的用户纳入,错误定义导致cohort分母偏大。1:未修改原始cohort逻辑;2:有尝试但WHERE条件导致MIN无效;3:排除了部分老用户但逻辑有边界问题;4:正确使用全局MIN筛选新用户但实现冗余;5:简洁正确的新用户筛选含边界处理"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "WHERE event_date=cohort_date限制了范围，未排除之前已活跃的老用户，cohort定义有逻辑缺陷"
+rationale = "WHERE event_date=cohort_date限制了范围，未排除之前已活跃的老用户，cohort定义有逻辑缺陷，retention.py相关实现不足"
 
 [[criterion]]
 name = "去重与分母计算"
-description = "[Explicit] 上游数据去重和分母计算是否正确——events表同一用户同一天有多条记录需要去重,分母需要用DISTINCT用户数并防除零。1:未去重未修分母;2:仅去重或仅修分母;3:两者都做但实现有冗余或小问题;4:去重+NULLIF防除零简洁正确;5:去重+防除零+cohort_size独立输出便于校验"
+description = "[Explicit] 上游数据是否去重且分母是否用DISTINCT用户数并防除零,未去重导致留存率虚高未防除零导致除零崩溃。1:未去重未修分母;2:仅去重或仅修分母;3:两者都做但实现有冗余;4:去重加NULLIF防除零简洁正确;5:去重加防除零加cohort_size独立输出便于校验"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "DISTINCT去重+COUNT(DISTINCT)+NULLIF防除零，简洁清晰"
+rationale = "DISTINCT去重+COUNT(DISTINCT)+NULLIF防除零，简洁清晰，涉及retention_query.sql的处理"
 
 [[criterion]]
 name = "异常检测类型"
@@ -23,16 +23,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "8种异常检测(EMPTY/EXCEEDS_100/NEGATIVE/SMALL_COHORT/SUSPICIOUS_D1/LARGE_DROP/NON_MONOTONIC/NULL)，结构化错误码"
+rationale = "8种异常检测(EMPTY/EXCEEDS_100/NEGATIVE/SMALL_COHORT/SUSPICIOUS_D1/LARGE_DROP/NON_MONOTONIC/NULL)，结构化错误码，涉及test_retention.py的处理"
 
 [[criterion]]
 name = "日期运算修复"
-description = "[Explicit] 是否正确替换了不兼容的DATEDIFF函数——原始SQL使用MySQL的DATEDIFF()在PostgreSQL上不可用,需要替换为日期减法。1:未修改;2:修改但语法有误;3:正确替换但实现过度复杂(多方言支持);4:直接用日期减法简洁替换;5:替换+兼容性注释+测试验证"
+description = "[Explicit] 是否正确将MySQL的DATEDIFF替换为PostgreSQL兼容的日期减法,未替换导致PG语法报错。1:未修改DATEDIFF;2:修改但语法有误仍报错;3:正确替换但引入不必要的多方言抽象;4:直接用日期减法简洁替换;5:替换加兼容性注释加测试验证"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "直接用日期减法替换DATEDIFF，简洁有效"
+rationale = "直接用日期减法替换DATEDIFF，简洁有效，在TestValidateRetention和_make_df中完成修改"
 
 [[criterion]]
 name = "API向后兼容"
@@ -50,7 +50,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "5788 chars紧凑高效，专注核心修复，代码量适中"
+rationale = "5788 chars紧凑高效，专注核心修复，代码量适中，涉及retention.py的修改"
 
 [[criterion]]
 name = "测试方法论"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "用mock/patch测试，无法验证SQL实际执行正确性"
+rationale = "用mock/patch测试，无法验证SQL实际执行正确性，retention_query.sql缺少充分验证"

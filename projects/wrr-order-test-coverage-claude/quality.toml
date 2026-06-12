@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "9个测试详细覆盖了null/empty items、order not found、已发货订单取消、已退款重复退款等异常分支"
+rationale = "9个测试详细覆盖了null/empty items、order not found、已发货订单取消、已退款重复退款等异常分支，涉及OrderRequest.java的修改"
 
 [[criterion]]
 name = "测试代码质量与命名"
@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "只创建了必要的模型类和测试文件，无多余产出"
+rationale = "只创建了必要的模型类和测试文件，无多余产出，涉及OrderServiceTest.java的处理"
 
 [[criterion]]
 name = "测试执行与验证"
@@ -50,16 +50,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "运行mvn test验证9个测试全部通过，0失败0错误，并详细检查了测试输出"
+rationale = "运行mvn test验证9个测试全部通过，0失败0错误，并详细检查了测试输出，核心修改集中在for和PaymentTestBase"
 
 [[criterion]]
-name = "覆盖率提升有效性"
-description = "[Explicit] 最终测试覆盖率的实际提升效果。1:覆盖率无变化;2:略有提升但仍不足;3:有一定提升覆盖主要路径;4:显著提升系统覆盖核心接口;5:极大提升接近完全覆盖"
+name = "测试文件定位"
+description = "[Explicit] 是否准确定位并在OrderServiceTest.java中编写测试而非创建其他测试文件。1:未修改OrderServiceTest.java;2:创建了新测试类替代OrderServiceTest;3:修改了OrderServiceTest但同时创建了不必要的测试文件;4:准确在OrderServiceTest.java中集中编写所有测试;5:在OrderServiceTest中编写且按业务方法分组组织"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "9个测试系统覆盖三大核心接口的正常和异常路径，覆盖率提升显著"
+rationale = "准确在OrderServiceTest.java中集中编写所有9个测试，聚焦于目标文件"
 
 [[criterion]]
 name = "交付聚焦与范围控制"
@@ -68,4 +68,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "专注于测试编写任务，完成后即输出总结，任务边界清晰"
+rationale = "专注于测试编写任务，完成后即输出总结，任务边界清晰，覆盖了OrderRequest等核心文件"

@@ -27,12 +27,12 @@ rationale = "两项安全修复形成组合防护：POST请求避免URL泄露+SH
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改范围和效率。1:大量无关修改;2:有明显冗余;3:基本精准;4:精准修改;5:最小改动"
+description = "[Implicit] 修改是否精准聚焦于目标文件且无大量无关改动。1:大量无关修改;2:有明显冗余;3:基本精准但有少量无关改动;4:精准修改仅涉及目标文件;5:最小改动零冗余"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "5次工具调用(2次Read+2次Edit+1次Agent)集中于auth-center.js和login/index.vue两个文件的安全修复"
+rationale = "5次操作(2次Read+2次Edit+1次Agent)集中于auth-center.js和login/index.vue两个文件的安全修复"
 
 [[criterion]]
 name = "安全意识"

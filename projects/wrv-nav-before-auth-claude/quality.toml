@@ -9,7 +9,7 @@ rationale = "通过Read读取login/index.vue第76-79行，分析登录成功后�
 
 [[criterion]]
 name = "执行顺序修复"
-description = "[Explicit] 将router.push移到setOauth和userInfo存储之后执行。1: 顺序未改；2: 改了但仍有部分逻辑在push之后；3: push在最后但解构顺序不对；4: 正确的执行顺序：解构响应→存储userInfo→setOauth→router.push；5: 正确顺序加await router.push加错误处理"
+description = "[Explicit] 登录成功后是否将router.push调整到setOauth与userInfo存储之后执行。1:顺序未改;2:改了但仍有部分逻辑在push之后;3:push在最后但解构顺序不对;4:正确顺序即解构响应然后存储userInfo然后setOauth然后router.push;5:正确顺序且await且有错误处理"
 type = "likert"
 points = 5
 weight = 1.0
@@ -36,9 +36,9 @@ rationale = "修复后登录链路：login.vue表单提交→API返回{user,acce
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改和非修复操作；2: 有明显冗余；3: 修改正确但过程冗长；4: 精准高效完成修复；5: 最小改动完成修复"
+description = "[Implicit] 修改精准度和操作效率。1: 大量无关修改和非修复操作；2: 有明显冗余；3: 修改正确但过程冗长；4: 精准高效完成修复；5: 最小改动完成修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "3次工具调用（2次Read+1次Edit），读取login/index.vue确认代码后1次Edit调整4行代码的执行顺序，精准高效"
+rationale = "3次操作（2次Read+1次Edit），读取login/index.vue确认代码后1次Edit调整4行代码的执行顺序，精准高效"

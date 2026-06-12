@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "5次工具调用快速定位根因：setOauth只收到access_token未收到expires_in，dayjs().add(undefined,'seconds')返回当前时间，token存入即过期，路由守卫检测过期跳回登录形成死循环"
+rationale = "5次操作快速定位根因：setOauth只收到access_token未收到expires_in，dayjs().add(undefined,'seconds')返回当前时间，token存入即过期，路由守卫检测过期跳回登录形成死循环"
 
 [[criterion]]
 name = "expires_in传递"
@@ -27,12 +27,12 @@ rationale = "oauth2.js第24-25行对expires_in做兜底，缺失时默认7200秒
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改范围和效率。1:大量无关修改;2:有冗余;3:基本精准;4:精准高效;5:最小改动"
+description = "[Implicit] 修改是否精准聚焦于目标文件且无大量无关改动。1:大量无关修改;2:有冗余;3:基本精准;4:精准高效;5:最小改动零冗余"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "5次工具调用(2次Read+2次Edit+1次Glob)精准完成两个文件的修复，无冗余操作"
+rationale = "5次操作(2次Read+2次Edit+1次Glob)精准完成两个文件的修复，无冗余操作"
 
 [[criterion]]
 name = "死循环防护"

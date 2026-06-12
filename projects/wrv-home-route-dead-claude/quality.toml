@@ -18,7 +18,7 @@ rationale = "router/index.js添加import HomeRoute from './modules/home'并在ro
 
 [[criterion]]
 name = "子路由完整性"
-description = "[Implicit] home.js中定义的8个功能页面路由配置是否完整且组件引用正确。1: 多个子路由配置错误；2: 部分路由缺少组件引用；3: 配置基本正确但有遗漏；4: 8个子路由路径、名称、组件引用都完整；5: 完整且包含权限控制和懒加载配置"
+description = "[Implicit] 是否在home.js中完整定义8个功能页面的子路由配置且组件引用正确。1:多个子路由配置错误;2:部分路由缺少组件引用;3:配置基本正确但有遗漏;4:8个子路由路径和名称和组件引用都完整;5:完整且包含权限控制和懒加载配置"
 type = "likert"
 points = 5
 weight = 1.0
@@ -36,9 +36,9 @@ rationale = "确认home.js的父路由component引用Layout组件，8个子路�
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
+description = "[Implicit] 修改精准度和操作效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "10次工具调用（5次Read+2次Glob+2次Edit+1次Grep），2次Edit分别修改router/index.js和home.js两个文件，Glob和Grep用于搜索路由模块结构"
+rationale = "10次操作（5次Read+2次Glob+2次Edit+1次Grep），2次Edit分别修改router/index.js和home.js两个文件，Glob和Grep用于搜索路由模块结构"

@@ -1,6 +1,6 @@
 [[criterion]]
 name = "防作弊机制"
-description = "[Explicit] 防改时间作弊的机制设计。1:完全信任客户端时间;2:概念上使用服务端时间但仅Mock实现;3:有服务端时间但缺少其他防护;4:服务端时间+数据库去重;5:服务端时间+不接受客户端参数+数据库唯一索引+身份自动注入+前端防连点"
+description = "[Explicit] 防改时间作弊的机制设计——是否使用服务端时间而非客户端时间生成签到日期。1:完全信任客户端时间;2:概念上使用服务端时间但仅Mock实现;3:有服务端时间但客户端仍可传入日期参数;4:服务端时间生成日期且不接受客户端日期参数;5:服务端时间且身份自动注入无法伪造且前端防连点"
 type = "likert"
 points = 5
 weight = 1.0
@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "完整Mock API层含签到/查询/记录CRUD接口，基本可用但需替换为真实后端"
+rationale = "完整Mock API层含签到/查询/记录CRUD接口，基本可用但需替换为真实后端，涉及api.js"
 
 [[criterion]]
 name = "连续奖励设计"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "阶梯积分：每天+10基础，3天额外+20，7天额外奖励，规则清晰"
+rationale = "阶梯积分：每天+10基础，3天额外+20，7天额外奖励，规则清晰，涉及util.js的修改"
 
 [[criterion]]
 name = "日历视图实现"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "profile页面实现日历展示签到记录"
+rationale = "profile页面实现日历展示签到记录，涉及app.wxss和app.json"
 
 [[criterion]]
 name = "页面结构完整性"

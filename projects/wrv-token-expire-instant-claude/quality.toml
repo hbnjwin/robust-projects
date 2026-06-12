@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "4次工具调用快速定位根因：login/index.vue第79行setOauth({access_token:accessToken})缺少expires_in字段，oauth2.js的setOauth用dayjs().add(oauth.expires_in,'seconds')计算过期时间，undefined导致dayjs返回当前时间，isTokenExpired()立即返回true"
+rationale = "4次操作快速定位根因：login/index.vue第79行setOauth({access_token:accessToken})缺少expires_in字段，oauth2.js的setOauth用dayjs().add(oauth.expires_in,'seconds')计算过期时间，undefined导致dayjs返回当前时间，isTokenExpired()立即返回true"
 
 [[criterion]]
 name = "expires_in传递"
@@ -18,7 +18,7 @@ rationale = "login/index.vue第77行从const {user, accessToken}改为const {use
 
 [[criterion]]
 name = "兜底机制"
-description = "[Explicit] oauth2.js的setOauth中对expires_in缺失添加默认值兜底。1: 无兜底；2: 兜底值不合理；3: 合理默认值但实现方式不优；4: expires_in || 7200的默认兜底防止undefined导致立即过期；5: 兜底加console.warn日志提醒开发者"
+description = "[Explicit] setOauth中是否对expires_in缺失添加合理默认值兜底防止undefined导致立即过期。1:无兜底;2:兜底值不合理;3:合理默认值但实现方式不优;4:expires_in或7200的默认兜底防止立即过期;5:兜底加console.warn日志提醒开发者"
 type = "likert"
 points = 5
 weight = 1.0
@@ -36,9 +36,9 @@ rationale = "修复后当后端返回expiresIn=7200时，dayjs().add(7200,'secon
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有明显冗余；3: 修改正确但有额外操作；4: 精准高效完成修复；5: 最小改动完成修复"
+description = "[Implicit] 修改精准度和操作效率。1: 大量无关修改；2: 有明显冗余；3: 修改正确但有额外操作；4: 精准高效完成修复；5: 最小改动完成修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "4次工具调用（2次Read+2次Edit），精准修改login/index.vue和oauth2.js两个文件各一处，无冗余操作"
+rationale = "4次操作（2次Read+2次Edit），精准修改login/index.vue和oauth2.js两个文件各一处，无冗余操作"

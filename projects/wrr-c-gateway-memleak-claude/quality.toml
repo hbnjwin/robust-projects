@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "在config_set中先strdup新值确认成功后再free旧值再赋值，避免了strdup失败导致数据丢失的风险"
+rationale = "在config_set中先strdup新值确认成功后再free旧值再赋值，避免了strdup失败导致数据丢失的风险，涉及main.c的修改"
 
 [[criterion]]
 name = "realloc安全检查"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "在buffer_append中用void *tmp = realloc(buf->data, new_cap)，tmp为NULL时保留原buf->data并返回错误码"
+rationale = "在buffer_append中用void *tmp = realloc(buf->data, new_cap)，tmp为NULL时保留原buf->data并返回错误码，涉及config_destroy的处理"
 
 [[criterion]]
 name = "清理函数设计"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "添加config_destroy函数：遍历链表逐个free(node->key)、free(node->value)、free(node)，内存释放完整"
+rationale = "添加config_destroy函数：遍历链表逐个free(node->key)、free(node->value)、free(node)，内存释放完整，涉及strdup的处理"
 
 [[criterion]]
 name = "修复说明质量"
@@ -41,16 +41,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "清晰说明了每处修复对应的内存问题：config_set去重防泄漏、strdup所有权转移、realloc安全检查、cleanup函数设计"
+rationale = "清晰说明了每处修复对应的内存问题：config_set去重防泄漏、strdup所有权转移、realloc安全检查、cleanup函数设计，在main.c和config_set中完成修改"
 
 [[criterion]]
 name = "排查执行效率"
-description = "[Explicit] 排查路径效率。1:超过20次工具调用大量无效探索;2:15-20次含多次冗余读取;3:10-15次有部分冗余;4:5-10次路径清晰直达目标;5:5次以内精准定位并修复"
+description = "[Explicit] 排查路径效率。1:超过20次操作大量无效探索;2:15-20次含多次冗余读取;3:10-15次有部分冗余;4:5-10次路径清晰直达目标;5:5次以内精准定位并修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "共5次工具调用路径清晰，快速定位gateway.c中的内存管理问题并逐一修复"
+rationale = "共5次操作路径清晰，快速定位gateway.c中的内存管理问题并逐一修复"
 
 [[criterion]]
 name = "代码修复正确性"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "所有修复正确：config_set去重更新、strdup安全拷贝、realloc检查、cleanup释放，彻底消除OOM"
+rationale = "所有修复正确：config_set去重更新、strdup安全拷贝、realloc检查、cleanup释放，彻底消除OOM，在config_destroy和strdup中完成修改"

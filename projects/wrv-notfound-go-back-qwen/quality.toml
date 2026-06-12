@@ -5,11 +5,11 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "通过Read和Grep读取not-found/index.vue找到click事件绑定的router.go(-1)，确认需要改为router.push('/')，但5次工具调用中Grep和Glob各1次用于搜索文件位置显示定位过程不够直接"
+rationale = "通过Read和Grep读取not-found/index.vue找到click事件绑定的router.go(-1)，确认需要改为router.push('/')，但5次操作中Grep和Glob各1次用于搜索文件位置显示定位过程不够直接"
 
 [[criterion]]
 name = "路由跳转修复"
-description = "[Explicit] 将router.go(-1)改为router.push('/')使按钮点击后跳转到首页路由。1: 未修改；2: 改了但目标路由不对；3: push正确但未用命名路由；4: router.push('/')正确跳转到首页；5: 使用命名路由router.push({name:'Home'})并验证首页路由存在"
+description = "[Explicit] 返回首页按钮是否由router.go(-1)改为router.push跳转到首页路由。1:未修改go(-1);2:改了但目标路由不对;3:push正确但未用命名路由;4:router.push正确跳转到首页;5:使用命名路由且验证首页路由存在"
 type = "likert"
 points = 5
 weight = 1.0
@@ -36,9 +36,9 @@ rationale = "router.push('/')在直接输入错误URL的场景下能正确跳转
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度和工具调用效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
+description = "[Implicit] 修改精准度和操作效率。1: 大量无关修改；2: 有冗余操作；3: 修改正确但过程可以更精简；4: 精准高效完成修复；5: 最小改动完成修复"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "5次工具调用（2次Read+1次Grep+1次Glob+1次Edit），其中Grep搜索router.go和Glob搜索not-found文件属于必要定位步骤，但整体效率一般"
+rationale = "5次操作（2次Read+1次Grep+1次Glob+1次Edit），其中Grep搜索router.go和Glob搜索not-found文件属于必要定位步骤，但整体效率一般"

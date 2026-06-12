@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在query_service.py中识别了缺少索引的问题，定位到find({user_id: xxx}).sort(created_at)查询"
+rationale = "识别了user_id字段缺少索引导致慢查询的问题，定位到查询未走索引的根因"
 
 [[criterion]]
 name = "索引设计质量"
@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在db_init.py中创建了{user_id:1,created_at:-1}复合索引，字段选择合理"
+rationale = "创建了{user_id:1,created_at:-1}复合索引，字段选择合理"
 
 [[criterion]]
 name = "缓存一致性方案"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "在query_service.py中设置ReadPreference.PRIMARY强制主节点读取，绕过了从节点延迟但未真正解决缓存一致性"
+rationale = "设置ReadPreference.PRIMARY强制主节点读取，绕过了从节点延迟但未真正解决缓存一致性"
 
 [[criterion]]
 name = "查询结果控制"
@@ -32,25 +32,25 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在query_service.py的find查询中添加了.limit(100)默认限制，防止大结果集"
+rationale = "在查询中添加了.limit(100)默认限制，防止大结果集返回"
 
 [[criterion]]
-name = "方案深度"
-description = "[Explicit] 解决方案的整体深度。1:仅表面修改一个点;2:修复了索引或缓存其中一个;3:同时处理了索引和查询优化但缓存方案不足;4:索引+查询+缓存三方面综合修复;5:全面方案含慢查询监控、告警阈值和性能基线"
+name = "索引写入影响评估"
+description = "[Implicit] 是否评估了新建索引对写入性能的影响并采取缓解措施。1:未考虑写入影响;2:提及了写入影响但未采取措施;3:设置background建索引但未分析写入放大;4:background建索引且分析了写入放大影响;5:完整评估含写入放大分析和索引维护策略"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "修复了索引和limit限制，但缓存一致性仅用ReadPreference.PRIMARY绕过，方案深度不足"
+rationale = "未评估新建索引对写入性能的影响，仅关注读优化"
 
 [[criterion]]
 name = "排查执行效率"
-description = "[Explicit] 排查路径效率。1:超过20次工具调用;2:15-20次含大量Bash;3:10-15次有冗余但方向正确;4:5-10次路径清晰;5:5次以内精准直达"
+description = "[Explicit] 排查路径效率。1:超过20次操作;2:15-20次含大量Bash;3:10-15次有冗余但方向正确;4:5-10次路径清晰;5:5次以内精准直达"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "共9次工具调用，在query_service.py和db_init.py之间有部分冗余的读取操作"
+rationale = "共9次操作，部分读取操作有冗余但整体方向正确"
 
 [[criterion]]
 name = "代码可维护性"
@@ -59,4 +59,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在db_init.py中使用createIndex创建索引，操作幂等可重复执行"
+rationale = "使用createIndex创建索引，操作幂等可重复执行"

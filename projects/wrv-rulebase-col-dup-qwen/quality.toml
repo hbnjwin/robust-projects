@@ -27,12 +27,12 @@ rationale = "修正后version和remark使用不同colKey，不再显示相同的
 
 [[criterion]]
 name = "代码精准度"
-description = "[Implicit] 修改精准度。1:大量无关修改;2:有冗余;3:基本精准;4:精准修改;5:最小改动"
+description = "[Implicit] 修改是否精准聚焦于目标文件且无冗余改动。1:大量无关修改;2:有冗余;3:基本精准;4:精准修改仅涉及目标文件;5:最小改动零冗余"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "5次工具调用(2次Read+2次Bash+1次Edit)，修改集中于rulebase/index.vue的tableColumns定义"
+rationale = "5次操作，修改精准集中于rulebase/index.vue的tableColumns定义"
 
 [[criterion]]
 name = "TDesign数据绑定"
