@@ -91,6 +91,8 @@ const dialog = reactive({
 const formRef = ref(null)
 const handleClose = () => {
 	formRef.value.clearValidate()
+	dialog.form.filesList = null
+	dialog.form.docType = 0
 	dialog.visible = false
 	dialog.loading = false
 }

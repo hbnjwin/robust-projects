@@ -17,7 +17,7 @@
 			<t-form-item label="报告上传：" style="width: 100%">
 				<t-upload
 					class="warahouse-upload"
-					:files="filesList"
+					:files="dialog.form.filesList ? [dialog.form.filesList] : []"
 					action=""
 					theme="custom"
 					:multiple="false"
@@ -91,6 +91,8 @@ const dialog = reactive({
 const formRef = ref(null)
 const handleClose = () => {
 	formRef.value.clearValidate()
+	dialog.form.filesList = null
+	dialog.form.docType = 0
 	dialog.visible = false
 	dialog.loading = false
 }
