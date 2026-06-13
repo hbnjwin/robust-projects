@@ -1,0 +1,53 @@
+[[criterion]]
+name = "vulture全项目扫描"
+description = "[Explicit] 是否用vulture扫描全项目生成未使用函数/类/变量的报告。1: 未运行vulture；2: 运行了但仅扫描了部分目录；3: 扫描了全项目但未保存报告；4: vulture扫描全项目并保存raw报告文件，列出未使用代码数量；5: 报告含代码行数估算和模块分布统计。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "运行vulture扫描全项目但报告仅输出到终端未保存为文件，后续通过generate_cleanup_report.py脚本生成了结构化报告。"
+
+[[criterion]]
+name = "白名单误报筛选"
+description = "[Explicit] 是否手动筛选vulture结果中的误报，生成.vulture_whitelist.py文件。1: 未创建白名单；2: 创建了但误报筛选不充分（白名单条目少于20）；3: 筛选了主要误报但遗漏了pytest动态调用的函数；4: .vulture_whitelist.py覆盖pytest fixture、PyTorch forward、Ptrade生命周期钩子等动态调用的误报；5: 白名单附带注释说明每类误报的原因。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = ".vulture_whitelist.py列出了部分误报，但对pytest的conftest fixture和parametrize标记函数的误报覆盖不够完整。"
+
+[[criterion]]
+name = "engine目录import依赖分析"
+description = "[Explicit] 是否对engine/目录做import依赖分析确认无其他模块import它。1: 未做依赖分析；2: 仅用grep搜索了import语句；3: 用ast模块分析了import但未覆盖动态import；4: 用grep -r和ast双重验证无其他模块import engine/下的类或函数；5: 额外生成了依赖图可视化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用grep -r搜索了对engine模块的import引用，但未使用ast模块进行更精确的静态分析，可能遗漏间接依赖。"
+
+[[criterion]]
+name = "engine目录deprecation标记"
+description = "[Explicit] 是否在engine/每个文件头部加deprecation warning并在__init__.py标记__all__=[]。1: 未添加任何标记；2: 仅修改了__init__.py；3: __init__.py设__all__=[]但未在其他文件加warning；4: engine/__init__.py设__all__=[]，每个.py文件头部加warnings.warn(DeprecationWarning)；5: 额外在模块docstring中说明了废弃原因和替代方案。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "未对engine/目录的文件进行deprecation标记处理，仅在报告中建议标记。"
+
+[[criterion]]
+name = "清理报告生成"
+description = "[Explicit] 是否输出清理报告列出可安全删除的文件和需保留但标记deprecated的文件，附确认方法。1: 未生成报告；2: 报告仅列出文件名无确认方法；3: 列出了文件名和grep命令但分类不清；4: 报告分为\"可安全删除\"和\"标记deprecated\"两类，每个文件附grep -r确认无外部引用的命令；5: 报告额外包含预计节省的代码行数和后续清理建议。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "生成了DEAD_CODE_REPORT.md但将可删除文件和需保留文件混在一起，分类不够清晰，grep确认命令也不完整。"
+
+[[criterion]]
+name = "generate_cleanup_report脚本"
+description = "[Implicit] 是否提供可重复执行的报告生成脚本用于后续维护。1: 未提供脚本；2: 脚本不可独立运行；3: 脚本可运行但依赖硬编码路径；4: 提供了generate_cleanup_report.py可重复运行生成更新报告；5: 脚本支持参数化（指定扫描目录、输出路径）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了generate_cleanup_report.py脚本，但脚本内部分路径硬编码，在其他环境下需手动修改。"
