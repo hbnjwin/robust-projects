@@ -1,6 +1,6 @@
 [[criterion]]
 name = "keep-alive状态保持"
-description = "[Explicit] 是否用keep-alive包裹动态组件替代v-if，保持切换页面时表单状态不丢失。1: 仍用v-if切换页面状态全丢; 2: 用keep-alive但include配置错误导致部分页面未缓存; 3: keep-alive加component :is基本可用但max未设置可能缓存过多; 4: keep-alive含include白名单仅缓存需要保持状态的页面; 5: keep-alive加activated/deactivated钩子处理缓存页面的重新激活逻辑"
+description = "[Explicit] 是否用keep-alive包裹动态组件替代v-if保持切换页面时表单状态不丢失。1: 仍用v-if切换页面状态全丢; 2: 用keep-alive但include配置错误导致部分页面未缓存; 3: keep-alive加component :is基本可用但max未设置可能缓存过多; 4: keep-alive含include白名单仅缓存需要保持状态的页面; 5: keep-alive加activated/deactivated钩子处理缓存页面的重新激活逻辑"
 type = "likert"
 points = 5
 weight = 1.0
@@ -14,16 +14,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "NaiveUI NMenu组件设置collapsed属性绑定到ref，但折叠时CSS过渡效果缺失，图标和文字的布局切换依赖NaiveUI默认行为未做自定义样式调整导致折叠过程中出现短暂重叠"
+rationale = "NaiveUI NMenu组件设置collapsed属性绑定到ref，但折叠时CSS过渡效果缺失，NMenu的collapsed-width和collapsed-icon-size未配置导致图标和文字的布局切换不流畅出现短暂重叠"
 
 [[criterion]]
-name = "菜单高亮同步"
-description = "[Explicit] 是否修复点击菜单切换页面后当前菜单项的高亮状态不更新的问题。1: 高亮状态不随页面切换更新; 2: 高亮更新但有闪烁延迟; 3: NMenu的value属性绑定到当前页面key但双向绑定方向不对; 4: v-model:value绑定activeMenu ref且在on-update:value回调中同步更新; 5: 菜单高亮加面包屑联动加页面标题同步更新"
+name = "刷新后菜单选中持久化"
+description = "[Explicit] 是否修复刷新页面后当前选中的菜单项丢失默认回到Dashboard的问题。1: 刷新后仍默认显示Dashboard选中项丢失; 2: 用sessionStorage但存取时机不对; 3: localStorage或sessionStorage保存当前菜单key但页面加载时恢复不完整; 4: watch监听activeMenu变化时存入localStorage且onMounted时读取恢复选中状态和对应页面; 5: 持久化加URL hash同步加浏览器前进后退支持"
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "NMenu使用value属性绑定activeKey变量，通过on-update:value回调更新activeKey值，但初始化时高亮状态可能与实际显示页面不同步"
+score = 2
+rationale = "App.vue中菜单选中状态仅保存在内存ref中，刷新页面后ref重置为默认值Dashboard，未使用localStorage或sessionStorage做持久化，用户刷新后不知道之前在哪个页面"
 
 [[criterion]]
 name = "动态组件类型安全"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "viewMap定义为Record结构映射菜单key到组件，但key类型使用string而非联合类型字面量，组件值类型不够精确"
+rationale = "viewMap定义为Record结构映射菜单key到组件，但key类型使用string而非联合类型字面量组件值类型不够精确"
 
 [[criterion]]
 name = "构建验证通过"
