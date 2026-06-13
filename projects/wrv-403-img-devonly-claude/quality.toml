@@ -1,0 +1,53 @@
+[[criterion]]
+name = "SVG图片加载失败定位"
+description = "[Explicit] 是否准确识别 403 页面 SVG 图片在生产环境加载失败返回 404 的根因。1: 未找到 403 页面文件或完全误判问题方向；2: 找到页面文件但未意识到图片路径问题；3: 识别出图片路径有问题但未明确是开发与构建的差异导致；4: 准确识别 src 硬编码 /src/assets/ 路径在构建后不存在的根因；5: 完整理解 Vite 开发服务器与构建产物的静态资源处理差异并准确定位根因。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确识别 src 属性硬编码 /src/assets/image/error/403.svg 在 Vite 构建后不存在的根因，理解开发环境 Vite 直接服务源文件目录而生产环境只有构建产物。"
+
+[[criterion]]
+name = "import导入方式修复"
+description = "[Explicit] 是否将硬编码的 src 路径改为 ES Module import 方式引入 SVG 资源。1: 未修改图片引用方式；2: 修改了路径但仍使用字符串拼接而非 import；3: 使用了 import 但路径别名或文件名有误；4: 正确使用 import errorImg from 路径别名引入 SVG 并绑定到 src；5: import 方式正确且同时将 src 改为动态绑定 :src 确保 Vue 模板正确响应。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用 import errorImg from @/assets/image/error/403.svg 替换硬编码路径，模板中改为 :src 动态绑定，修复方式与项目其他页面的图片引用一致。"
+
+[[criterion]]
+name = "Vite资源处理机制理解"
+description = "[Implicit] 是否理解 Vite 开发模式与生产构建对静态资源路径的不同处理方式。1: 未区分开发和生产环境的资源处理差异；2: 知道有差异但解释不准确；3: 理解 /src/ 路径仅在开发模式可用但未说明构建后的资源哈希机制；4: 正确解释 Vite dev server 直接映射源目录而 build 产物使用哈希文件名；5: 深入理解 Vite 的 public 目录和 assets 目录的区别以及 import 触发资源处理管线的机制。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "清晰解释了 Vite dev server 直接服务 /src/ 目录而 build 后该路径不存在的差异，说明了 import 方式让 Vite 将资源纳入构建管线。"
+
+[[criterion]]
+name = "其他页面图片对比分析"
+description = "[Implicit] 是否对比分析了其他正常显示图片的页面采用的引用方式以确认修复方向。1: 未查看任何其他页面的图片引用方式；2: 查看了其他页面但未从中推导出正确的修复模式；3: 对比了一个正常页面并参考其 import 方式；4: 对比了登录页 logo 或导航栏头像的引用方式确认 import 模式可行；5: 系统对比多个正常页面的引用方式并解释了为何 403 页面是唯一使用硬编码路径的异常。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复前查看了 403 页面的代码结构，虽未显式对比其他页面但采用的 import 方式与项目中登录页等页面的标准做法一致。"
+
+[[criterion]]
+name = "改动精确性"
+description = "[Implicit] 是否仅修改必要的图片引用相关代码且不引入其他变更。1: 修改了与图片无关的页面布局或样式代码；2: 改动涉及多个文件但实际只需修改一个；3: 仅修改目标文件但改动行数超出必要范围；4: 精确修改 403 页面的 src 属性和新增一行 import 语句共两处改动；5: 改动精确到两处且代码格式与文件现有风格完全一致。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "仅修改 index.vue 两处代码，第4行 src 改为 :src 绑定和第15行新增 import 语句，改动最小化且风格一致。"
+
+[[criterion]]
+name = "修复可验证性"
+description = "[Explicit] 是否修复后 403 页面在生产构建环境下能正确显示 SVG 图片。1: 修复后图片仍无法显示；2: 修复了但未考虑构建验证步骤；3: 修复正确但未说明如何验证生产环境效果；4: 修复正确且说明了需要通过构建后预览验证图片加载；5: 修复正确且提供了完整的验证路径包括开发和生产环境的对比确认。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修复方案正确，最终回复中说明了修改要点，import 方式是 Vite 项目的标准做法可确保生产环境可用。"
