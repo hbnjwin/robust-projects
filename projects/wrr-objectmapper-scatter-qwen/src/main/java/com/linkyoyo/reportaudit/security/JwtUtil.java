@@ -16,6 +16,7 @@ public class JwtUtil {
 
     private static final String SECRET_KEY = "Hn-tsp-2024";
     private static final long EXPIRATION_TIME = 3600000*24; // 1 hour
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
     public static String generateToken(SysOperator sysOperator) {
 
         long nowMillis = System.currentTimeMillis();
@@ -44,10 +45,8 @@ public class JwtUtil {
                     .getBody();
 
 
-            ObjectMapper objectMapper = new ObjectMapper();
-
             // 将LinkedHashMap转换为JSON字符串
-            String json = objectMapper.writeValueAsString(claims.get("sysUser"));
+            String json = OBJECT_MAPPER.writeValueAsString(claims.get("sysUser"));
             JSONObject  jsonObject = new JSONObject();
             jsonObject.put("userId",claims.getSubject());
             jsonObject.put("sysUser",json) ;

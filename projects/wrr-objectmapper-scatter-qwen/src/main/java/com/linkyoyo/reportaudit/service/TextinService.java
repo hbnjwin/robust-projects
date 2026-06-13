@@ -73,7 +73,7 @@ public class TextinService {
             .writeTimeout(120, TimeUnit.SECONDS)
             .readTimeout(120, TimeUnit.SECONDS)
             .build();
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    private final ObjectMapper objectMapper;
     
     @Autowired
     private SysParasetRepository sysParasetRepository;

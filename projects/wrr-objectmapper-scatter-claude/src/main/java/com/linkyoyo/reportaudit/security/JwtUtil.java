@@ -2,6 +2,7 @@ package com.linkyoyo.reportaudit.security;
 
 import cn.hutool.json.JSONObject;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.linkyoyo.reportaudit.config.JacksonConfig;
 import com.linkyoyo.reportaudit.entity.QSysOperator;
 import com.linkyoyo.reportaudit.entity.SysOperator;
 import io.jsonwebtoken.Claims;
@@ -44,7 +45,7 @@ public class JwtUtil {
                     .getBody();
 
 
-            ObjectMapper objectMapper = new ObjectMapper();
+            ObjectMapper objectMapper = JacksonConfig.staticInstance();
 
             // 将LinkedHashMap转换为JSON字符串
             String json = objectMapper.writeValueAsString(claims.get("sysUser"));

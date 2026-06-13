@@ -53,7 +53,6 @@ public class SysOperaLogAspect {
         HttpServletRequest request = ((ServletRequestAttributes) Objects
                 .requireNonNull(RequestContextHolder.getRequestAttributes())).getRequest();
 
-        ObjectMapper objectMapper = new ObjectMapper();
         SysOperator sysOperator=null;
         try {
             Object obj =request.getSession().getAttribute("sysUser");
