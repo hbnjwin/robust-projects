@@ -1,0 +1,13 @@
+[tool.pytest.ini_options]
+testpaths = ["testing"]
+addopts = [
+    "--cov=core",
+    "--cov=analytics",
+    "--cov=live",
+    "--cov=factor_engine",
+    "--cov=ml",
+    "--cov-report=html",
+    "--cov-report=term",
+    "--cov-fail-under=40",
+    "-v",
+]

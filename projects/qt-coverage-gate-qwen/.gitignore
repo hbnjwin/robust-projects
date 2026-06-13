@@ -31,3 +31,10 @@ vnpy/
 
 # Env
 .env
+
+# Coverage
+htmlcov/
+.coverage
+.coverage.*
+*.cover
+.pytest_cache/
