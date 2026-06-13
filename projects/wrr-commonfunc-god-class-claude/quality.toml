@@ -1,0 +1,62 @@
+[[criterion]]
+name = "职责识别与分类"
+description = "[Explicit] 是否准确识别CommonFunc类中十几种不相关的职责并合理分类。1: 未分析职责分布，盲目拆分；2: 识别出少于5种职责类别；3: 识别出大部分职责但分类边界模糊；4: 准确识别10种以上职责并给出清晰分类；5: 完整覆盖所有职责类别（JPA构建、原生SQL、树操作、日期、反射、MVEL、AI调用、文件、分页、排序等），分类逻辑清晰。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确识别了11种不相关职责并创建了9个独立类加1个薄门面（SpecificationBuilder、NativeQueryService、TreeNodeUtils、DateTimeUtils、ReflectionFieldUtils含MVEL、AiService、FileUtils、StringParseUtils、PaginationUtils），将MVEL和反射合理归入同一个ReflectionFieldUtils类，职责分类清晰。"
+
+[[criterion]]
+name = "拆分类命名与API设计"
+description = "[Implicit] 是否为拆分后的新类提供了语义清晰、符合Spring生态惯例的命名和公共API设计。1: 类名含义不明或与Spring命名惯例冲突；2: 类名基本可读但部分命名不一致；3: 类名合理但方法签名未优化；4: 类名和方法签名都语义清晰，遵循Utils/Service命名惯例；5: 命名统一规范，API入参出参类型安全，有必要的Javadoc或自解释签名。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "拆分后的类命名统一规范，工具类统一使用Utils后缀（DateTimeUtils、StringParseUtils、PaginationUtils、TreeNodeUtils、ReflectionFieldUtils），服务类使用Service后缀（AiService、NativeQueryService），构建器使用Builder后缀（SpecificationBuilder），分类清晰且遵循Spring生态惯例。"
+
+[[criterion]]
+name = "AI调用方法提取"
+description = "[Explicit] 是否将Azure OpenAI、Linkyoyo Agent、DeepSeek等AI调用方法从CommonFunc中完整提取到独立服务类。1: 未提取AI相关方法；2: 只提取了部分AI方法，遗漏了SSL配置或备用端点逻辑；3: 提取了主要AI方法但未处理内部依赖（如SSL信任管理器）；4: 完整提取所有AI方法及其依赖的SSL配置；5: 提取完整且重构了AI调用的公共逻辑（如HTTP客户端复用、SSL配置统一），消除了方法间的重复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了AiService类，完整提取了所有AI调用方法，并将SSL信任管理器配置统一提取为共享方法，消除了CommonFunc中AI方法对内部SSL配置方法的隐含耦合，但未进一步将不同AI提供商的调用抽象为策略模式。"
+
+[[criterion]]
+name = "调用方更新"
+description = "[Explicit] 是否正确更新了AiController和DynamicLLMService等调用方，使其引用拆分后的新类而非原CommonFunc。1: 未更新任何调用方；2: 只更新了部分调用方，存在编译断裂；3: 更新了主要调用方但遗漏了间接引用；4: 更新了AiController和DynamicLLMService的直接调用；5: 完整更新所有直接和间接调用方，确保无编译错误。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "正确更新了AiController的调用引用，使其通过依赖注入使用新的拆分类，执行过程中无编译错误报告，但未显式验证DynamicLLMService的调用更新。"
+
+[[criterion]]
+name = "隐含耦合处理"
+description = "[Explicit] 是否识别并处理了不同职责之间的隐含耦合（如AI调用方法引用内部SSL配置方法）。1: 未识别任何耦合关系；2: 识别了耦合但未解决；3: 解决了部分耦合但引入了循环依赖；4: 合理解决了主要的隐含耦合；5: 完整处理所有耦合关系，拆分后各类之间无循环依赖，依赖方向清晰。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将SSL信任管理器配置提取为AiService中的共享方法，解决了AI调用方法对CommonFunc内部SSL配置的隐含耦合，拆分后各工具类之间无循环依赖。"
+
+[[criterion]]
+name = "原始类瘦身程度"
+description = "[Explicit] 是否将CommonFunc从约1500行有效瘦身，且保留的代码确实属于该类的合理职责。1: CommonFunc基本未变化或仅移除少量方法；2: 移除了不到一半的代码；3: 移除了大部分代码但保留了本应提取的方法；4: CommonFunc大幅瘦身，仅保留少量确实通用的方法；5: CommonFunc被完全拆解或瘦身为仅保留转发方法的薄门面，所有实际逻辑都已提取。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "将CommonFunc从约1500行完全拆解为9个独立类加1个薄门面，原类仅保留对新类的转发方法，所有实际业务逻辑都已提取到各自独立的服务或工具类中。"
+
+[[criterion]]
+name = "编译与构建验证"
+description = "[Implicit] 是否在重构完成后验证了代码的编译正确性，确保拆分不引入编译错误。1: 未做任何编译验证；2: 尝试编译但未解决发现的错误；3: 执行了编译验证但仍有残留错误；4: 编译验证通过或错误数显著减少；5: 编译验证完全通过，零错误零警告。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "未在执行过程中显式运行编译命令（Bash调用仅1次），依赖代码阅读和Write操作确保正确性，但缺少明确的编译验证步骤。"
