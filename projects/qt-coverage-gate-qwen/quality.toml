@@ -1,0 +1,53 @@
+[[criterion]]
+name = "pyproject.toml pytest-cov配置"
+description = "[Explicit] 是否在pyproject.toml的[tool.pytest.ini_options]中配置--cov=core --cov=analytics --cov=live --cov-report=html --cov-report=term。1: 未配置pytest-cov；2: 仅配置了--cov缺少report选项；3: 配置了cov和report但模块不完整（缺core或analytics）；4: 完整配置三个模块的--cov和html+term双报告；5: 额外配置了xml报告用于CI集成。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在pyproject.toml中配置了--cov和--cov-report，但初始配置时遗漏了live模块的覆盖度量，后续补充。"
+
+[[criterion]]
+name = "覆盖率门槛设置"
+description = "[Explicit] 是否配置--cov-fail-under=40作为初始基线。1: 未配置覆盖率门槛；2: 配置了但阈值不合理（过高或为0）；3: 配置了40%但未在pyproject.toml中正确放置；4: --cov-fail-under=40正确配置，pytest低于40%时返回非零退出码；5: 附带注释说明40%是初始基线待逐步提升。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "配置了--cov-fail-under=40，但配置位置在单独的pytest.ini中而非统一到pyproject.toml。"
+
+[[criterion]]
+name = ".coveragerc排除目录"
+description = "[Explicit] 是否在.coveragerc中排除testing/、docs/、gpu-train/、engine/目录。1: 未创建.coveragerc；2: 创建了但排除目录不完整；3: 排除了全部4个目录但格式有误；4: .coveragerc的[run] omit正确排除testing/、docs/、gpu-train/、engine/四个目录；5: 额外配置了[report] exclude_lines排除pragma和__main__。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = ".coveragerc的[run] omit正确排除testing/*、docs/*、gpu-train/*、engine/*四个目录，[report]中配置了exclude_lines排除pragma和TYPE_CHECKING。"
+
+[[criterion]]
+name = "覆盖率摘要报告生成"
+description = "[Explicit] 是否按模块列出core/、analytics/、live/、factor_engine/、ml/各自的行覆盖率，标注最差5个文件。1: 未生成报告；2: 仅生成了总体覆盖率无模块分拆；3: 按模块列出但未标注最差文件；4: 按模块列出覆盖率并标注覆盖最差的5个文件；5: 报告含行数统计和趋势建议。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "运行了pytest-cov输出了term报告，但未按要求整理为按模块分列的摘要，也未标注覆盖最差的5个文件。"
+
+[[criterion]]
+name = "Makefile命令配置"
+description = "[Explicit] 是否在Makefile中添加make test-cov命令一键运行带覆盖率的测试。1: 未修改Makefile；2: 添加了命令但语法错误（如缩进用空格）；3: 命令正确但未包含覆盖率参数（与普通test重复）；4: make test-cov正确调用pytest并启用覆盖率报告；5: 额外提供make test（不含cov）和make cov-html（单独生成HTML报告）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在Makefile中添加了test-cov目标，但同时修改了项目外的文件（C:/Users/wt/Desktop/quant_project），操作范围超出了项目目录。"
+
+[[criterion]]
+name = "requirements依赖声明"
+description = "[Implicit] 是否在requirements文件中声明pytest-cov依赖。1: 未声明依赖；2: 仅手动pip install未写入文件；3: 写入了requirements.txt但版本约束不合理；4: requirements.txt或requirements-dev.txt中声明pytest-cov；5: 区分了dev和prod依赖，pytest-cov仅在dev中。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过pip install安装了pytest-cov，在requirements.txt中添加了依赖声明，但未区分dev和prod依赖文件。"
