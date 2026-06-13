@@ -1,0 +1,44 @@
+[[criterion]]
+name = "隔离架构设计"
+description = "[Explicit] 是否解读了多租户数据隔离的整体架构设计包含middleware和mixin的协作机制。1: 未分析架构；2: 只描述了其中一个组件；3: 描述了middleware和mixin但未说明它们如何协作；4: 分析了middleware提取tenant_id和mixin自动过滤的协作链路；5: 架构分析完整且评估了该方案的安全等级和适用场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "同样分析了middleware+mixin的双层架构，但由于项目中没有实际代码，分析基于Django多租户的标准实现模式"
+
+[[criterion]]
+name = "ORM自动注入机制"
+description = "[Explicit] 是否分析了tenant_id在ORM查询中自动注入的具体实现方式。1: 未分析注入机制；2: 提到了自动过滤但未分析实现；3: 分析了manager覆盖但未处理关联查询的情况；4: 分析了manager.get_queryset()覆盖和关联查询的级联过滤；5: 注入机制分析完整且指出了预加载(select_related/prefetch_related)和聚合查询的隔离边界"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "描述了Manager覆盖的标准实现方式，指出了需要处理关联查询的级联过滤，但分析基于通用模式"
+
+[[criterion]]
+name = "raw query泄漏"
+description = "[Explicit] 是否分析了管理员导出报表使用raw SQL绕过ORM导致的数据泄漏根因。1: 未分析raw query问题；2: 提到了raw query但未分析绕过机制；3: 分析了raw query不经过Manager的原因但未给出解决方案；4: 准确分析了raw query绕过Manager的原理并建议封装安全的raw query接口；5: 泄漏分析完整且给出了代码审计规则防止未来的raw query泄漏"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了raw SQL绕过ORM的技术原因——Manager.get_queryset()只作用于QuerySet API调用，raw()和cursor.execute()直接下发SQL不经过Manager层。建议封装safe_raw_query方法自动注入tenant_id条件，并在代码审计中禁止直接使用原生SQL"
+
+[[criterion]]
+name = "附件越权访问"
+description = "[Explicit] 是否分析了跨租户分享报告时附件图片不受权限控制的越权问题根因。1: 未分析附件越权；2: 提到了附件但未分析越权路径；3: 分析了附件URL的可预测性但未分析权限校验缺失；4: 分析了附件存储的URL设计缺陷和缺少鉴权中间件的双重问题；5: 附件越权分析完整且给出了签名URL和鉴权中间件的修复方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "描述了附件越权的原因是报告分享和附件访问走了不同的权限校验链路——报告分享创建了临时访问token但附件URL没有关联该token"
+
+[[criterion]]
+name = "租户删除数据残留"
+description = "[Explicit] 是否分析了删除租户后数据残留导致新租户看到旧数据的问题根因。1: 未分析数据残留；2: 提到了残留但未分析原因；3: 分析了缺少级联删除但未考虑tenant_id复用问题；4: 分析了软删除vs硬删除的策略选择和tenant_id复用的风险；5: 数据残留分析完整且给出了租户回收和ID不复用的完整方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "同样分析了软删除导致数据残留的问题，建议tenant_id使用UUID而非自增ID避免复用，删除租户时异步清理所有关联数据表"
