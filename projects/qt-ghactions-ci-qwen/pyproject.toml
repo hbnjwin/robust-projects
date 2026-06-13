@@ -1,0 +1,43 @@
+[project]
+name = "qt-ghactions-ci-qwen"
+version = "0.1.0"
+description = "Chinese A-share quantitative trading platform"
+requires-python = ">=3.11"
+
+[tool.ruff]
+target-version = "py311"
+line-length = 120
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I"]
+
+[tool.pytest.ini_options]
+testpaths = ["."]
+python_files = ["test_*.py"]
+python_functions = ["test_*"]
+addopts = [
+    "--strict-markers",
+    "-v",
+]
+markers = [
+    "integration: tests requiring PostgreSQL (deselect with '-m \"not integration\"')",
+]
+
+[tool.coverage.run]
+omit = [
+    "testing/*",
+    "scripts/*",
+    "gpu-train/*",
+    "quant-qmt-ptrade/*",
+]
+
+[tool.coverage.report]
+show_missing = true
+fail_under = 0
+
+[tool.mypy]
+python_version = "3.11"
+ignore_missing_imports = true
+warn_unused_configs = true
+warn_redundant_casts = true
+warn_unused_ignores = true

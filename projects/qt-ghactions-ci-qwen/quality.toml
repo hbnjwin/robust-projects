@@ -1,0 +1,53 @@
+[[criterion]]
+name = "CI三阶段pipeline设计"
+description = "[Explicit] 是否创建ci.yml实现lint→test→type-check三阶段pipeline。1: 未创建ci.yml；2: 创建了但仅有单个job；3: 三个阶段存在但未设置依赖关系；4: lint阶段失败阻断test，type-check独立运行不阻断，依赖关系正确；5: 额外配置了concurrency取消旧运行避免资源浪费。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了ci.yml包含lint、test、type-check三个job，但job间的needs依赖关系设置中type-check也依赖了lint导致不够独立。"
+
+[[criterion]]
+name = "lint阶段ruff检查"
+description = "[Explicit] 是否在lint阶段运行ruff check和ruff format --check，失败即阻断。1: 未配置lint阶段；2: 仅有ruff check缺少format检查；3: 两者都有但exit code处理不正确；4: ruff check和ruff format --check均配置，任一失败即阻断后续阶段；5: 附带了ruff版本固定避免CI非确定性。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "lint阶段配置了ruff check和ruff format --check，但未固定ruff版本，可能导致不同CI运行结果不一致。"
+
+[[criterion]]
+name = "test阶段覆盖率与artifact"
+description = "[Explicit] 是否在test阶段用Python 3.11运行pytest，排除PG集成测试，覆盖率报告上传为artifact。1: 未配置test阶段；2: 配置了pytest但未排除集成测试；3: 排除了集成测试但无覆盖率上传；4: pytest -m \"not integration\"运行，覆盖率HTML报告通过upload-artifact上传；5: artifact设置了retention-days和覆盖率xml用于PR comment。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "test阶段配置了pytest运行和覆盖率收集，但artifact上传的覆盖率报告仅包含term输出缺少HTML报告。"
+
+[[criterion]]
+name = "pip缓存加速"
+description = "[Explicit] 是否缓存pip依赖加速构建。1: 未配置任何缓存；2: 使用了cache但key设计不合理；3: 缓存了pip但cache key未包含requirements文件hash；4: actions/setup-python的cache=pip或actions/cache缓存~/.cache/pip，key含requirements hash；5: 使用setup-python内置cache=pip最简方案。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用了actions/cache缓存pip依赖，但cache key设计中未包含requirements.txt的hashFiles，缓存失效策略不够精确。"
+
+[[criterion]]
+name = "README构建状态badge"
+description = "[Explicit] 是否在README顶部添加GitHub Actions构建状态badge。1: 未添加badge；2: badge语法错误或链接不正确；3: badge正确但未放在README顶部；4: README顶部添加了正确的CI状态badge，链接到workflow页面；5: 额外添加了覆盖率badge。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在README.md中添加了CI状态badge，但badge图片URL中的workflow名称与ci.yml中的name不完全一致。"
+
+[[criterion]]
+name = "Makefile统一命令"
+description = "[Explicit] 是否定义make lint、make test、make typecheck命令，本地和CI使用同一套。1: 未创建Makefile；2: 仅定义了部分命令；3: 三个命令都有但与CI中的命令不一致；4: make lint/test/typecheck三个命令与ci.yml中的步骤命令一致；5: 额外提供make ci一键运行全部三阶段。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Makefile中定义了lint、test、typecheck三个目标，但typecheck的mypy参数与ci.yml中的配置不完全一致。"
