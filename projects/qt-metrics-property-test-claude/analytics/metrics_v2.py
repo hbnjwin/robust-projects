@@ -2,6 +2,8 @@ import numpy as np
 
 def max_drawdown(equity):
     """最大回撤"""
+    if len(equity) == 0:
+        return 0.0
     peak = equity[0]
     max_dd = 0
     for v in equity:
@@ -12,6 +14,8 @@ def max_drawdown(equity):
 
 def annual_return(equity, days=252):
     """年化收益率"""
+    if len(equity) <= 1:
+        return 0.0
     total_return = equity[-1] / equity[0] - 1
     n = len(equity)
     if n <= 1:
