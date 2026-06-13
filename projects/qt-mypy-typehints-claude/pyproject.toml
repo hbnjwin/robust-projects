@@ -1,0 +1,42 @@
+[project]
+name = "qt_mypy_typehints"
+version = "0.1.0"
+
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+warn_unused_configs = true
+show_error_codes = true
+explicit_package_bases = true
+
+# 默认宽松：其他模块暂不检查
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["core.oms", "core.strategy", "analytics.metrics_v2"]
+disallow_untyped_defs = true
+
+[[tool.mypy.overrides]]
+module = [
+    "data.*",
+    "alpha.*",
+    "control.*",
+    "dao.*",
+    "execution.*",
+    "factor.*",
+    "factor_engine.*",
+    "factor_lib.*",
+    "live.*",
+    "ml.*",
+    "qlib_bridge.*",
+    # core/ 和 analytics/ 中尚未类型化的模块
+    "core.event",
+    "core.gateway",
+    "core.matcher",
+    "core.contract",
+    "core.datafeed",
+    "core.risk",
+    "core.portfolio_optimizer",
+    "analytics.metrics",
+]
+ignore_errors = true

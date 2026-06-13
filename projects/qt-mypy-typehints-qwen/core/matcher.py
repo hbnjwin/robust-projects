@@ -18,8 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.oms import OmsEngine, OrderSide, OrderStatus
-from core.contract import contract_manager
+from core.oms import OmsEngine, Order, OrderSide, OrderStatus
+from core.contract import contract_manager, ContractConfig
 from live.strategy_account import StrategyAccount
 
 
@@ -79,7 +79,17 @@ class DailyMatcher:
                 self._match_sell(order, price, volume, limit_down, account, date)
 
     # ── 买入撮合 ─────────────────────────────────────────────
-    def _match_buy(self, order, price, volume, limit_up, lot_size, cfg, account, date):
+    def _match_buy(
+        self,
+        order: Order,
+        price: float,
+        volume: float,
+        limit_up: float,
+        lot_size: int,
+        cfg: ContractConfig,
+        account: StrategyAccount,
+        date: str,
+    ) -> None:
         # 涨停不能买
         if price >= limit_up:
             self.oms.reject_order(order.order_id, reason="涨停无法买入")
@@ -129,7 +139,15 @@ class DailyMatcher:
             self.oms.reject_order(order.order_id, reason="账户买入失败")
 
     # ── 卖出撮合 ─────────────────────────────────────────────
-    def _match_sell(self, order, price, volume, limit_down, account, date):
+    def _match_sell(
+        self,
+        order: Order,
+        price: float,
+        volume: float,
+        limit_down: float,
+        account: StrategyAccount,
+        date: str,
+    ) -> None:
         # 跌停不能卖
         if price <= limit_down:
             self.oms.reject_order(order.order_id, reason="跌停无法卖出")

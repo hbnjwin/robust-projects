@@ -22,7 +22,7 @@ core/gateway.py — BaseGateway 抽象层
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
-from typing import Callable
+from typing import Any, Callable
 
 
 class BaseGateway(ABC):
@@ -56,7 +56,7 @@ class BaseGateway(ABC):
         pass
 
     @abstractmethod
-    def send_order(self, order) -> str:
+    def send_order(self, order: Any) -> str:
         """
         发送订单
         order: core.oms.Order 对象

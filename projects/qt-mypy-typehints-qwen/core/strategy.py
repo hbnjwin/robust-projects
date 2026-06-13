@@ -4,6 +4,8 @@ core/strategy.py — 统一策略基类
 向后兼容：旧策略的 generate(date, prices) 接口仍可用，
 通过 LegacyStrategyAdapter 包装后接入事件引擎。
 """
+from __future__ import annotations
+
 from abc import ABC, abstractmethod
 from typing import Any
 
@@ -66,7 +68,7 @@ class LegacyStrategyAdapter(BaseStrategy):
         self._strategy = legacy_strategy
 
     def on_bars(self, date: str, prices: dict) -> list[dict]:
-        return self._strategy.generate(date, prices)
+        return self._strategy.generate(date, prices)  # type: ignore[no-any-return]
 
     def warmup(self, date: str, prices: dict) -> None:
         """旧策略预热：调用 generate 但丢弃结果"""
