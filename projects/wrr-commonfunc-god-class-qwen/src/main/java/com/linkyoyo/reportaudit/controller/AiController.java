@@ -3,7 +3,7 @@ package com.linkyoyo.reportaudit.controller;
 import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import com.linkyoyo.reportaudit.config.AiConfig;
-import com.linkyoyo.reportaudit.support.CommonFunc;
+import com.linkyoyo.reportaudit.support.AiCallService;
 import com.linkyoyo.reportaudit.result.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -28,7 +28,7 @@ public class AiController {
     private AiConfig aiConfig;
 
     @Autowired
-    private CommonFunc commonFunc;
+    private AiCallService aiCallService;
 
     @Value("${paraSet.tempPath:temp}")
     private String tempPath;
@@ -52,7 +52,7 @@ public class AiController {
 
         log.info("处理后的内容长度: {}", content.length());
 
-        JSONObject result = CommonFunc.callAiWithOkHttp(content);
+        JSONObject result = aiCallService.callAiWithOkHttp(content);
 
         if (result.containsKey("error")) {
             log.error("调用Azure AI失败: {}", result.getStr("error"));
@@ -93,7 +93,7 @@ public class AiController {
 
         log.info("处理后的内容长度: {}", content.length());
 
-        JSONObject result = CommonFunc.callDeepSeekAi(content);
+        JSONObject result = aiCallService.callDeepSeekAi(content);
 
         if (result.containsKey("error")) {
             log.error("调用DeepSeek AI失败: {}", result.getStr("error"));
@@ -174,10 +174,10 @@ public class AiController {
             JSONObject result;
             if (useDeepSeek) {
                 log.info("使用DeepSeek AI解析Markdown文件: {}", originalFilename);
-                result = CommonFunc.callDeepSeekAi(markdownContent);
+                result = aiCallService.callDeepSeekAi(markdownContent);
             } else {
                 log.info("使用Azure AI解析Markdown文件: {}", originalFilename);
-                result = CommonFunc.callAiWithOkHttp(markdownContent);
+                result = aiCallService.callAiWithOkHttp(markdownContent);
             }
 
             if (result.containsKey("error")) {
@@ -235,7 +235,7 @@ public class AiController {
             }
 
             // 调用callAi方法解析内容
-            JSONObject result = commonFunc.callAi(markdownContent);
+            JSONObject result = aiCallService.callAi(markdownContent);
 
             if (result == null) {
                 return R.warning("AI解析失败，未能获取结果");
