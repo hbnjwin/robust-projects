@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "时间戳格式化"
+description = "[Explicit] 是否在tooltip的formatter中将Unix时间戳转换为HH:mm格式显示。1: tooltip直接显示原始时间戳数字; 2: 用Date对象但格式不含前导零如9:5而非09:05; 3: 格式化为HH:mm但仅在tooltip生效axisPointer未处理; 4: tooltip和axisPointer.label.formatter都使用统一的formatTimestamp函数; 5: 抽取为独立的时间格式化工具函数并处理了时区边界"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "TradingDesk.vue中tooltip.formatter使用formatTime()函数将Unix时间戳转为HH:mm格式，axisPointer也应用了相同的格式化逻辑"
+
+[[criterion]]
+name = "多系列Tooltip展示"
+description = "[Explicit] 是否修复tooltip只显示单个系列数据的问题，使hover时展示所有价格系列。1: tooltip仍只显示一条系列; 2: 显示多系列但格式混乱无对齐; 3: 多系列显示但颜色标记缺失; 4: formatter中遍历params数组拼接所有系列含圆点颜色标记; 5: 完整的多系列tooltip含颜色标记、数值对齐、单位显示和排序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "tooltip.formatter通过list.map遍历所有系列数据，每行包含marker颜色标记和seriesName加value，格式整齐"
+
+[[criterion]]
+name = "Y轴单位格式化"
+description = "[Explicit] 是否在Y轴标签上添加元/MWh单位并合理格式化价格数值。1: Y轴显示原始数字无单位; 2: 有单位但格式化不合理如小数位过多; 3: Y轴label.formatter添加了单位但精度不统一; 4: 统一的价格格式化函数处理Y轴和tooltip中的数值显示含固定小数位; 5: 价格格式化支持自动单位切换（分/元）和千分位分隔符"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Y轴axisLabel.formatter统一使用formatPrice函数添加元/MWh单位，tooltip中也调用相同函数保持小数位精度一致"
+
+[[criterion]]
+name = "数据源与类型定义"
+description = "[Implicit] 是否正确定义电价数据的TypeScript类型并确保时间轴数据点结构一致。1: 无类型定义使用any; 2: 有基本interface但字段类型不准确; 3: 类型定义正确但数据生成逻辑有偏差; 4: 完整的类型定义含时间戳和价格字段且数据生成逻辑与图表配置匹配; 5: 类型定义加数据校验加边界处理如跨日时间戳"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建priceData.ts集中管理电价数据类型和模拟数据生成，TypeScript接口定义清晰与TradingDesk.vue的图表配置匹配"
+
+[[criterion]]
+name = "ECharts配置完整性"
+description = "[Implicit] 是否确保ECharts option中tooltip、xAxis、yAxis、series的配置项相互一致无冲突。1: 配置项之间存在类型冲突导致渲染错误; 2: 基本配置正确但trigger和axisPointer设置不当; 3: tooltip.trigger为axis且axisPointer.type设置合理; 4: 完整配置含tooltip.trigger=axis、xAxis.type=time、series.type=line且相互匹配; 5: 配置含dataZoom、legend交互、动态刷新支持"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "tooltip.trigger=axis配合xAxis.type=time，series使用line类型，axisPointer.type=cross，配置项一致性良好"
