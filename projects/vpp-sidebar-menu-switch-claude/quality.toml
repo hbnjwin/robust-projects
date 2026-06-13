@@ -1,6 +1,6 @@
 [[criterion]]
 name = "keep-alive状态保持"
-description = "[Explicit] 是否用keep-alive包裹动态组件替代v-if，保持切换页面时表单状态不丢失。1: 仍用v-if切换页面状态全丢; 2: 用keep-alive但include配置错误导致部分页面未缓存; 3: keep-alive加component :is基本可用但max未设置可能缓存过多; 4: keep-alive含include白名单仅缓存需要保持状态的页面; 5: keep-alive加activated/deactivated钩子处理缓存页面的重新激活逻辑"
+description = "[Explicit] 是否用keep-alive包裹动态组件替代v-if保持切换页面时表单状态不丢失。1: 仍用v-if切换页面状态全丢; 2: 用keep-alive但include配置错误导致部分页面未缓存; 3: keep-alive加component :is基本可用但max未设置可能缓存过多; 4: keep-alive含include白名单仅缓存需要保持状态的页面; 5: keep-alive加activated/deactivated钩子处理缓存页面的重新激活逻辑"
 type = "likert"
 points = 5
 weight = 1.0
@@ -14,16 +14,16 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "NMenu绑定collapsed属性，配合n-layout-sider的collapse-mode=width确保折叠时宽度动画平滑，NaiveUI内部处理文字隐藏和图标居中"
+rationale = "NMenu绑定collapsed属性配合n-layout-sider的collapse-mode=width设置collapsed-width=64确保折叠时宽度动画平滑，NaiveUI内部处理文字隐藏和图标居中"
 
 [[criterion]]
-name = "菜单高亮同步"
-description = "[Explicit] 是否修复点击菜单切换页面后当前菜单项的高亮状态不更新的问题。1: 高亮状态不随页面切换更新; 2: 高亮更新但有闪烁延迟; 3: NMenu的value属性绑定到当前页面key但双向绑定方向不对; 4: v-model:value绑定activeMenu ref且在on-update:value回调中同步更新; 5: 菜单高亮加面包屑联动加页面标题同步更新"
+name = "刷新后菜单选中持久化"
+description = "[Explicit] 是否修复刷新页面后当前选中的菜单项丢失默认回到Dashboard的问题。1: 刷新后仍默认显示Dashboard选中项丢失; 2: 用sessionStorage但存取时机不对; 3: localStorage或sessionStorage保存当前菜单key但页面加载时恢复不完整; 4: watch监听activeMenu变化时存入localStorage且onMounted时读取恢复选中状态和对应页面; 5: 持久化加URL hash同步加浏览器前进后退支持"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "NMenu通过v-model:value双向绑定currentMenu ref，on-update:value回调中同步更新currentMenu触发component :is切换，高亮与页面始终一致"
+rationale = "App.vue中watch监听currentMenu变化时将值存入localStorage，onMounted时从localStorage读取上次选中的菜单key恢复选中状态并切换到对应页面组件"
 
 [[criterion]]
 name = "动态组件类型安全"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "viewMap使用Record<MenuKey, Component>定义，MenuKey为联合字面量类型，currentView通过computed从映射中取值类型安全"
+rationale = "viewMap使用Record<MenuKey, Component>定义MenuKey为联合字面量类型currentView通过computed从映射中取值类型安全"
 
 [[criterion]]
 name = "构建验证通过"
@@ -41,4 +41,4 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "TypeScript类型检查和Vite构建均通过无错误，tsconfig.json配置正确包含了所有新增文件"
+rationale = "TypeScript类型检查和Vite构建均通过无错误tsconfig.json配置正确包含了所有新增文件"
