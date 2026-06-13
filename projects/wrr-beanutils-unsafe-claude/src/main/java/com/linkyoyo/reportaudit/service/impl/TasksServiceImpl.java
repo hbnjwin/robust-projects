@@ -25,7 +25,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 import com.github.wenhao.jpa.Specifications;
 
-import org.springframework.beans.BeanUtils;
+import com.linkyoyo.reportaudit.mapper.CheckResultMapper;
+import com.linkyoyo.reportaudit.mapper.TasksMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -76,6 +77,12 @@ public class TasksServiceImpl implements TasksService {
     
     @Autowired
     private CheckItemsRepository checkItemsRepository;
+
+    @Autowired
+    private TasksMapper tasksMapper;
+
+    @Autowired
+    private CheckResultMapper checkResultMapper;
 
     @Override
     public PageInfo<TasksInfo> getTasksList(TasksQuery tasksQuery) {
@@ -152,8 +159,7 @@ public class TasksServiceImpl implements TasksService {
         final Map<Integer, ProjectInfo> finalProjectInfoMap = projectInfoMap;
         List<TasksInfo> tasksInfoList = tasksPageInfo.getList().stream()
                 .map(tasks -> {
-                    TasksInfo tasksInfo = new TasksInfo();
-                    BeanUtils.copyProperties(tasks, tasksInfo);
+                    TasksInfo tasksInfo = tasksMapper.toInfo(tasks);
                     
                     // 填充待审报告就绪状态
                     if (tasks.getOriginalDocId() != null) {
@@ -205,8 +211,7 @@ public class TasksServiceImpl implements TasksService {
     @Override
     public Tasks createOrUpdate(TasksInfo tasksInfo) {
         if (Objects.isNull(tasksInfo.getId())) {
-            Tasks tasks = Tasks.builder().build();
-            BeanUtils.copyProperties(tasksInfo, tasks);
+            Tasks tasks = tasksMapper.toEntity(tasksInfo);
 
             // 获取当前用户信息
             com.linkyoyo.reportaudit.entity.SysOperator currentUser = SysUserUtils.currentUser();
@@ -271,8 +276,7 @@ public class TasksServiceImpl implements TasksService {
                 // 保存新的CheckResult数据
                 List<CheckResultInfo> checkResultList = tasksInfo.getCheckResultList();
                 for (CheckResultInfo checkResultInfo : checkResultList) {
-                    CheckResult checkResult = CheckResult.builder().build();
-                    BeanUtils.copyProperties(checkResultInfo, checkResult);
+                    CheckResult checkResult = checkResultMapper.toEntity(checkResultInfo);
                     checkResult.setTaskId(tasks.getId());
                     checkResultRepository.save(checkResult);
                 }
@@ -290,8 +294,7 @@ public class TasksServiceImpl implements TasksService {
                 // 保存新的TasksCheckItems数据
                 List<TasksCheckItemsInfo> tasksCheckItemsList = tasksInfo.getTasksCheckItemsList();
                 for (TasksCheckItemsInfo tasksCheckItemsInfo : tasksCheckItemsList) {
-                    TasksCheckItems tasksCheckItems = TasksCheckItems.builder().build();
-                    BeanUtils.copyProperties(tasksCheckItemsInfo, tasksCheckItems);
+                    TasksCheckItems tasksCheckItems = tasksMapper.checkItemsToEntity(tasksCheckItemsInfo);
                     tasksCheckItems.setTaskId(tasks.getId());
                     tasksCheckItemsRepository.save(tasksCheckItems);
                 }
@@ -301,8 +304,7 @@ public class TasksServiceImpl implements TasksService {
             entityManager.clear();
             Tasks tasks = tasksRepository.findById(tasksInfo.getId()).orElse(null);
             if (tasks != null) {
-                BeanUtils.copyProperties(tasksInfo, tasks, "title","status","createdAt", "updatedAt", "startedAt", 
-                        "completedAt", "result", "error", "creater", "deptId", "operatorCode", "progress");
+                tasksMapper.updateEntitySelective(tasksInfo, tasks);
                 tasks.setUpdatedAt(LocalDateTime.now());
                 // 设置原文件名称 - 根据original_doc_id查询Documents表
                 if (Objects.nonNull(tasks.getOriginalDocId())) {
@@ -345,8 +347,7 @@ public class TasksServiceImpl implements TasksService {
                 // 保存新的CheckResult数据
                 List<CheckResultInfo> checkResultList = tasksInfo.getCheckResultList();
                 for (CheckResultInfo checkResultInfo : checkResultList) {
-                    CheckResult checkResult = CheckResult.builder().build();
-                    BeanUtils.copyProperties(checkResultInfo, checkResult);
+                    CheckResult checkResult = checkResultMapper.toEntity(checkResultInfo);
                     checkResult.setTaskId(tasks.getId());
                     checkResultRepository.save(checkResult);
                 }
@@ -364,8 +365,7 @@ public class TasksServiceImpl implements TasksService {
                 // 保存新的TasksCheckItems数据
                 List<TasksCheckItemsInfo> tasksCheckItemsList = tasksInfo.getTasksCheckItemsList();
                 for (TasksCheckItemsInfo tasksCheckItemsInfo : tasksCheckItemsList) {
-                    TasksCheckItems tasksCheckItems = TasksCheckItems.builder().build();
-                    BeanUtils.copyProperties(tasksCheckItemsInfo, tasksCheckItems);
+                    TasksCheckItems tasksCheckItems = tasksMapper.checkItemsToEntity(tasksCheckItemsInfo);
                     tasksCheckItems.setTaskId(tasks.getId());
                     tasksCheckItemsRepository.save(tasksCheckItems);
                 }
@@ -379,9 +379,9 @@ public class TasksServiceImpl implements TasksService {
     public TasksInfo getTasksDetail(String id) {
         entityManager.clear();
         Tasks tasks = tasksRepository.findById(id).orElse(null);
-        TasksInfo tasksInfo = new TasksInfo();
-        if (Objects.nonNull(tasks))
-           BeanUtils.copyProperties(tasks, tasksInfo);
+        TasksInfo tasksInfo = Objects.nonNull(tasks)
+            ? tasksMapper.toInfo(tasks)
+            : new TasksInfo();
 
         // 查询CheckResult明细数据
         List<CheckResult> checkResultList = checkResultRepository.findAll(
@@ -392,11 +392,7 @@ public class TasksServiceImpl implements TasksService {
 
         // 转换为Info对象
         List<CheckResultInfo> checkResultListInfo = checkResultList.stream()
-            .map(item -> {
-                CheckResultInfo info = new CheckResultInfo();
-                BeanUtils.copyProperties(item, info);
-                return info;
-            })
+            .map(checkResultMapper::toInfo)
          .collect(Collectors.toList());
 
         tasksInfo.setCheckResultList(checkResultListInfo);
@@ -409,11 +405,7 @@ public class TasksServiceImpl implements TasksService {
 
         // 转换为Info对象
         List<TasksCheckItemsInfo> tasksCheckItemsListInfo = tasksCheckItemsList.stream()
-            .map(item -> {
-                TasksCheckItemsInfo info = new TasksCheckItemsInfo();
-                BeanUtils.copyProperties(item, info);
-                return info;
-            })
+            .map(tasksMapper::checkItemsToInfo)
             .collect(Collectors.toList());
         // 处理引用文档列表 - 解析referenceDocId JSONB字段
         List<ReferenceDocInfo> listReferenceDoc = new ArrayList<>();
