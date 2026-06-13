@@ -39,11 +39,12 @@ const { userInfo } = storeToRefs(useUserinfoStore())
 const router = useRouter()
 const route = useRoute()
 const routes = computed(() => {
-	// 递归处理路由，过滤掉hidden为true的项，并处理其子路由
+	const menus = userInfo.value?.menus || []
+	// 递归处理路由，过滤掉hidden为true的项和无权限的项，并处理其子路由
 	const filterRoutes = (routeList) => {
 		return (
 			routeList
-				.filter((item) => !item.hidden) // 过滤当前层级中hidden为true的路由
+				.filter((item) => !item.hidden && (!item.auth || menus.includes(item.auth))) // 过滤hidden和无权限的路由
 				.map((item) => {
 					// 如果有子路由，递归处理子路由
 					if (item.children && item.children.length > 0) {
