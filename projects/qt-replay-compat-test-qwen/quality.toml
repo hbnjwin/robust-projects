@@ -1,0 +1,53 @@
+[[criterion]]
+name = "v4与v5净值曲线一致性"
+description = "[Explicit] 是否用mock数据构造30交易日MA交叉信号，分别跑v4和v5验证相同参数下净值曲线一致。1: 未构造对比测试；2: 仅跑了v5未对比v4；3: 对比了但mock数据信号不够清晰（无明确交叉点）；4: 构造清晰MA交叉信号，v4和v5在相同参数下净值曲线长度和数值一致；5: 额外验证了持仓序列和交易记录的一致性。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "构造了30天行情数据分别跑v4和v5引擎，验证净值曲线长度一致，但MA交叉信号的构造不够显式，依赖随机数据而非确定性交叉点。"
+
+[[criterion]]
+name = "drawdown_limit仓位强制降低"
+description = "[Explicit] 是否测试MasterPortfolio集成——组合回撤触及drawdown_limit时策略仓位是否被强制降低。1: 未测试drawdown_limit功能；2: 设置了drawdown_limit但未验证仓位变化；3: 验证了仓位降低但未检查具体降低幅度；4: 验证回撤触及阈值后仓位被强制降至配置比例，恢复后可重新开仓；5: 额外测试了阈值边界（恰好触及和未触及）的行为差异。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "设置了drawdown_limit参数运行v5引擎，但对仓位是否被实际降低的验证不充分，缺少对MasterPortfolio内部状态的检查。"
+
+[[criterion]]
+name = "CRISIS模式开仓限制"
+description = "[Explicit] 是否测试RegimeDetectorV2在CRISIS模式下正确限制了开仓行为。1: 未测试RegimeDetector；2: 测试了regime检测但未验证开仓限制；3: 验证了CRISIS模式被触发但未检查开仓是否被阻止；4: 构造触发CRISIS的行情，验证该状态下新开仓信号被忽略或缩减；5: 额外测试了CRISIS模式退出后开仓恢复和不同regime之间的转换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "在测试中配置了RegimeDetectorV2但对CRISIS模式的触发条件构造不够精确，未明确验证开仓被限制的具体行为。"
+
+[[criterion]]
+name = "conftest mock数据工厂"
+description = "[Implicit] 是否在conftest.py中提供可复用的mock数据构造工具（行情生成、信号生成、引擎工厂）。1: 无conftest或工具函数；2: conftest仅有基础fixture无数据工厂；3: 提供了行情生成但缺少信号和引擎工厂；4: conftest提供行情生成（支持多种模式）、ML信号构造、引擎快速创建三类工具；5: 数据工厂支持参数化配置（股票数、天数、信号模式）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "conftest.py提供了vnpy mock和make_market_data行情生成，但信号构造和引擎工厂的参数化不够灵活，仅支持crossover一种模式。"
+
+[[criterion]]
+name = "slow标记可选跳过"
+description = "[Explicit] 是否用pytest.mark.slow标记耗时测试，支持-m \"not slow\"跳过。1: 未添加任何mark标记；2: 添加了mark但名称不是slow；3: 标记了slow但未验证跳过功能；4: 全部回归测试标记slow，-m \"not slow\"可正确跳过到快速用例；5: 同时在pytest.ini注册了slow标记消除warning。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "部分测试标记了pytest.mark.slow，但验证-m \"not slow\"跳过时输出显示跳过的测试数量与预期不完全一致。"
+
+[[criterion]]
+name = "vnpy依赖隔离"
+description = "[Implicit] 是否通过mock或stub隔离了vnpy库依赖，使测试在未安装vnpy的环境下可运行。1: 测试依赖真实vnpy安装；2: 部分mock但仍有import vnpy失败；3: mock了EventEngine但其他vnpy组件仍报错；4: 完整mock vnpy.event模块，测试无需安装vnpy即可运行；5: mock覆盖了vnpy全部被引用的子模块和类型。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在conftest中mock了vnpy的EventEngine，但未完整处理vnpy.event模块的导入，部分测试环境下仍需vnpy包存在。"
