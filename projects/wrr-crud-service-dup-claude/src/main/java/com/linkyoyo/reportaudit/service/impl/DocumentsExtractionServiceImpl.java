@@ -9,50 +9,40 @@ import com.linkyoyo.reportaudit.service.DocumentsExtractionService;
 import com.linkyoyo.reportaudit.support.CommonFunc;
 import com.linkyoyo.reportaudit.util.PageableUtil;
 
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
 import java.util.Objects;
 
 @Service
-public class DocumentsExtractionServiceImpl implements DocumentsExtractionService {
-
-    @Autowired
-    private EntityManager entityManager;
+public class DocumentsExtractionServiceImpl extends AbstractCrudServiceImpl<DocumentsExtraction, DocumentsExtractionInfo, Integer>
+        implements DocumentsExtractionService {
 
     @Autowired
     private DocumentsExtractionRepository documentsExtractionRepository;
 
+    @Override
+    protected JpaRepository<DocumentsExtraction, Integer> getRepository() {
+        return documentsExtractionRepository;
+    }
 
+    @Override
+    protected DocumentsExtraction newEntity() {
+        return DocumentsExtraction.builder().build();
+    }
+
+    @Override
+    protected Integer getInfoId(DocumentsExtractionInfo info) {
+        return info.getId();
+    }
 
     @Override
     public PageInfo<DocumentsExtraction> getDocumentsExtractionList(DocumentsExtractionQuery documentsExtractionQuery) {
         Pageable pageable = PageableUtil.build(documentsExtractionQuery);
         return PageableUtil.info(documentsExtractionRepository.findAll(CommonFunc.<DocumentsExtraction>getWhere(documentsExtractionQuery), pageable));
-    }
-
-    @Override
-    public DocumentsExtraction createOrUpdate(DocumentsExtractionInfo documentsExtractionInfo) {
-        if (Objects.isNull(documentsExtractionInfo.getId())) {
-            DocumentsExtraction documentsExtraction = DocumentsExtraction.builder().build();
-            BeanUtils.copyProperties(documentsExtractionInfo, documentsExtraction);
-            documentsExtraction = documentsExtractionRepository.save(documentsExtraction);
-            // TODO: 保存明细数据
-            return documentsExtraction;
-        } else {
-            entityManager.clear();
-            DocumentsExtraction documentsExtraction = documentsExtractionRepository.findById(documentsExtractionInfo.getId()).orElse(null);
-            if (documentsExtraction != null) {
-                BeanUtils.copyProperties(documentsExtractionInfo, documentsExtraction);
-                documentsExtraction = documentsExtractionRepository.save(documentsExtraction);
-            // TODO: 保存明细数据
-            }
-            return documentsExtraction;
-        }
     }
 
     @Override

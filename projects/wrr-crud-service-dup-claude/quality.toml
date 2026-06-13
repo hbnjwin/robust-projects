@@ -1,0 +1,53 @@
+[[criterion]]
+name = "createOrUpdate模板提取"
+description = "[Explicit] 是否将6个服务类共享的createOrUpdate模式（判空区分新增修改、BeanUtils拷贝、save、子表先删后增）提取为可复用模板。1: 未提取模板；2: 提取了部分逻辑但核心模式仍需每个类自行实现；3: 提取了基类但新增和修改分支的公共逻辑不完整；4: 通过泛型基类或模板方法完整封装了createOrUpdate的骨架逻辑；5: 泛型基类覆盖id判空、属性拷贝、save、子表处理全流程，子类只需实现钩子方法。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "创建了AbstractCrudServiceImpl泛型基类，完整封装createOrUpdate的模板逻辑，提供beforeCreate、beforeUpdate、getUpdateExcludeProperties、getChildTableHandlers四个钩子方法，子类只需实现差异化钩子即可。"
+
+[[criterion]]
+name = "子表删除重建统一"
+description = "[Explicit] 是否将TasksServiceImpl中createOrUpdate新增分支和修改分支中重复的子表保存逻辑（CheckResult和TasksCheckItems的删除-重建）统一提取。1: 未处理子表逻辑重复；2: 识别了重复但未提取；3: 提取了部分子表逻辑；4: 通过工具类或函数式接口统一了子表的先删后增模式；5: 提供了通用的ChildTableHandler机制，支持任意数量子表的声明式配置。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了ChildTableHandler函数式接口，封装子表先删后建逻辑，通过getChildTableHandlers钩子方法支持声明式配置子表处理。"
+
+[[criterion]]
+name = "六个服务类改造"
+description = "[Explicit] 是否将全部六个服务实现类（CheckResultServiceImpl、DocumentsExtractionServiceImpl、ExtractionResultServiceImpl、ExtractionTasksServiceImpl、TasksServiceImpl、DocumentsServiceImpl）都改造为使用新的基类或模板。1: 未改造任何服务类；2: 改造了1-2个；3: 改造了3-4个；4: 改造了5个；5: 全部6个服务类都完成改造。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "全部六个服务实现类都完成改造，继承AbstractCrudServiceImpl并实现相应钩子。"
+
+[[criterion]]
+name = "泛型类型参数设计"
+description = "[Implicit] 是否为基类设计了合理的泛型参数（如Entity类型、Info或DTO类型、ID类型、Repository类型），使类型安全得到保证。1: 未使用泛型；2: 使用了泛型但类型参数不完整；3: 泛型参数覆盖Entity和Info但缺少Repository的泛型约束；4: 完整的泛型参数设计，编译时类型安全；5: 泛型参数完整且添加了类型边界约束（如extends JpaRepository）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用了泛型参数覆盖Entity、Info和ID类型，通过钩子方法保证类型安全。"
+
+[[criterion]]
+name = "样板代码消除程度"
+description = "[Explicit] 是否有效减少了各服务类中createOrUpdate的样板代码行数。1: 样板代码基本未减少；2: 减少不到30%；3: 减少30-50%；4: 减少50-70%；5: 各服务类的createOrUpdate相关代码减少70%以上，仅保留业务差异化逻辑。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "各服务类的createOrUpdate核心样板逻辑已完全提取到AbstractCrudServiceImpl，子类仅需实现差异化的钩子方法（如getUpdateExcludeProperties和getChildTableHandlers），样板代码大幅减少。"
+
+[[criterion]]
+name = "新增实体扩展验证"
+description = "[Implicit] 是否验证或说明了新增业务实体时只需继承基类即可获得完整CRUD能力，无需再复制样板代码。1: 未考虑扩展性；2: 提到了扩展性但未验证；3: 说明了扩展方式但缺少示例；4: 在总结中明确说明了新增实体的接入步骤；5: 提供了新增实体的完整接入示例或模板。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "基类设计合理但未在总结中提供新增实体的接入示例或步骤说明。"
