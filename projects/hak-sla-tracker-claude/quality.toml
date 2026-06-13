@@ -1,0 +1,44 @@
+[[criterion]]
+name = "工作时间计算算法"
+description = "[Explicit] 是否分析了SLA只计工作日9-18时且排除节假日的剩余时间计算方式。1: 未分析时间计算；2: 描述了工作时间概念但算法不清楚；3: 分析了基本算法但跨日跨周场景处理不完整；4: 完整分析了跨工作日的分段计时算法；5: 算法分析完整且处理了节假日、调休日和时区差异"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在sla_tracker.py中完整分析了_add_work_minutes方法的分段计时算法——从创建时间开始，如果当前在工作时间内则计入剩余分钟，到18时后跳到下一工作日9时继续，遇到周末和holiday_calendar中的节假日自动跳过。并用具体示例演示了周五17时30分创建P1工单的时间计算"
+
+[[criterion]]
+name = "挂起恢复计时逻辑"
+description = "[Explicit] 是否分析了工单挂起暂停SLA和恢复后续接计时的逻辑。1: 未分析挂起恢复；2: 描述了挂起概念但续接逻辑不清楚；3: 分析了暂停但恢复后从0重新计时的bug未识别；4: 准确识别了恢复后应续接剩余时间而非重新计算的问题；5: 挂起恢复分析完整且处理了多次挂起恢复的累计时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在resume_sla方法中定位了bug——恢复后used_time被重置为0而非从pause_time记录的已用时间继续累加。正确逻辑应为resumed_remaining = paused_remaining（挂起时刻的剩余时间），而当前代码重新调用calculate_remaining从ticket.created_at算起"
+
+[[criterion]]
+name = "周五工单时间计算bug"
+description = "[Explicit] 是否定位了周五17时30分创建P1工单显示剩余30分钟的bug根因。1: 未分析该bug；2: 提到了bug但未定位；3: 分析了可能原因但不精确；4: 准确定位到计时不跳过周末直接用自然时间计算的代码bug；5: 根因定位精确且给出了修复方案和边界测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在_add_work_minutes方法中精确定位了bug——工作日判断用的是Python的weekday()方法但是在计算总分钟数时直接用了(deadline-created_at).total_seconds()/60的自然时间差而非分段累加工作时间。周五17时30分创建时到18时只有30分钟工作时间，周末不应计入但代码把48小时自然时间也算了进去"
+
+[[criterion]]
+name = "预警通知时间控制"
+description = "[Explicit] 是否分析了预警通知在凌晨2点误发给值班经理的根因。1: 未分析通知问题；2: 提到了通知但未分析时间控制；3: 分析了通知触发但发送时间限制的缺失未指出；4: 准确指出了通知发送逻辑缺少工作时间窗口判断；5: 根因分析精确且给出了通知队列和延迟发送方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了预警触发的定时检查任务check_sla_breach每5分钟扫描一次即将超时的工单并调用send_notification，该方法直接发送邮件没有判断当前时间是否在工作时间(9-18时)内。建议增加is_work_hour()判断，非工作时间的通知写入pending_notifications队列延迟到次日9时发送"
+
+[[criterion]]
+name = "SLA升级通知机制"
+description = "[Implicit] 是否分析了SLA即将超时和已超时的多级通知升级策略。1: 未分析升级策略；2: 描述了通知但未分析升级层级；3: 分析了预警通知但超时后每小时催办的逻辑不完整；4: 分析了30%预警和超时后每小时催办的双层通知策略；5: 通知策略分析完整含升级层级（处理人→组长→经理）和去重机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了双层通知策略——剩余时间≤30%时发first_warning给处理人，超时后每小时发escalation通知给上级（通过escalation_chain配置的升级路径依次通知组长→经理→总监）。通知去重通过last_notified_at字段确保同一级别通知间隔≥1小时"
