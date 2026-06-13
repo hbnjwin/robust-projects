@@ -9,14 +9,14 @@ import org.springframework.context.annotation.Configuration;
 @Configuration
 public class BlueCloudAiConfig {
     // API URLs - Injected from properties or defaults
-    @Value("${bluecloud.ai.upload-api-url:https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/files/upload}")
+    @Value("${bluecloud.ai.upload-api-url:}")
     private String uploadApiUrl;
 
-    @Value("${bluecloud.ai.markdown-api-url:https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/files/markdown}")
+    @Value("${bluecloud.ai.markdown-api-url:}")
     private String markdownApiUrl;
 
-    // Auth Token - Injected from properties or defaults
-    @Value("${bluecloud.ai.auth-token:Bearer REDACTED_JWT_TOKEN}")
+    // Auth Token - MUST be provided via external configuration (application.yml or env variable)
+    @Value("${bluecloud.ai.auth-token:}")
     private String authToken;
 
     // Provider settings - Injected from properties or defaults
