@@ -260,7 +260,7 @@ public class DynamicLLMService {
                 .add("Content-Type", "application/json")
                 .add("Authorization", "Bearer " + config.getToken());
             
-            // 构建请求体（参考CommonFunc.callAi方法的格式）
+            // 构建请求体（参考AiCallService.callAi方法的格式）
             JSONObject requestJson = buildLinkyoyoAgentRequest(userMessage, temperature, maxTokens, model);
             
             RequestBody requestBody = RequestBody.create(
@@ -316,7 +316,7 @@ public class DynamicLLMService {
     }
     
     /**
-     * 构建Linkyoyo Agent请求体（参考CommonFunc.callAi方法）
+     * 构建Linkyoyo Agent请求体（参考AiCallService.callAi方法）
      */
     private JSONObject buildLinkyoyoAgentRequest(String query, Float temperature, Integer maxTokens, String model) {
         JSONObject requestJson = new JSONObject();
