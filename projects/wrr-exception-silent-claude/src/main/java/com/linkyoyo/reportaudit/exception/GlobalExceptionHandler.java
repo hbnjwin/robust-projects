@@ -9,6 +9,8 @@ import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.ResponseBody;
@@ -100,7 +102,29 @@ public class GlobalExceptionHandler {
         return R.error(CodeMsg.FILE_UPLOAD_ERROR.fillArgs(e.getMessage()));
     }
 
+    @ExceptionHandler(EntityNotFoundException.class)
+    @ResponseBody
+    private ResponseEntity<R> entityNotFoundException(EntityNotFoundException e) {
+        log.warn("实体未找到: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(R.error(new CodeMsg(404, e.getMessage())));
+    }
 
+    @ExceptionHandler(ServiceUnavailableException.class)
+    @ResponseBody
+    private ResponseEntity<R> serviceUnavailableException(ServiceUnavailableException e) {
+        log.error("外部服务不可用: {}", e.getMessage(), e);
+        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
+                .body(R.error(new CodeMsg(503, e.getMessage())));
+    }
+
+    @ExceptionHandler(InvalidInputException.class)
+    @ResponseBody
+    private ResponseEntity<R> invalidInputException(InvalidInputException e) {
+        log.warn("无效输入: {}", e.getMessage());
+        return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                .body(R.error(new CodeMsg(400, e.getMessage())));
+    }
 
     @ExceptionHandler(BizException.class)
     @ResponseBody

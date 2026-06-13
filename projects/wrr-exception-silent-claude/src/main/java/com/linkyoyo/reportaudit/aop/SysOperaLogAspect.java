@@ -59,11 +59,9 @@ public class SysOperaLogAspect {
             Object obj =request.getSession().getAttribute("sysUser");
             if  (obj != null)
                 sysOperator = objectMapper.readValue(obj.toString(), SysOperator.class);
-        }catch (Exception e)
-        {
-
+        } catch (Exception e) {
+            log.warn("操作日志切面获取登录用户信息失败, 将以匿名用户记录日志", e);
         }
-
 
         StopWatch sw = new StopWatch();
         sw.start();
@@ -94,7 +92,7 @@ public class SysOperaLogAspect {
                             title = title.concat("--新增");
                     }
                 } catch (Exception e) {
-
+                    log.warn("操作日志切面解析请求体JSON失败, 跳过操作类型判断: {}", e.getMessage());
                 }
             }
 
@@ -123,7 +121,7 @@ public class SysOperaLogAspect {
         return obj;
         }
         catch (Exception e){
-            log.error("日志记录失败",e.getMessage());
+            log.error("日志记录失败", e);
 
         }
         return obj;

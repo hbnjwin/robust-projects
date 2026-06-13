@@ -1,6 +1,7 @@
 package com.linkyoyo.reportaudit.service.impl;
 
 import com.linkyoyo.reportaudit.entity.ExtractionTasks;
+import com.linkyoyo.reportaudit.exception.EntityNotFoundException;
 import com.linkyoyo.reportaudit.info.ExtractionTasksInfo;
 import com.linkyoyo.reportaudit.info.PageInfo;
 import com.linkyoyo.reportaudit.query.ExtractionTasksQuery;
@@ -103,72 +104,66 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
             return extractionTasks;
         } else {
             entityManager.clear();
-            Optional<ExtractionTasks> optionalExtractionTasks = extractionTasksRepository.findById(extractionTasksInfo.getId());
-            if (optionalExtractionTasks.isPresent()) {
-                ExtractionTasks extractionTasks = optionalExtractionTasks.get();
-                BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
-                // 更新时间
-                extractionTasks.setUpdatedAt(LocalDateTime.now());
-                extractionTasks = extractionTasksRepository.save(extractionTasks);
+            ExtractionTasks extractionTasks = extractionTasksRepository.findById(extractionTasksInfo.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("抽取任务", extractionTasksInfo.getId()));
+            BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
+            // 更新时间
+            extractionTasks.setUpdatedAt(LocalDateTime.now());
+            extractionTasks = extractionTasksRepository.save(extractionTasks);
 
-                // 保存ExtractionResult明细数据
-                if (Objects.nonNull(extractionTasksInfo.getExtractionResultList())) {
-                    // 先删除原有的ExtractionResult数据
-                    List<ExtractionResult> existingExtractionResultList = extractionResultRepository.findAll(
-                        Specifications.<ExtractionResult>and()
-                            .eq("taskId", extractionTasks.getId())
-                            .build()
-                    );
-                    extractionResultRepository.deleteAll(existingExtractionResultList);
+            // 保存ExtractionResult明细数据
+            if (Objects.nonNull(extractionTasksInfo.getExtractionResultList())) {
+                // 先删除原有的ExtractionResult数据
+                List<ExtractionResult> existingExtractionResultList = extractionResultRepository.findAll(
+                    Specifications.<ExtractionResult>and()
+                        .eq("taskId", extractionTasks.getId())
+                        .build()
+                );
+                extractionResultRepository.deleteAll(existingExtractionResultList);
 
-                    // 保存新的ExtractionResult数据
-                    List<ExtractionResultInfo> extractionResultList = extractionTasksInfo.getExtractionResultList();
-                    for (ExtractionResultInfo extractionResultInfo : extractionResultList) {
-                        ExtractionResult extractionResult = ExtractionResult.builder().build();
-                        BeanUtils.copyProperties(extractionResultInfo, extractionResult);
-                        extractionResult.setTaskId(extractionTasks.getId());
-                        extractionResultRepository.save(extractionResult);
-                    }
+                // 保存新的ExtractionResult数据
+                List<ExtractionResultInfo> extractionResultList = extractionTasksInfo.getExtractionResultList();
+                for (ExtractionResultInfo extractionResultInfo : extractionResultList) {
+                    ExtractionResult extractionResult = ExtractionResult.builder().build();
+                    BeanUtils.copyProperties(extractionResultInfo, extractionResult);
+                    extractionResult.setTaskId(extractionTasks.getId());
+                    extractionResultRepository.save(extractionResult);
                 }
-                // 保存ExtractionTasksItems明细数据
-                if (Objects.nonNull(extractionTasksInfo.getExtractionTasksItemsList())) {
-                    // 先删除原有的ExtractionTasksItems数据
-                    List<ExtractionTasksItems> existingExtractionTasksItemsList = extractionTasksItemsRepository.findAll(
-                        Specifications.<ExtractionTasksItems>and()
-                            .eq("extractionTaskId", extractionTasks.getId())
-                            .build()
-                    );
-                    extractionTasksItemsRepository.deleteAll(existingExtractionTasksItemsList);
-
-                    // 保存新的ExtractionTasksItems数据
-                    List<ExtractionTasksItemsInfo> extractionTasksItemsList = extractionTasksInfo.getExtractionTasksItemsList();
-                    for (ExtractionTasksItemsInfo extractionTasksItemsInfo : extractionTasksItemsList) {
-                        ExtractionTasksItems extractionTasksItems = ExtractionTasksItems.builder().build();
-                        BeanUtils.copyProperties(extractionTasksItemsInfo, extractionTasksItems);
-                        extractionTasksItems.setExtractionTaskId(extractionTasks.getId());
-                        extractionTasksItemsRepository.save(extractionTasksItems);
-                    }
-                }
-                return extractionTasks;
             }
-            return null;
+            // 保存ExtractionTasksItems明细数据
+            if (Objects.nonNull(extractionTasksInfo.getExtractionTasksItemsList())) {
+                // 先删除原有的ExtractionTasksItems数据
+                List<ExtractionTasksItems> existingExtractionTasksItemsList = extractionTasksItemsRepository.findAll(
+                    Specifications.<ExtractionTasksItems>and()
+                        .eq("extractionTaskId", extractionTasks.getId())
+                        .build()
+                );
+                extractionTasksItemsRepository.deleteAll(existingExtractionTasksItemsList);
+
+                // 保存新的ExtractionTasksItems数据
+                List<ExtractionTasksItemsInfo> extractionTasksItemsList = extractionTasksInfo.getExtractionTasksItemsList();
+                for (ExtractionTasksItemsInfo extractionTasksItemsInfo : extractionTasksItemsList) {
+                    ExtractionTasksItems extractionTasksItems = ExtractionTasksItems.builder().build();
+                    BeanUtils.copyProperties(extractionTasksItemsInfo, extractionTasksItems);
+                    extractionTasksItems.setExtractionTaskId(extractionTasks.getId());
+                    extractionTasksItemsRepository.save(extractionTasksItems);
+                }
+            }
+            return extractionTasks;
         }
     }
 
     @Override
     public ExtractionTasks getExtractionTasksDetail(String id) {
         entityManager.clear();
-        Optional<ExtractionTasks> optionalExtractionTasks = extractionTasksRepository.findById(id);
-        if (optionalExtractionTasks.isPresent()) {
-            return optionalExtractionTasks.get();
-        }
-        return null;
+        return extractionTasksRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("抽取任务", id));
     }
 
     @Override
     public void markDeleted(String id) {
         ExtractionTasks extractionTasks = extractionTasksRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("未找到ID为 " + id + " 的抽取任务"));
+                .orElseThrow(() -> new EntityNotFoundException("抽取任务", id));
         extractionTasks.setDelFlag(Boolean.TRUE);
         extractionTasks.setUpdatedAt(LocalDateTime.now());
         extractionTasksRepository.save(extractionTasks);

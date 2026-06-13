@@ -1,0 +1,62 @@
+[[criterion]]
+name = "SysUserUtils静默异常修复"
+description = "[Explicit] 是否修复了SysUserUtils.currentUser()中catch块静默吞掉异常并返回空SysOperator的问题，使调用方能区分未登录和会话数据损坏。1: 未修改SysUserUtils；2: 添加了日志但仍返回空对象；3: 添加了日志并对部分异常抛出；4: 区分了未登录（返回空对象）和会话损坏（抛出BizException），添加了@Slf4j日志记录；5: 完整区分两种情况并在异常信息中包含诊断细节。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改了SysUserUtils.currentUser()，添加@Slf4j记录日志，区分了session属性为null（返回空SysOperator表示未登录）和异常（抛出BizException表示会话数据损坏）两种情况。"
+
+[[criterion]]
+name = "SysOperaLogAspect空catch修复"
+description = "[Explicit] 是否修复了SysOperaLogAspect中三个完全空的catch块（62-65、96-98、125-128行），使审计日志保存失败时有日志记录。1: 未修改任何catch块；2: 只修改了1个catch块；3: 修改了2个；4: 三个catch块都添加了日志记录；5: 三个catch块都添加了log.error并传入异常对象，且不影响业务主流程。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改了SysOperaLogAspect中三个空catch块，添加了log.error记录审计日志保存失败的异常信息，确保不影响业务主流程的执行。"
+
+[[criterion]]
+name = "自定义异常层次建立"
+description = "[Explicit] 是否创建了至少3个自定义异常类来区分不同的业务错误场景（如EntityNotFoundException对应404、ServiceUnavailableException对应503、InvalidInputException对应400）。1: 未创建任何自定义异常；2: 只创建了1个通用异常；3: 创建了2个自定义异常；4: 创建了3-4个覆盖主要场景的自定义异常；5: 创建了完整的异常层次并包含基类BizException。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了BizException（业务异常基类）、EntityNotFoundException（404）、ServiceUnavailableException（503）、InvalidInputException（400）四个自定义异常类。"
+
+[[criterion]]
+name = "GlobalExceptionHandler增强"
+description = "[Explicit] 是否增强了全局异常处理器，为新的自定义异常类添加了对应的@ExceptionHandler方法并返回正确的HTTP状态码。1: 未修改GlobalExceptionHandler；2: 添加了1个handler；3: 添加了2个handler；4: 为所有新异常类都添加了handler并返回正确状态码（404/503/400）；5: handler使用ResponseEntity返回正确状态码且响应格式与已有handler一致。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "为GlobalExceptionHandler添加了三个@ExceptionHandler方法，分别处理EntityNotFoundException(404)、ServiceUnavailableException(503)、InvalidInputException(400)，使用ResponseEntity返回正确HTTP状态码。"
+
+[[criterion]]
+name = "实体未找到异常替换"
+description = "[Explicit] 是否将ExtractionTasksServiceImpl和CheckResultServiceImpl中实体未找到时返回null的逻辑改为抛出EntityNotFoundException。1: 未修改返回null的逻辑；2: 只修改了一个类；3: 两个类都修改但异常信息不够明确；4: 两个类都改为抛出EntityNotFoundException并包含实体ID信息；5: 所有服务类中返回null的逻辑都检查并替换为明确异常。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将ExtractionTasksServiceImpl第154行和CheckResultServiceImpl第48行实体未找到时返回null的逻辑替换为抛出EntityNotFoundException，异常信息包含实体ID便于定位。"
+
+[[criterion]]
+name = "HTTP状态码语义区分"
+description = "[Implicit] 是否在异常层次设计中考虑了HTTP状态码的语义区分，使全局异常处理器能将文档未找到映射到404、OCR服务不可用映射到503、输入格式错误映射到400。1: 所有异常返回同一状态码；2: 区分了500和其他；3: 区分了404和500；4: 区分了404、400、503三种状态码；5: 完整的状态码映射并在异常类中携带状态码信息。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "异常层次设计清晰对应HTTP语义：EntityNotFoundException对应404、ServiceUnavailableException对应503、InvalidInputException对应400，GlobalExceptionHandler中的handler使用ResponseEntity明确返回对应状态码。"
+
+[[criterion]]
+name = "异常日志记录规范"
+description = "[Implicit] 是否在修复静默异常的同时建立了一致的异常日志记录规范（使用log.error记录异常堆栈、包含上下文信息）。1: 仍然静默吞异常；2: 添加了日志但不一致；3: 主要位置添加了log.error；4: 所有修改点使用一致的log.error格式并传入异常对象；5: 一致的日志格式且包含业务上下文信息（如实体类型、实体ID）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在所有修改点使用一致的log.error格式记录异常，SysUserUtils中包含了会话相关的上下文信息。"
