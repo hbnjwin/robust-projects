@@ -32,6 +32,11 @@ public class AiServiceConfig {
     private int readTimeout = 120000;
 
     /**
+     * 写入超时（毫秒）
+     */
+    private int writeTimeout = 60000;
+
+    /**
      * 是否启用重试机制
      */
     private boolean retryEnabled = true;
@@ -83,6 +88,14 @@ public class AiServiceConfig {
 
     public void setReadTimeout(int readTimeout) {
         this.readTimeout = readTimeout;
+    }
+
+    public int getWriteTimeout() {
+        return writeTimeout;
+    }
+
+    public void setWriteTimeout(int writeTimeout) {
+        this.writeTimeout = writeTimeout;
     }
 
     public boolean isRetryEnabled() {
