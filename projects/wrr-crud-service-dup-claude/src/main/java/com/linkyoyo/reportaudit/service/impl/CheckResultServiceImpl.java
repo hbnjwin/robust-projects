@@ -9,50 +9,40 @@ import com.linkyoyo.reportaudit.service.CheckResultService;
 import com.linkyoyo.reportaudit.support.CommonFunc;
 import com.linkyoyo.reportaudit.util.PageableUtil;
 
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
 import java.util.Objects;
 
 @Service
-public class CheckResultServiceImpl implements CheckResultService {
-
-    @Autowired
-    private EntityManager entityManager;
+public class CheckResultServiceImpl extends AbstractCrudServiceImpl<CheckResult, CheckResultInfo, Integer>
+        implements CheckResultService {
 
     @Autowired
     private CheckResultRepository checkResultRepository;
 
+    @Override
+    protected JpaRepository<CheckResult, Integer> getRepository() {
+        return checkResultRepository;
+    }
 
+    @Override
+    protected CheckResult newEntity() {
+        return CheckResult.builder().build();
+    }
+
+    @Override
+    protected Integer getInfoId(CheckResultInfo info) {
+        return info.getId();
+    }
 
     @Override
     public PageInfo<CheckResult> getCheckResultList(CheckResultQuery checkResultQuery) {
         Pageable pageable = PageableUtil.build(checkResultQuery);
         return PageableUtil.info(checkResultRepository.findAll(CommonFunc.<CheckResult>getWhere(checkResultQuery), pageable));
-    }
-
-    @Override
-    public CheckResult createOrUpdate(CheckResultInfo checkResultInfo) {
-        if (Objects.isNull(checkResultInfo.getId())) {
-            CheckResult checkResult = CheckResult.builder().build();
-            BeanUtils.copyProperties(checkResultInfo, checkResult);
-            checkResult = checkResultRepository.save(checkResult);
-            // TODO: 保存明细数据
-            return checkResult;
-        } else {
-            entityManager.clear();
-            CheckResult checkResult = checkResultRepository.findById(checkResultInfo.getId()).orElse(null);
-            if (checkResult != null) {
-                BeanUtils.copyProperties(checkResultInfo, checkResult);
-                checkResult = checkResultRepository.save(checkResult);
-            // TODO: 保存明细数据
-            }
-            return checkResult;
-        }
     }
 
     @Override

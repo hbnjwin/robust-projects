@@ -13,7 +13,6 @@ import com.linkyoyo.reportaudit.service.TextinService;
 import com.linkyoyo.reportaudit.support.CommonFunc;
 import com.linkyoyo.reportaudit.util.PageableUtil;
 import com.linkyoyo.reportaudit.entity.DocumentsToc;
-import com.linkyoyo.reportaudit.info.DocumentsTocInfo;
 import com.linkyoyo.reportaudit.repository.DocumentsTocRepository;
 import com.linkyoyo.reportaudit.entity.ExtractionTasks;
 import com.linkyoyo.reportaudit.entity.ExtractionRules;
@@ -48,6 +47,7 @@ import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
@@ -58,16 +58,9 @@ import java.util.Objects;
 
 @Service
 @Slf4j
-public class DocumentsServiceImpl implements DocumentsService {
-
-    @Autowired
-    private EntityManager entityManager;
-
-    @Autowired
-    public void setEntityManager(EntityManager entityManager) {
-        this.entityManager = entityManager;
-        this.queryFactory = new JPAQueryFactory(entityManager);
-    }
+public class DocumentsServiceImpl
+        extends AbstractCrudService<Documents, DocumentsInfo, Integer, DocumentsQuery>
+        implements DocumentsService {
 
     @Autowired
     private DocumentsRepository documentsRepository;
@@ -100,6 +93,39 @@ public class DocumentsServiceImpl implements DocumentsService {
 
     @Value("${paraSet.uploadPath:d:/data/upload}")
     private String uploadPath;
+
+    @Autowired
+    public void setEntityManager(EntityManager entityManager) {
+        this.entityManager = entityManager;
+        this.queryFactory = new JPAQueryFactory(entityManager);
+    }
+
+    @Override
+    protected JpaRepository<Documents, Integer> getRepository() {
+        return documentsRepository;
+    }
+
+    @Override
+    protected Integer getInfoId(DocumentsInfo info) {
+        return info.getId();
+    }
+
+    @Override
+    protected Documents createEntity() {
+        return Documents.builder().build();
+    }
+
+    @Override
+    protected void saveChildTables(DocumentsInfo info, Documents entity) {
+        ChildTableUtils.saveChildTable(
+                documentsTocRepository,
+                entity.getId(),
+                "docId",
+                info.getDocumentsTocList(),
+                DocumentsToc.builder()::build,
+                (childInfo, child) -> BeanUtils.copyProperties(childInfo, child),
+                (child, parentId) -> child.setDocId(parentId));
+    }
 
     @Override
     public PageInfo<DocumentsInfo> getDocumentsList(DocumentsQuery documentsQuery) {
@@ -140,10 +166,6 @@ public class DocumentsServiceImpl implements DocumentsService {
             PageInfo<DocumentsInfo> emptyResult = new PageInfo<>();
             emptyResult.setList(java.util.Collections.emptyList());
             emptyResult.setTotal(0);
-  /*          emptyResult.setPageNum(documentsPageInfo.getPageNum());
-            emptyResult.setPageSize(documentsPageInfo.getPageSize());
-            emptyResult.setPages(0);
-            emptyResult.setSize(0);*/
             return emptyResult;
         }
 
@@ -151,9 +173,9 @@ public class DocumentsServiceImpl implements DocumentsService {
         List<Integer> documentIds = documentsPageInfo.getList().stream()
                 .map(Documents::getId)
                 .collect(Collectors.toList());
-        
+
         List<ProjectInfo> allProjectInfos = projectInfoRepository.findByDocumentIdIn(documentIds);
-        
+
         // 创建documentId到ProjectInfo的映射
         Map<Integer, ProjectInfo> projectInfoMap = allProjectInfos.stream()
                 .collect(Collectors.toMap(ProjectInfo::getDocumentId, p -> p, (existing, replacement) -> existing));
@@ -163,17 +185,17 @@ public class DocumentsServiceImpl implements DocumentsService {
                 .map(documents -> {
                     DocumentsInfo documentsInfo = new DocumentsInfo();
                     BeanUtils.copyProperties(documents, documentsInfo);
-                    
+
                     // 清空mdContent字段，减少数据传输量，提升列表查询性能
                     documentsInfo.setMdContent(null);
-                    
+
                     // 从映射中获取项目信息
                     ProjectInfo projectInfo = projectInfoMap.get(documents.getId());
                     if (projectInfo != null) {
                         documentsInfo.setProjectName(projectInfo.getProjectName());
                         documentsInfo.setReportType(projectInfo.getReportType());
                     }
-                    
+
                     return documentsInfo;
                 })
                 .collect(Collectors.toList());
@@ -182,82 +204,8 @@ public class DocumentsServiceImpl implements DocumentsService {
         PageInfo<DocumentsInfo> result = new PageInfo<>();
         result.setList(documentsInfoList);
         result.setTotal(documentsPageInfo.getTotal());
-        /*result.setPageNum(documentsPageInfo.getPageNum());
-        result.setPageSize(documentsPageInfo.getPageSize());
-        result.setPages(documentsPageInfo.getPages());
-        result.setSize(documentsPageInfo.getSize());
-        result.setStartRow(documentsPageInfo.getStartRow());
-        result.setEndRow(documentsPageInfo.getEndRow());
-        result.setHasNextPage(documentsPageInfo.isHasNextPage());
-        result.setHasPreviousPage(documentsPageInfo.isHasPreviousPage());
-        result.setIsFirstPage(documentsPageInfo.isIsFirstPage());
-        result.setIsLastPage(documentsPageInfo.isIsLastPage());
-        result.setNavigatePages(documentsPageInfo.getNavigatePages());
-        result.setNavigatepageNums(documentsPageInfo.getNavigatepageNums());
-        result.setNavigateFirstPage(documentsPageInfo.getNavigateFirstPage());
-        result.setNavigateLastPage(documentsPageInfo.getNavigateLastPage());
-        result.setFirstPage(documentsPageInfo.getFirstPage());
-        result.setLastPage(documentsPageInfo.getLastPage());*/
 
         return result;
-    }
-
-    @Override
-    public Documents createOrUpdate(DocumentsInfo documentsInfo) {
-        if (Objects.isNull(documentsInfo.getId())) {
-            Documents documents = Documents.builder().build();
-            BeanUtils.copyProperties(documentsInfo, documents);
-            documents = documentsRepository.save(documents);
-
-            // 保存DocumentsToc明细数据
-            if (Objects.nonNull(documentsInfo.getDocumentsTocList())) {
-                // 先删除原有的DocumentsToc数据
-                List<DocumentsToc> existingDocumentsTocList = documentsTocRepository.findAll(
-                        Specifications.<DocumentsToc>and()
-                                .eq("docId", documents.getId())
-                                .build()
-                );
-                documentsTocRepository.deleteAll(existingDocumentsTocList);
-
-                // 保存新的DocumentsToc数据
-                List<DocumentsTocInfo> documentsTocList = documentsInfo.getDocumentsTocList();
-                for (DocumentsTocInfo documentsTocInfo : documentsTocList) {
-                    DocumentsToc documentsToc = DocumentsToc.builder().build();
-                    BeanUtils.copyProperties(documentsTocInfo, documentsToc);
-                    documentsToc.setDocId(documents.getId());
-                    documentsTocRepository.save(documentsToc);
-                }
-            }
-            return documents;
-        } else {
-            entityManager.clear();
-            Documents documents = documentsRepository.findById(documentsInfo.getId()).orElse(null);
-            if (documents != null) {
-                BeanUtils.copyProperties(documentsInfo, documents);
-                documents = documentsRepository.save(documents);
-
-                // 保存DocumentsToc明细数据
-                if (Objects.nonNull(documentsInfo.getDocumentsTocList())) {
-                    // 先删除原有的DocumentsToc数据
-                    List<DocumentsToc> existingDocumentsTocList = documentsTocRepository.findAll(
-                            Specifications.<DocumentsToc>and()
-                                    .eq("docId", documents.getId())
-                                    .build()
-                    );
-                    documentsTocRepository.deleteAll(existingDocumentsTocList);
-
-                    // 保存新的DocumentsToc数据
-                    List<DocumentsTocInfo> documentsTocList = documentsInfo.getDocumentsTocList();
-                    for (DocumentsTocInfo documentsTocInfo : documentsTocList) {
-                        DocumentsToc documentsToc = DocumentsToc.builder().build();
-                        BeanUtils.copyProperties(documentsTocInfo, documentsToc);
-                        documentsToc.setDocId(documents.getId());
-                        documentsTocRepository.save(documentsToc);
-                    }
-                }
-            }
-            return documents;
-        }
     }
 
     @Override
@@ -294,7 +242,7 @@ public class DocumentsServiceImpl implements DocumentsService {
                         .eq("documentId", id)
                         .build()
         );
-        
+
         // 如果存在项目信息，取第一条并转换为Info对象
         if (!projectInfoList.isEmpty()) {
             ProjectInfo projectInfo = projectInfoList.get(0);
@@ -419,7 +367,7 @@ public class DocumentsServiceImpl implements DocumentsService {
 
             // 保存文档记录
             document = documentsRepository.save(document);
-            
+
             // 异步处理OCR和后续操作，立即返回文档对象给前端
             java.io.File originalFile = originalFilePath.toFile();
             documentOcrProcessorService.processOcrAsync(originalFile, document.getId().intValue(), currentUser);
@@ -443,34 +391,34 @@ public class DocumentsServiceImpl implements DocumentsService {
         // 1. 获取文档内容
         Documents document = documentsRepository.findById(docId)
                 .orElseThrow(() -> new RuntimeException("未找到ID为 " + docId + " 的文档"));
-                
+
         // 2. 检查是否有Markdown内容
         if (document.getMdContent() == null || document.getMdContent().trim().isEmpty()) {
             throw new RuntimeException("文档没有Markdown内容，无法生成目录");
         }
-        
+
         try {
             // 3. 处理Markdown内容，生成目录
             Map<String, Object> result = ProcessRealFile.processMarkdownContent(document.getMdContent());
-            
+
             // 4. 获取处理后的目录数据
             @SuppressWarnings("unchecked")
             List<Map<String, Object>> tocList = (List<Map<String, Object>>) result.get("tableOfContents");
-            
+
             if (tocList == null || tocList.isEmpty()) {
                 throw new RuntimeException("未能从文档中提取出有效的目录结构");
             }
-            
+
             // 5. 删除旧的目录数据
             documentsTocRepository.deleteByDocId(docId);
-            
+
             // 6. 保存新的目录数据
             processTocData(docId, tocList);
-            
+
             // 7. 更新文档的目录信息
 //            document.setTocStatus(1); // 1 表示目录已生成
 //            document.setUpdateTime(LocalDateTime.now());
-            
+
             return documentsRepository.save(document);
         } catch (Exception e) {
             throw new RuntimeException("重新生成目录失败: " + e.getMessage(), e);
@@ -594,28 +542,28 @@ public class DocumentsServiceImpl implements DocumentsService {
 
             // 获取当前用户信息
             com.linkyoyo.reportaudit.entity.SysOperator currentUser = SysUserUtils.currentUser();
-            
+
             // 获取用户规则分类
             RuleClass ruleClass = RuleClassUtils.getRuleClass(currentUser);
-            
+
             // 查询未删除的抽取规则，根据用户规则分类过滤
             com.querydsl.core.types.dsl.BooleanExpression whereCondition = qExtractionRules.delFlag.isNull()
                     .or(qExtractionRules.delFlag.eq(false));
-            
+
             // 如果获取到规则分类，添加 classId 条件
             if (ruleClass != null && ruleClass.getId() != null) {
                 whereCondition = whereCondition.and(qExtractionRules.classId.eq(ruleClass.getId()));
-                System.out.println("根据用户规则分类过滤抽取规则: classId=" + ruleClass.getId() + 
+                System.out.println("根据用户规则分类过滤抽取规则: classId=" + ruleClass.getId() +
                     ", className=" + ruleClass.getClassName());
             }
-            
+
             List<ExtractionRules> activeRules = queryFactory
                     .selectFrom(qExtractionRules)
                     .where(whereCondition)
                     .fetch();
 
             if (activeRules.isEmpty()) {
-                System.out.println("没有找到有效的抽取规则，跳过创建抽取任务。用户规则分类: " + 
+                System.out.println("没有找到有效的抽取规则，跳过创建抽取任务。用户规则分类: " +
                     (ruleClass != null ? ruleClass.getClassName() : "未获取到"));
                 return;
             }
@@ -626,7 +574,7 @@ public class DocumentsServiceImpl implements DocumentsService {
                             .map(rule -> rule.getId().toString())
                             .collect(Collectors.joining(",")) +
                     "]";
-            
+
             // 创建新的抽取任务
             ExtractionTasks newTask = ExtractionTasks.builder()
                     .id(UUID.randomUUID().toString())

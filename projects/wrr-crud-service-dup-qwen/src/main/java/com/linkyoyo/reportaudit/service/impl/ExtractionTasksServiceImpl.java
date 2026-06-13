@@ -6,163 +6,91 @@ import com.linkyoyo.reportaudit.info.PageInfo;
 import com.linkyoyo.reportaudit.query.ExtractionTasksQuery;
 import com.linkyoyo.reportaudit.repository.ExtractionTasksRepository;
 import com.linkyoyo.reportaudit.service.ExtractionTasksService;
-import com.linkyoyo.reportaudit.support.CommonFunc;
-import com.linkyoyo.reportaudit.util.PageableUtil;
 import com.linkyoyo.reportaudit.entity.ExtractionResult;
-import com.linkyoyo.reportaudit.info.ExtractionResultInfo;
 import com.linkyoyo.reportaudit.repository.ExtractionResultRepository;
 import com.linkyoyo.reportaudit.entity.ExtractionTasksItems;
-import com.linkyoyo.reportaudit.info.ExtractionTasksItemsInfo;
 import com.linkyoyo.reportaudit.repository.ExtractionTasksItemsRepository;
-import java.util.List;
-import java.util.stream.Collectors;
-import com.github.wenhao.jpa.Specifications;
 
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
-import java.util.Objects;
+import java.time.LocalDateTime;
 import java.util.UUID;
-import java.util.Optional;
-import java.time.LocalDateTime;
-import java.time.LocalDateTime;
 
 @Service
-public class ExtractionTasksServiceImpl implements ExtractionTasksService {
-
-    @Autowired
-    private EntityManager entityManager;
+public class ExtractionTasksServiceImpl
+        extends AbstractCrudService<ExtractionTasks, ExtractionTasksInfo, String, ExtractionTasksQuery>
+        implements ExtractionTasksService {
 
     @Autowired
     private ExtractionTasksRepository extractionTasksRepository;
 
     @Autowired
     private ExtractionResultRepository extractionResultRepository;
+
     @Autowired
     private ExtractionTasksItemsRepository extractionTasksItemsRepository;
 
     @Override
-    public PageInfo<ExtractionTasks> getExtractionTasksList(ExtractionTasksQuery extractionTasksQuery) {
-        Pageable pageable = PageableUtil.build(extractionTasksQuery);
-        return PageableUtil.info(extractionTasksRepository.findAll(CommonFunc.<ExtractionTasks>getWhere(extractionTasksQuery), pageable));
+    protected JpaRepository<ExtractionTasks, String> getRepository() {
+        return extractionTasksRepository;
     }
 
     @Override
-    public ExtractionTasks createOrUpdate(ExtractionTasksInfo extractionTasksInfo) {
-        if (Objects.isNull(extractionTasksInfo.getId())) {
-            ExtractionTasks extractionTasks = ExtractionTasks.builder().build();
-            BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
-            // 为新任务生成UUID作为ID
-            extractionTasks.setId(UUID.randomUUID().toString());
-            // 设置创建时间
-            extractionTasks.setCreatedAt(LocalDateTime.now());
-            extractionTasks.setUpdatedAt(LocalDateTime.now());
-            extractionTasks = extractionTasksRepository.save(extractionTasks);
+    protected String getInfoId(ExtractionTasksInfo info) {
+        return info.getId();
+    }
 
-            // 保存ExtractionResult明细数据
-            if (Objects.nonNull(extractionTasksInfo.getExtractionResultList())) {
-                // 先删除原有的ExtractionResult数据
-                List<ExtractionResult> existingExtractionResultList = extractionResultRepository.findAll(
-                    Specifications.<ExtractionResult>and()
-                        .eq("taskId", extractionTasks.getId())
-                        .build()
-                );
-                extractionResultRepository.deleteAll(existingExtractionResultList);
+    @Override
+    protected ExtractionTasks createEntity() {
+        return ExtractionTasks.builder().build();
+    }
 
-                // 保存新的ExtractionResult数据
-                List<ExtractionResultInfo> extractionResultList = extractionTasksInfo.getExtractionResultList();
-                for (ExtractionResultInfo extractionResultInfo : extractionResultList) {
-                    ExtractionResult extractionResult = ExtractionResult.builder().build();
-                    BeanUtils.copyProperties(extractionResultInfo, extractionResult);
-                    extractionResult.setTaskId(extractionTasks.getId());
-                    extractionResultRepository.save(extractionResult);
-                }
-            }
-            // 保存ExtractionTasksItems明细数据
-            if (Objects.nonNull(extractionTasksInfo.getExtractionTasksItemsList())) {
-                // 先删除原有的ExtractionTasksItems数据
-                List<ExtractionTasksItems> existingExtractionTasksItemsList = extractionTasksItemsRepository.findAll(
-                    Specifications.<ExtractionTasksItems>and()
-                        .eq("extractionTaskId", extractionTasks.getId())
-                        .build()
-                );
-                extractionTasksItemsRepository.deleteAll(existingExtractionTasksItemsList);
+    @Override
+    protected void beforeCreate(ExtractionTasksInfo info, ExtractionTasks entity) {
+        entity.setId(UUID.randomUUID().toString());
+        entity.setCreatedAt(LocalDateTime.now());
+        entity.setUpdatedAt(LocalDateTime.now());
+    }
 
-                // 保存新的ExtractionTasksItems数据
-                List<ExtractionTasksItemsInfo> extractionTasksItemsList = extractionTasksInfo.getExtractionTasksItemsList();
-                for (ExtractionTasksItemsInfo extractionTasksItemsInfo : extractionTasksItemsList) {
-                    ExtractionTasksItems extractionTasksItems = ExtractionTasksItems.builder().build();
-                    BeanUtils.copyProperties(extractionTasksItemsInfo, extractionTasksItems);
-                    extractionTasksItems.setExtractionTaskId(extractionTasks.getId());
-                    extractionTasksItemsRepository.save(extractionTasksItems);
-                }
-            }
-            return extractionTasks;
-        } else {
-            entityManager.clear();
-            Optional<ExtractionTasks> optionalExtractionTasks = extractionTasksRepository.findById(extractionTasksInfo.getId());
-            if (optionalExtractionTasks.isPresent()) {
-                ExtractionTasks extractionTasks = optionalExtractionTasks.get();
-                BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
-                // 更新时间
-                extractionTasks.setUpdatedAt(LocalDateTime.now());
-                extractionTasks = extractionTasksRepository.save(extractionTasks);
+    @Override
+    protected void beforeUpdate(ExtractionTasksInfo info, ExtractionTasks entity) {
+        entity.setUpdatedAt(LocalDateTime.now());
+    }
 
-                // 保存ExtractionResult明细数据
-                if (Objects.nonNull(extractionTasksInfo.getExtractionResultList())) {
-                    // 先删除原有的ExtractionResult数据
-                    List<ExtractionResult> existingExtractionResultList = extractionResultRepository.findAll(
-                        Specifications.<ExtractionResult>and()
-                            .eq("taskId", extractionTasks.getId())
-                            .build()
-                    );
-                    extractionResultRepository.deleteAll(existingExtractionResultList);
+    @Override
+    protected void saveChildTables(ExtractionTasksInfo info, ExtractionTasks entity) {
+        // Child 1: ExtractionResult (FK: taskId)
+        ChildTableUtils.saveChildTable(
+                extractionResultRepository,
+                entity.getId(),
+                "taskId",
+                info.getExtractionResultList(),
+                ExtractionResult.builder()::build,
+                (childInfo, child) -> BeanUtils.copyProperties(childInfo, child),
+                (child, parentId) -> child.setTaskId(parentId));
 
-                    // 保存新的ExtractionResult数据
-                    List<ExtractionResultInfo> extractionResultList = extractionTasksInfo.getExtractionResultList();
-                    for (ExtractionResultInfo extractionResultInfo : extractionResultList) {
-                        ExtractionResult extractionResult = ExtractionResult.builder().build();
-                        BeanUtils.copyProperties(extractionResultInfo, extractionResult);
-                        extractionResult.setTaskId(extractionTasks.getId());
-                        extractionResultRepository.save(extractionResult);
-                    }
-                }
-                // 保存ExtractionTasksItems明细数据
-                if (Objects.nonNull(extractionTasksInfo.getExtractionTasksItemsList())) {
-                    // 先删除原有的ExtractionTasksItems数据
-                    List<ExtractionTasksItems> existingExtractionTasksItemsList = extractionTasksItemsRepository.findAll(
-                        Specifications.<ExtractionTasksItems>and()
-                            .eq("extractionTaskId", extractionTasks.getId())
-                            .build()
-                    );
-                    extractionTasksItemsRepository.deleteAll(existingExtractionTasksItemsList);
+        // Child 2: ExtractionTasksItems (FK: extractionTaskId)
+        ChildTableUtils.saveChildTable(
+                extractionTasksItemsRepository,
+                entity.getId(),
+                "extractionTaskId",
+                info.getExtractionTasksItemsList(),
+                ExtractionTasksItems.builder()::build,
+                (childInfo, child) -> BeanUtils.copyProperties(childInfo, child),
+                (child, parentId) -> child.setExtractionTaskId(parentId));
+    }
 
-                    // 保存新的ExtractionTasksItems数据
-                    List<ExtractionTasksItemsInfo> extractionTasksItemsList = extractionTasksInfo.getExtractionTasksItemsList();
-                    for (ExtractionTasksItemsInfo extractionTasksItemsInfo : extractionTasksItemsList) {
-                        ExtractionTasksItems extractionTasksItems = ExtractionTasksItems.builder().build();
-                        BeanUtils.copyProperties(extractionTasksItemsInfo, extractionTasksItems);
-                        extractionTasksItems.setExtractionTaskId(extractionTasks.getId());
-                        extractionTasksItemsRepository.save(extractionTasksItems);
-                    }
-                }
-                return extractionTasks;
-            }
-            return null;
-        }
+    @Override
+    public PageInfo<ExtractionTasks> getExtractionTasksList(ExtractionTasksQuery extractionTasksQuery) {
+        return getList(extractionTasksQuery);
     }
 
     @Override
     public ExtractionTasks getExtractionTasksDetail(String id) {
-        entityManager.clear();
-        Optional<ExtractionTasks> optionalExtractionTasks = extractionTasksRepository.findById(id);
-        if (optionalExtractionTasks.isPresent()) {
-            return optionalExtractionTasks.get();
-        }
-        return null;
+        return getDetail(id);
     }
 
     @Override
