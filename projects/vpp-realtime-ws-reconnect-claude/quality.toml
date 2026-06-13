@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "连接状态指示灯"
+description = "[Explicit] 是否在页面上添加WebSocket连接状态指示灯，绿色表示在线红色表示离线。1: 无任何连接状态提示; 2: 有文字提示但无颜色区分; 3: 有颜色圆点但状态切换有延迟; 4: 实时绿/红圆点指示灯绑定WebSocket连接状态响应式变量; 5: 指示灯加连接时长显示加断线时弹出通知提醒"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "RealTimeMonitor.vue中使用绿色/红色圆点DOM元素绑定connectionState响应式变量，WebSocket的onopen/onclose事件触发状态切换实时反映连接状态"
+
+[[criterion]]
+name = "断线数据间隙处理"
+description = "[Explicit] 是否在ECharts图表中对WebSocket断开期间的数据缺失做标记或插值处理。1: 断开期间曲线直接降为0误导用户; 2: 断开期间无数据点但连线直接跨越; 3: 断线区间标记为null使ECharts显示断线; 4: 断线区间插入null数据点加markArea可视化标记断线时段; 5: markArea标记加断线时长提示加重连后历史数据回补"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "websocket.ts记录disconnectTime和reconnectTime，RealTimeMonitor.vue中在ECharts的series数据中为断线区间插入null点使曲线断开，并通过markArea组件高亮标记数据中断时段"
+
+[[criterion]]
+name = "重连后订阅重放"
+description = "[Explicit] 是否在WebSocket重连后自动重新发送所有设备的订阅消息恢复数据流。1: 重连后不重新订阅数据流停止; 2: 重新订阅但遗漏部分设备; 3: 维护订阅列表重连时遍历重发; 4: Map存储所有活跃订阅，onopen中检测重连后自动遍历重发; 5: 订阅重放加去重加订阅确认回执加失败重试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "websocket.ts中使用Map存储所有subscribe指令，onopen回调中通过wasReconnecting标志判断是否为重连，是则遍历subscriptions重新发送所有订阅消息"
+
+[[criterion]]
+name = "自动重连退避策略"
+description = "[Implicit] 是否实现WebSocket断线后的自动重连并采用指数退避避免频繁重试。1: 无自动重连需手动刷新; 2: 固定间隔重试如每秒一次造成服务器压力; 3: 指数退避但无最大重试次数限制; 4: 指数退避含最大间隔上限和最大重试次数; 5: 指数退避加抖动加在线状态检测加手动重连按钮"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReconnectingWebSocket类实现指数退避重连，初始间隔1秒倍增至最大30秒，含maxRetries上限防止无限重试"
+
+[[criterion]]
+name = "Pinia状态与组件解耦"
+description = "[Implicit] 是否将实时数据缓冲和设备选择状态抽离到Pinia store而非组件本地管理。1: 所有状态在组件本地ref管理; 2: 部分状态抽离但数据流和UI状态混在一起; 3: Pinia store管理数据缓冲和设备列表; 4: store管理数据加设备选择加断线记录，组件仅负责UI渲染; 5: store加getter派生数据加action封装业务逻辑加持久化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "实时数据和WebSocket状态在组件本地管理，未抽离到Pinia store，WebSocket实例通过自定义类封装但数据缓冲仍在组件ref中"
