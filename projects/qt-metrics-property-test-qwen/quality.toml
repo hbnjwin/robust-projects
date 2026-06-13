@@ -1,0 +1,62 @@
+[[criterion]]
+name = "max_drawdown属性测试"
+description = "[Explicit] 是否用hypothesis验证max_drawdown对任意净值曲线结果在[0,1]之间且平推序列回撤为0。1: 未编写max_drawdown属性测试；2: 仅用固定数据测试未使用hypothesis；3: 使用hypothesis但策略生成的净值曲线不够多样；4: hypothesis策略生成多样净值曲线，验证结果在[0,1]且常数序列回撤为0；5: 额外验证了单调递增序列回撤为0和单调递减序列回撤接近最大值。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用hypothesis的st.lists生成净值序列测试max_drawdown，验证了结果在[0,1]范围，但平推序列（常数序列）的回撤为0验证是用固定数据而非属性测试。"
+
+[[criterion]]
+name = "sharpe与sortino正常数收益测试"
+description = "[Explicit] 是否验证sharpe_ratio和sortino_ratio在收益全为正常数时返回有限正值。1: 未测试这两个指标的属性；2: 仅用固定数据测试；3: 使用hypothesis但未验证\"有限正值\"约束；4: 验证全为正常数收益时sharpe和sortino均为有限正值（非inf非nan）；5: 额外测试了零收益和混合正负收益的数学性质。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用hypothesis生成正常数收益序列验证sharpe_ratio为正值，但sortino_ratio的测试策略不够精确，部分生成序列触发了边界情况。"
+
+[[criterion]]
+name = "profit_factor零亏损处理"
+description = "[Explicit] 是否验证profit_factor当没有亏损交易时返回inf或特殊值而非抛异常。1: 未测试零亏损场景；2: 测试了但未明确预期返回值；3: 验证了不抛异常但未检查返回值类型；4: 验证无亏损时返回inf或自定义特殊值，不抛未处理异常；5: 额外验证了无盈利交易时返回0和全零交易的处理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了profit_factor在无亏损交易时不抛异常，但对返回值是否为inf的断言不够明确。"
+
+[[criterion]]
+name = "win_rate范围约束"
+description = "[Explicit] 是否验证win_rate对任意交易记录始终返回[0,1]范围内的值。1: 未测试win_rate范围；2: 仅用固定数据验证；3: 使用hypothesis但生成的交易记录结构不符合函数签名；4: hypothesis生成多样交易记录，验证win_rate始终在[0,1]；5: 额外验证了全盈利时为1、全亏损时为0的边界。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "使用hypothesis验证win_rate范围在[0,1]，但生成策略偶尔产生空列表导致需要额外过滤。"
+
+[[criterion]]
+name = "空序列异常安全性"
+description = "[Explicit] 是否验证空序列输入时所有指标函数不抛未处理异常。1: 未测试空输入；2: 仅测试了部分函数的空输入；3: 测试了全部函数但部分抛异常未修复；4: 全部函数空序列输入均不抛异常，返回合理默认值；5: 空输入返回0或NaN且有文档说明约定。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了大部分指标函数的空序列输入，发现max_drawdown和annual_return抛IndexError后进行了修复，但修复后的返回值语义（0.0 vs NaN）未统一。"
+
+[[criterion]]
+name = "hypothesis CI性能配置"
+description = "[Explicit] 是否配置pytest profile控制hypothesis用例数量确保CI在30秒内完成。1: 未配置性能限制；2: 配置了max_examples但值过大（>1000）；3: 配置了合理的max_examples但未设置deadline；4: pytest.ini或conftest中配置CI profile，max_examples适中（50-200），有deadline限制；5: 同时配置了dev和CI两套profile，CI快速、dev详尽。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在conftest.py中注册了hypothesis profile，设置max_examples=50，但未设置deadline限制，单个用例可能因慢策略超时。"
+
+[[criterion]]
+name = "metrics_v2源码缺陷修复"
+description = "[Implicit] 是否在属性测试中发现并修复了metrics_v2.py中的源码缺陷（如空输入崩溃、除零错误）。1: 未发现任何缺陷；2: 发现了缺陷但未修复；3: 修复了1-2个缺陷；4: 修复了3个以上缺陷并确保测试通过；5: 修复后回归验证了原有test_architecture测试仍然通过。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过hypothesis测试发现并修复了max_drawdown空列表IndexError、annual_return空列表IndexError、profit_factor除零ZeroDivisionError共3个bug。"
