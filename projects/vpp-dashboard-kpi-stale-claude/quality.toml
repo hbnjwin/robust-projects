@@ -1,53 +1,44 @@
 [[criterion]]
 name = "定时器清除与生命周期"
-description = "[Explicit] 是否在组件卸载时正确清除setInterval定时器，防止切换页面后定时器泄漏。1: 未处理onUnmounted中的clearInterval; 2: 仅清除部分定时器或清除逻辑有条件遗漏; 3: onUnmounted中调用clearInterval但未处理多次挂载叠加; 4: 封装composable统一管理定时器创建与销毁; 5: composable含完整的挂载/卸载生命周期绑定且支持动态间隔切换"
+description = "[Explicit] 是否在组件卸载时正确清除setInterval定时器，防止切换页面后定时器泄漏导致数据不再更新。1: 未处理onUnmounted中的clearInterval; 2: 仅清除部分定时器或清除逻辑有条件遗漏; 3: onUnmounted中调用clearInterval但未处理多次挂载叠加; 4: 封装composable统一管理定时器创建与销毁; 5: composable含完整的挂载/卸载生命周期绑定且支持动态间隔切换"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "usePolling.ts composable在onMounted中调用startPolling()，onUnmounted中调用stopPolling()清除定时器，完整覆盖了挂载/卸载生命周期，且支持立即执行首次轮询，实现精简准确"
+rationale = "Dashboard.vue中创建的composable在onMounted中调用startPolling()、onUnmounted中调用stopPolling()清除定时器，完整覆盖了挂载/卸载生命周期，且支持立即执行首次轮询"
 
 [[criterion]]
 name = "重新挂载数据恢复"
-description = "[Explicit] 是否在v-if切换回Dashboard时重新启动数据轮询，确保KPI卡片立即获取最新数据。1: 切回后KPI数据保持销毁前的旧值不更新; 2: 切回后需手动刷新才能恢复更新; 3: 切回后自动恢复轮询但首次显示有明显延迟; 4: onMounted中立即执行一次数据拉取再启动定时轮询; 5: 立即拉取+轮询恢复且显示loading骨架屏过渡"
+description = "[Explicit] 是否在v-if切换回Dashboard时重新启动数据轮询，确保KPI卡片立即获取最新数据。1: 切回后KPI数据保持销毁前的旧值不更新; 2: 切回后需手动刷新才能恢复更新; 3: 切回后自动恢复轮询但首次显示有明显延迟; 4: onMounted中立即执行一次数据拉取再启动定时轮询; 5: 立即拉取加轮询恢复且显示loading骨架屏过渡"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "usePolling在startPolling()中先立即执行callback获取最新数据，再创建setInterval定时轮询，切回Dashboard时onMounted触发startPolling无延迟恢复"
+rationale = "Dashboard.vue的composable中startPolling()方法先立即执行callback获取最新数据再创建setInterval定时轮询，切回Dashboard时onMounted触发startPolling无延迟恢复"
 
 [[criterion]]
 name = "多定时器叠加防护"
-description = "[Implicit] 是否防止反复切换页面导致多个setInterval叠加运行，造成请求频率倍增。1: 每次onMounted新建定时器但从未清除旧的; 2: 清除逻辑存在但有竞态条件可能遗漏; 3: onUnmounted清除但未处理快速切换场景; 4: 创建新定时器前先清除已有定时器; 5: composable内部维护单一timerId引用，创建前必清除旧引用"
+description = "[Explicit] 是否防止反复切换页面导致多个setInterval叠加运行造成请求频率倍增。1: 每次onMounted新建定时器但从未清除旧的; 2: 清除逻辑存在但有竞态条件可能遗漏; 3: onUnmounted清除但未处理快速切换场景; 4: 创建新定时器前先清除已有定时器确保单实例; 5: composable内部维护单一timerId引用创建前必清除旧引用且有防重入保护"
 type = "likert"
 points = 5
 weight = 1.0
 score = 5
-rationale = "usePolling内部startPolling()方法开头先调用stopPolling()清除已有定时器再创建新的，确保任何时刻只有一个定时器实例运行"
+rationale = "Dashboard.vue的composable内部startPolling()方法开头先调用stopPolling()清除已有定时器再创建新的，确保任何时刻只有一个定时器实例运行"
 
 [[criterion]]
-name = "加载状态与骨架屏"
-description = "[Explicit] 是否在KPI数据获取期间显示loading骨架屏，避免用户看到空白或旧数据。1: 无任何加载状态提示; 2: 仅有简单的loading文字; 3: 有loading状态但切换回来时不显示; 4: 首次加载和切换回来都显示骨架屏; 5: 骨架屏样式与KPI卡片一致且有平滑过渡动画"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "KpiCard.vue中实现了loading状态判断，首次加载和切换回来时通过isLoading ref控制骨架屏显示，数据到达后切换为实际KPI值"
-
-[[criterion]]
-name = "轮询间隔与性能"
-description = "[Implicit] 是否合理管理3秒轮询间隔，避免组件不可见时浪费网络请求。1: 硬编码setInterval无任何优化; 2: 间隔可配置但不可见时仍轮询; 3: 组件卸载时停止轮询但无页面可见性检测; 4: 结合document.visibilitychange暂停/恢复轮询; 5: 可见性检测+恢复时立即刷新数据+间隔动态可调"
+name = "KPI数字过渡动画"
+description = "[Explicit] 是否为KPI卡片的数字变化添加过渡动画，避免数值从1200直接跳到1350的生硬体验。1: 数字变化仍无任何过渡效果; 2: 有CSS transition但仅作用于容器不影响数字; 3: 使用requestAnimationFrame或定时器做数字递增动画; 4: 封装数字动画composable实现数值从旧值平滑过渡到新值; 5: 数字动画加缓动函数加格式化保持加组件化复用"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "usePolling组件卸载时停止轮询，但未实现document.visibilitychange监听，切到浏览器其他tab时仍会持续轮询"
+rationale = "Dashboard.vue中KPI卡片数据更新时利用Vue的transition组件做了基本的淡入效果，但非数字递增动画，数值跳变仍然明显"
 
 [[criterion]]
-name = "代码组织与改动范围"
-description = "[Implicit] 是否将修复控制在合理的文件范围内，避免不必要的重构扩散。1: 改动超过10个文件且包含大量与bug无关的变更; 2: 改动8-10个文件部分无关; 3: 改动5-7个文件基本围绕修复; 4: 改动3-4个文件精准定位; 5: 仅改动必要的1-2个核心文件加上composable提取"
+name = "轮询间隔与性能"
+description = "[Implicit] 是否合理管理3秒轮询间隔，避免组件不可见时浪费网络请求。1: 硬编码setInterval无任何优化; 2: 间隔可配置但不可见时仍轮询; 3: 组件卸载时停止轮询但无页面可见性检测; 4: 结合document.visibilitychange暂停和恢复轮询; 5: 可见性检测加恢复时立即刷新数据加间隔动态可调"
 type = "likert"
 points = 5
 weight = 1.0
-score = 4
-rationale = "编辑6个文件，创建usePolling.ts composable并修改KpiCard.vue、dashboard.ts、DashboardView.vue、TradingView.vue、App.vue，改动基本围绕轮询逻辑修复"
+score = 3
+rationale = "Dashboard.vue的composable在组件卸载时停止轮询，但未实现document.visibilitychange监听，切到浏览器其他tab时仍会持续轮询"
