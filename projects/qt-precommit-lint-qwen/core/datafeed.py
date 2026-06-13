@@ -4,6 +4,7 @@ core/datafeed.py — 数据层抽象接口
 支持后端: PostgreSQL / DuckDB(CSV/Parquet) / SQLite / Memory
 返回格式统一: {date_str: {ts_code: {"close", "volume", "prev_close"}}}
 """
+
 from __future__ import annotations
 
 import sys
@@ -16,7 +17,6 @@ _ROOT = Path(__file__).resolve().parent.parent
 
 # ── 抽象基类 ─────────────────────────────────────────────────
 class BaseDataFeed(ABC):
-
     @abstractmethod
     def load_bar_data(
         self,
@@ -48,6 +48,7 @@ class BaseDataFeed(ABC):
     def _df_to_dict(df) -> dict:
         """pandas DataFrame → market_data dict"""
         import pandas as pd
+
         result = {}
         for date, group in df.groupby("trade_date"):
             day = {}
@@ -55,8 +56,8 @@ class BaseDataFeed(ABC):
                 if pd.isna(row.get("prev_close")) or float(row["prev_close"]) <= 0:
                     continue
                 day[row["ts_code"]] = {
-                    "close":      float(row["close"]),
-                    "volume":     float(row["volume"]),
+                    "close": float(row["close"]),
+                    "volume": float(row["volume"]),
                     "prev_close": float(row["prev_close"]),
                 }
             if day:
@@ -75,6 +76,7 @@ class PostgresDataFeed(BaseDataFeed):
         if pg_config is None:
             sys.path.insert(0, str(_ROOT))
             from config import PG_CONFIG
+
             pg_config = PG_CONFIG
         self._cfg = pg_config
 
@@ -84,8 +86,8 @@ class PostgresDataFeed(BaseDataFeed):
         end: str,
         ts_codes: list[str] | None = None,
     ) -> dict:
-        import psycopg
         import pandas as pd
+        import psycopg
 
         code_filter = ""
         params: list = [start, end]
@@ -132,6 +134,7 @@ class DuckDBDataFeed(BaseDataFeed):
         ts_codes: list[str] | None = None,
     ) -> dict:
         import duckdb
+
         con = duckdb.connect()
         sql = self._build_sql(start, end, ts_codes)
         df = con.execute(sql).fetchdf()
@@ -140,7 +143,7 @@ class DuckDBDataFeed(BaseDataFeed):
 
     def _build_sql(self, start: str, end: str, ts_codes: list[str] | None) -> str:
         start_year = int(start[:4])
-        end_year   = int(end[:4])
+        end_year = int(end[:4])
 
         csv_files = [
             str(self._csv_dir / f"{yr}.csv")
@@ -149,16 +152,12 @@ class DuckDBDataFeed(BaseDataFeed):
         ]
 
         if csv_files:
-            union = " UNION ALL ".join(
-                f"SELECT * FROM read_csv_auto('{f}')" for f in csv_files
-            )
+            union = " UNION ALL ".join(f"SELECT * FROM read_csv_auto('{f}')" for f in csv_files)
             source = f"({union})"
         elif self._parquet.exists():
             source = f"'{self._parquet}'"
         else:
-            raise FileNotFoundError(
-                f"找不到数据: csv_dir={self._csv_dir}, parquet={self._parquet}"
-            )
+            raise FileNotFoundError(f"找不到数据: csv_dir={self._csv_dir}, parquet={self._parquet}")
 
         code_filter = ""
         if ts_codes:
@@ -195,6 +194,7 @@ class SQLiteDataFeed(BaseDataFeed):
         ts_codes: list[str] | None = None,
     ) -> dict:
         import sqlite3
+
         import pandas as pd
 
         conn = sqlite3.connect(self._db)
@@ -269,7 +269,7 @@ def create_datafeed(backend: str = "auto", **kwargs) -> BaseDataFeed:
         )
     # auto: 优先 DuckDB，fallback PG
     csv_dir = _ROOT / "data" / "yearly"
-    parquet  = _ROOT / "data" / "daily_price_full.parquet"
+    parquet = _ROOT / "data" / "daily_price_full.parquet"
     if any(csv_dir.glob("*.csv")) or parquet.exists():
         return DuckDBDataFeed()
     return PostgresDataFeed()

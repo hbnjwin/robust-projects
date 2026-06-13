@@ -6,15 +6,12 @@ from datetime import datetime, timedelta
 from config import PG_CONFIG
 
 # 股票池
-CODES = ['603019.SH','000977.SZ','002230.SZ','688256.SH']
+CODES = ["603019.SH", "000977.SZ", "002230.SZ", "688256.SH"]
 
 
 def get_last_date(pg_conn, ts_code):
     cur = pg_conn.cursor()
-    cur.execute(
-        "SELECT MAX(trade_date) FROM daily_price WHERE ts_code=%s",
-        (ts_code,)
-    )
+    cur.execute("SELECT MAX(trade_date) FROM daily_price WHERE ts_code=%s", (ts_code,))
     result = cur.fetchone()[0]
     cur.close()
     return result
@@ -51,13 +48,13 @@ def update_one(pg_conn, ts_code):
             ON CONFLICT DO NOTHING
             """,
             (
-                row['ts_code'],
-                datetime.strptime(row['trade_date'], '%Y%m%d').date(),
-                row['open'],
-                row['high'],
-                row['low'],
-                row['close'],
-                row['vol'],
+                row["ts_code"],
+                datetime.strptime(row["trade_date"], "%Y%m%d").date(),
+                row["open"],
+                row["high"],
+                row["low"],
+                row["close"],
+                row["vol"],
             ),
         )
         inserted += 1

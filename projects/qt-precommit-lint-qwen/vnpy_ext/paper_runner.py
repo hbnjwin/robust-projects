@@ -9,6 +9,7 @@ Paper Runner - vnpy 模拟盘主入口
 5. 输出持仓快照、交易流水、PnL 报告
 6. 同步 watchlist.in_position 状态
 """
+
 from __future__ import annotations
 
 import json
@@ -91,8 +92,7 @@ class PaperRunner:
             "datetime": str(trade.datetime) if trade.datetime else "",
         }
         self.trades.append(record)
-        print(f"  ✅ 成交: {record['ts_code']} {record['direction']} "
-              f"{record['volume']}股 @ {record['price']}")
+        print(f"  ✅ 成交: {record['ts_code']} {record['direction']} {record['volume']}股 @ {record['price']}")
 
     def _on_order(self, event: Event) -> None:
         """委托回调"""
@@ -140,9 +140,9 @@ class PaperRunner:
         Returns:
             当日快照 dict
         """
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"📊 vnpy Paper Trading: {trade_date}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         self.trades.clear()
         self.orders.clear()
@@ -181,8 +181,10 @@ class PaperRunner:
         for req in order_requests:
             vt_orderid = self.main_engine.send_order(req, "PG_DAILY")
             if vt_orderid:
-                print(f"  📤 委托: {req.symbol}.{req.exchange.value} "
-                      f"{req.direction.value} {req.volume:.0f}股 @ {req.price:.2f}")
+                print(
+                    f"  📤 委托: {req.symbol}.{req.exchange.value} "
+                    f"{req.direction.value} {req.volume:.0f}股 @ {req.price:.2f}"
+                )
 
         # 等待撮合完成
         time.sleep(0.5)
@@ -196,12 +198,14 @@ class PaperRunner:
             price = current_prices.get(ts_code, 0)
             value = vol * price
             total_position_value += value
-            position_details.append({
-                "ts_code": ts_code,
-                "volume": vol,
-                "price": price,
-                "value": value,
-            })
+            position_details.append(
+                {
+                    "ts_code": ts_code,
+                    "volume": vol,
+                    "price": price,
+                    "value": value,
+                }
+            )
 
         # 估算现金（简化：总资金 - 持仓市值）
         # 实际应从 PaperEngine 的 AccountData 获取
@@ -240,7 +244,7 @@ class PaperRunner:
         print(f"     现金:   {cash:,.2f}")
         print(f"     持仓:   {len(final_positions)} 只, 市值 {total_position_value:,.2f}")
         print(f"     成交:   {len(self.trades)} 笔")
-        print(f"{'='*60}\n")
+        print(f"{'=' * 60}\n")
 
         return snapshot
 
@@ -258,8 +262,7 @@ class PaperRunner:
                 ts_codes = list(positions.keys())
                 placeholders = ",".join(["%s"] * len(ts_codes))
                 cur.execute(
-                    f"UPDATE watchlist SET in_position = TRUE "
-                    f"WHERE ts_code IN ({placeholders})",
+                    f"UPDATE watchlist SET in_position = TRUE WHERE ts_code IN ({placeholders})",
                     ts_codes,
                 )
 

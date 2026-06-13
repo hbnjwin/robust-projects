@@ -1,7 +1,7 @@
 import numpy as np
 
-class MasterPortfolio:
 
+class MasterPortfolio:
     def __init__(self, total_capital, target_vol=0.15):
         self.total_capital = total_capital
         self.strategy_accounts = {}
@@ -81,8 +81,4 @@ class MasterPortfolio:
             self.drawdown_control_triggered = True
 
     def record(self, date):
-        self.equity_curve.append({
-            "date": date,
-            "equity": self.total_equity,
-            "drawdown": self.max_drawdown
-        })
+        self.equity_curve.append({"date": date, "equity": self.total_equity, "drawdown": self.max_drawdown})

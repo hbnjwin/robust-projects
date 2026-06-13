@@ -1,10 +1,15 @@
 """测试因子整合模块"""
+
 import sys
+
 sys.path.insert(0, "/home/tulin/quant")
 import numpy as np
 from factor.factor_analyzer import (
-    compute_ic, compute_ic_series, compute_ir,
-    composite_equal_weight, composite_ic_weight
+    compute_ic,
+    compute_ic_series,
+    compute_ir,
+    composite_equal_weight,
+    composite_ic_weight,
 )
 from strategies.factor_strategy import FactorStrategy
 
@@ -78,16 +83,16 @@ def test_composite_ic():
 
 def test_factor_strategy():
     print("=== test_factor_strategy ===")
-    scores = {
-        "2024-01-01": {
-            "A": 5.0, "B": 4.0, "C": 3.0, "D": 2.0, "E": 1.0,
-            "F": 0.5, "G": 0.3, "H": 0.1
-        }
-    }
+    scores = {"2024-01-01": {"A": 5.0, "B": 4.0, "C": 3.0, "D": 2.0, "E": 1.0, "F": 0.5, "G": 0.3, "H": 0.1}}
     prices = {
-        "A": {"close": 10}, "B": {"close": 20}, "C": {"close": 15},
-        "D": {"close": 12}, "E": {"close": 8}, "F": {"close": 5},
-        "G": {"close": 3}, "H": {"close": 2}
+        "A": {"close": 10},
+        "B": {"close": 20},
+        "C": {"close": 15},
+        "D": {"close": 12},
+        "E": {"close": 8},
+        "F": {"close": 5},
+        "G": {"close": 3},
+        "H": {"close": 2},
     }
 
     strategy = FactorStrategy(scores, top_n=3, rebalance_days=20)

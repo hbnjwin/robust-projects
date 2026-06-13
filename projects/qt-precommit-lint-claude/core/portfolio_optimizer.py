@@ -19,10 +19,11 @@ core/portfolio_optimizer.py — 组合权重优化器
 from __future__ import annotations
 
 import warnings
+from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
 import scipy.optimize as so
-from typing import Optional, Union
 
 
 class PortfolioOptimizer:
@@ -207,7 +208,6 @@ def compute_cov_from_returns(
     """
     recent = returns_df.tail(lookback).dropna(axis=1, how="any")
     S = recent.cov().values
-    n = len(S)
 
     # Ledoit-Wolf 收缩：S = (1-α)S + α·diag(S)
     if shrinkage > 0:

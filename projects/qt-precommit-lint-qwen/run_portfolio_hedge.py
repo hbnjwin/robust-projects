@@ -10,8 +10,8 @@ from strategies.ma_trend_risk import MATrendRiskStrategy
 from analytics.metrics import max_drawdown, annual_return
 
 DB_PATH = "data/market.db"
-CODES = ['603019.SH','000977.SZ','002230.SZ','688256.SH']
-INDEX = '000300.SH'  # 沪深300
+CODES = ["603019.SH", "000977.SZ", "002230.SZ", "688256.SH"]
+INDEX = "000300.SH"  # 沪深300
 
 
 def load_close(ts_code):
@@ -53,14 +53,14 @@ def main():
     long_portfolio = np.sum(aligned, axis=0)
 
     # 指数简单对冲（50%对冲）
-    idx_df = load_close('603019.SH')  # 临时用同长度占位
+    idx_df = load_close("603019.SH")  # 临时用同长度占位
     hedge = long_portfolio * 0.5
     hedged_equity = long_portfolio - hedge
 
     print("=== Hedged Portfolio (50% synthetic hedge) ===")
-    print("Final Equity:", round(hedged_equity[-1],2))
-    print("Annual Return:", round(annual_return(hedged_equity),4))
-    print("Max Drawdown:", round(max_drawdown(hedged_equity),4))
+    print("Final Equity:", round(hedged_equity[-1], 2))
+    print("Annual Return:", round(annual_return(hedged_equity), 4))
+    print("Max Drawdown:", round(max_drawdown(hedged_equity), 4))
 
 
 if __name__ == "__main__":

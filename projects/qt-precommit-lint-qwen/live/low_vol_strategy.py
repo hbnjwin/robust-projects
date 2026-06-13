@@ -4,6 +4,7 @@
 # 此 LowVolStrategy 占位实现已被 lowvol_strategy_v2.py (LowVolStrategy) 取代。
 # =============================================================================
 
+
 class LowVolStrategy:
     def generate(self, date, price_dict):
         if not price_dict:

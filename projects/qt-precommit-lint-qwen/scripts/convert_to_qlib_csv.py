@@ -7,6 +7,7 @@ qlib 要求:
 - date 格式: YYYY-MM-DD
 - symbol 格式: SH600000 / SZ000001
 """
+
 import os
 import gc
 import sys
@@ -18,10 +19,12 @@ import pandas as pd
 FACTORS_FULL = "data/factors_full.parquet"
 OUTPUT_DIR = "data/qlib_csv"
 
+
 # ts_code (000001.SZ) → qlib symbol (SZ000001)
 def ts_to_qlib(ts_code: str) -> str:
     symbol, market = ts_code.split(".")
     return f"{market}{symbol}"
+
 
 def main():
     os.makedirs(OUTPUT_DIR, exist_ok=True)
@@ -56,12 +59,14 @@ def main():
 
         n_stocks = df["symbol"].nunique()
         print(f"{year}: {len(df)} rows, {n_stocks} stocks")
-        del df; gc.collect()
+        del df
+        gc.collect()
 
     # 统计
     files = [f for f in os.listdir(OUTPUT_DIR) if f.endswith(".csv")]
     print(f"\n总计: {len(files)} 只股票 CSV 文件")
     print(f"输出目录: {OUTPUT_DIR}")
+
 
 if __name__ == "__main__":
     main()

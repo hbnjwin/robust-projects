@@ -2,6 +2,7 @@
 快速行情数据加载器 (CSV/Parquet 版)
 从本地年度 CSV 或全量 Parquet 加载，比 PG 快 100x
 """
+
 import os
 import duckdb
 
@@ -31,9 +32,7 @@ def load_market_data_fast(start: str, end: str) -> dict:
 
     if csv_files:
         # 从年度 CSV 加载
-        union_sql = " UNION ALL ".join(
-            f"SELECT * FROM read_csv_auto('{f}')" for f in csv_files
-        )
+        union_sql = " UNION ALL ".join(f"SELECT * FROM read_csv_auto('{f}')" for f in csv_files)
         sql = f"""
             SELECT
                 trade_date::VARCHAR AS trade_date,

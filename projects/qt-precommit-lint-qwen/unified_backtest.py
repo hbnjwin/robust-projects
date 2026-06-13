@@ -2,6 +2,7 @@
 统一回测入口 - 使用 ReplayEngineV3 作为唯一回测引擎
 用法: python unified_backtest.py --start 2020-01-01 --end 2024-12-31 --capital 1000000
 """
+
 import argparse
 import json
 import sys
@@ -13,8 +14,12 @@ sys.path.insert(0, "/home/tulin/quant")
 from live.replay_engine_v3 import ReplayEngineV3
 from live.data_loader import load_market_data
 from analytics.metrics_v2 import (
-    max_drawdown, annual_return, sharpe_ratio, sortino_ratio,
-    calmar_ratio, max_consecutive_loss_days
+    max_drawdown,
+    annual_return,
+    sharpe_ratio,
+    sortino_ratio,
+    calmar_ratio,
+    max_consecutive_loss_days,
 )
 
 
@@ -31,10 +36,7 @@ def run_unified_backtest(start_date, end_date, initial_capital=1_000_000):
     print(f"初始资金: {initial_capital:,.0f}")
 
     engine = ReplayEngineV3(
-        market_data=market_data,
-        start_date=start_date,
-        end_date=end_date,
-        initial_capital=initial_capital
+        market_data=market_data, start_date=start_date, end_date=end_date, initial_capital=initial_capital
     )
 
     equity_curve = engine.run()

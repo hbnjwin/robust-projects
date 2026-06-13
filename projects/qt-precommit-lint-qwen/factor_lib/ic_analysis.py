@@ -9,6 +9,7 @@ ICIR = IC均值 / IC标准差（越高越稳定）
     analyzer = ICAnalyzer(factor_df, return_df)
     report = analyzer.run()
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -57,12 +58,12 @@ class ICAnalyzer:
         if ic_series.empty:
             return {}
         return {
-            "IC_mean":    round(float(ic_series.mean()), 4),
-            "IC_std":     round(float(ic_series.std()), 4),
-            "ICIR":       round(float(ic_series.mean() / ic_series.std()), 4) if ic_series.std() > 0 else 0.0,
+            "IC_mean": round(float(ic_series.mean()), 4),
+            "IC_std": round(float(ic_series.std()), 4),
+            "ICIR": round(float(ic_series.mean() / ic_series.std()), 4) if ic_series.std() > 0 else 0.0,
             "IC_positive_rate": round(float((ic_series > 0).mean()), 4),
             "IC_abs_mean": round(float(ic_series.abs().mean()), 4),
-            "n_days":     len(ic_series),
+            "n_days": len(ic_series),
         }
 
     def run(self, verbose: bool = True) -> dict:
@@ -146,7 +147,7 @@ def factor_quantile_return(
         for q in range(n_quantiles):
             mask = labels == q
             if mask.sum() > 0:
-                row[f"Q{q+1}"] = float(r_common[mask].mean())
+                row[f"Q{q + 1}"] = float(r_common[mask].mean())
         records.append(row)
 
     if not records:

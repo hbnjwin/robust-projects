@@ -2,6 +2,7 @@
 Lasso 回归模型
 用于因子筛选（非零系数 = 有效因子）和作为基线模型对比
 """
+
 import numpy as np
 from sklearn.linear_model import Lasso
 
@@ -66,8 +67,7 @@ class LassoModel(BaseModel):
             "train_samples": len(y_train),
             "valid_samples": len(y_valid),
         }
-        print(f"[Lasso] nonzero={nonzero}/{total}, "
-              f"train_mse={train_mse:.6f}, valid_mse={valid_mse:.6f}")
+        print(f"[Lasso] nonzero={nonzero}/{total}, train_mse={train_mse:.6f}, valid_mse={valid_mse:.6f}")
         return metrics
 
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -82,19 +82,12 @@ class LassoModel(BaseModel):
         total = coef.sum()
         if total == 0:
             return {}
-        return {
-            name: float(c / total)
-            for name, c in zip(self.feature_names, coef)
-        }
+        return {name: float(c / total) for name, c in zip(self.feature_names, coef)}
 
     def selected_features(self) -> list[tuple[str, float]]:
         """返回非零系数的因子（即 Lasso 选中的因子）"""
         if self.model is None:
             return []
-        result = [
-            (name, float(coef))
-            for name, coef in zip(self.feature_names, self.model.coef_)
-            if coef != 0
-        ]
+        result = [(name, float(coef)) for name, coef in zip(self.feature_names, self.model.coef_) if coef != 0]
         result.sort(key=lambda x: abs(x[1]), reverse=True)
         return result

@@ -2,6 +2,7 @@
 LightGBM 模型
 主力预测模型，适合表格数据，训练快，可解释性好
 """
+
 import numpy as np
 import lightgbm as lgb
 
@@ -93,7 +94,7 @@ class LGBModel(BaseModel):
             valid_pred = self.model.predict(X_valid)
             valid_mse = float(np.mean((valid_pred - y_valid) ** 2))
         else:
-            valid_mse = float('nan')
+            valid_mse = float("nan")
 
         metrics = {
             "best_iteration": self.best_iteration,
@@ -102,8 +103,7 @@ class LGBModel(BaseModel):
             "train_samples": len(y_train),
             "valid_samples": len(y_valid),
         }
-        print(f"[LGB] best_iter={self.best_iteration}, "
-              f"train_mse={train_mse:.6f}, valid_mse={valid_mse:.6f}")
+        print(f"[LGB] best_iter={self.best_iteration}, train_mse={train_mse:.6f}, valid_mse={valid_mse:.6f}")
         return metrics
 
     def predict(self, X: np.ndarray) -> np.ndarray:
@@ -118,10 +118,7 @@ class LGBModel(BaseModel):
         total = importance.sum()
         if total == 0:
             return {}
-        return {
-            name: float(imp / total)
-            for name, imp in zip(self.feature_names, importance)
-        }
+        return {name: float(imp / total) for name, imp in zip(self.feature_names, importance)}
 
     def top_features(self, n: int = 20) -> list[tuple[str, float]]:
         """返回 top-n 重要因子"""

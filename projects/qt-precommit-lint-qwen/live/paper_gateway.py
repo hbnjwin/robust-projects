@@ -11,6 +11,7 @@ live/paper_gateway.py — 模拟盘 Gateway
   - 持仓/资金状态持久化到 paper_state.json
   - 与 LiveEngine 接口完全一致，切换 QMT 只需换 Gateway
 """
+
 from __future__ import annotations
 
 import json
@@ -86,10 +87,7 @@ class PaperGateway(BaseGateway):
         order.status = OrderStatus.NOTTRADED
         self._oms._orders[order.order_id] = order
         self._oms._active[order.order_id] = order
-        self.write_log(
-            f"挂单: {order.order_id} {order.side.value} "
-            f"{order.ts_code} x{order.volume} @{order.price:.2f}"
-        )
+        self.write_log(f"挂单: {order.order_id} {order.side.value} {order.ts_code} x{order.volume} @{order.price:.2f}")
         return order.order_id
 
     def cancel_order(self, order_id: str) -> bool:
@@ -100,16 +98,16 @@ class PaperGateway(BaseGateway):
 
     def query_account(self) -> dict:
         return {
-            "balance":   round(self._account.total_equity, 2),
+            "balance": round(self._account.total_equity, 2),
             "available": round(self._account.cash, 2),
-            "frozen":    0.0,
+            "frozen": 0.0,
         }
 
     def query_positions(self) -> dict:
         return {
             code: {
-                "shares":       pos["shares"],
-                "avg_cost":     round(pos.get("avg_cost", 0), 4),
+                "shares": pos["shares"],
+                "avg_cost": round(pos.get("avg_cost", 0), 4),
                 "market_value": round(
                     pos["shares"] * self._account.last_known_prices.get(code, pos.get("avg_cost", 0)), 2
                 ),
@@ -132,16 +130,17 @@ class PaperGateway(BaseGateway):
         try:
             sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
             from services.realtime_quotes import get_realtime_quotes
+
             raw = get_realtime_quotes(codes)
             result = {}
             for ts_code, q in raw.items():
-                price     = q.get("price", 0)
+                price = q.get("price", 0)
                 pre_close = q.get("pre_close", 0)
-                volume    = q.get("volume", 0)
+                volume = q.get("volume", 0)
                 if price > 0 and pre_close > 0:
                     result[ts_code] = {
-                        "close":      price,
-                        "volume":     volume,
+                        "close": price,
+                        "volume": volume,
                         "prev_close": pre_close,
                     }
             return result
@@ -163,8 +162,7 @@ class PaperGateway(BaseGateway):
         dict: 当日撮合结果摘要
         """
         # 撮合：Paper 模式所有策略共用同一账户，映射所有可能的策略名
-        accounts = {name: self._account for name in
-                    ["Paper", "Trend", "LowVol", "Factor", "Cash"]}
+        accounts = {name: self._account for name in ["Paper", "Trend", "LowVol", "Factor", "Cash"]}
         self._matcher.match(date, prices, accounts)
 
         # 估值
@@ -185,14 +183,12 @@ class PaperGateway(BaseGateway):
 
         stats = self._oms.get_stats()
         summary = {
-            "date":          date,
-            "total_equity":  round(self._account.total_equity, 2),
-            "cash":          round(self._account.cash, 2),
-            "positions":     len(self._account.positions),
-            "filled_today":  sum(
-                1 for t in self._oms.get_trades() if t.trade_time == date
-            ),
-            "oms_stats":     stats,
+            "date": date,
+            "total_equity": round(self._account.total_equity, 2),
+            "cash": round(self._account.cash, 2),
+            "positions": len(self._account.positions),
+            "filled_today": sum(1 for t in self._oms.get_trades() if t.trade_time == date),
+            "oms_stats": stats,
         }
         self.write_log(
             f"[{date}] 收盘撮合完成 equity={summary['total_equity']:,.0f} "
@@ -208,17 +204,20 @@ class PaperGateway(BaseGateway):
         """将持仓、交易记录、权益写入 PostgreSQL"""
         try:
             import psycopg
+
             sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
             from config import PG_CONFIG
+
             conn = psycopg.connect(**PG_CONFIG)
-            cur  = conn.cursor()
+            cur = conn.cursor()
 
             # 持仓快照
             for code, pos in self._account.positions.items():
                 mkt_price = prices.get(code, {}).get("close", pos.get("avg_cost", 0))
-                mkt_val   = round(pos["shares"] * mkt_price, 2)
-                pnl_pct   = round((mkt_price / pos["avg_cost"] - 1) * 100, 4) if pos.get("avg_cost", 0) > 0 else 0
-                cur.execute("""
+                mkt_val = round(pos["shares"] * mkt_price, 2)
+                pnl_pct = round((mkt_price / pos["avg_cost"] - 1) * 100, 4) if pos.get("avg_cost", 0) > 0 else 0
+                cur.execute(
+                    """
                     INSERT INTO paper_positions
                         (trade_date, ts_code, shares, avg_cost, market_price, market_value, pnl_pct)
                     VALUES (%s, %s, %s, %s, %s, %s, %s)
@@ -227,24 +226,36 @@ class PaperGateway(BaseGateway):
                         market_price=EXCLUDED.market_price,
                         market_value=EXCLUDED.market_value,
                         pnl_pct=EXCLUDED.pnl_pct
-                """, (date, code, pos["shares"], pos.get("avg_cost", 0),
-                      mkt_price, mkt_val, pnl_pct))
+                """,
+                    (date, code, pos["shares"], pos.get("avg_cost", 0), mkt_price, mkt_val, pnl_pct),
+                )
 
             # 当日交易记录
             for t in self._account.trade_log:
                 if str(t.get("date", "")) == date:
-                    cur.execute("""
+                    cur.execute(
+                        """
                         INSERT INTO paper_trades
                             (trade_date, ts_code, action, price, shares, amount, fee, reason)
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                         ON CONFLICT DO NOTHING
-                    """, (date, t["code"], t["action"], t["price"], t["shares"],
-                          round(t["price"] * t["shares"], 2), t.get("fee", 0),
-                          t.get("reason", "signal")))
+                    """,
+                        (
+                            date,
+                            t["code"],
+                            t["action"],
+                            t["price"],
+                            t["shares"],
+                            round(t["price"] * t["shares"], 2),
+                            t.get("fee", 0),
+                            t.get("reason", "signal"),
+                        ),
+                    )
 
             # 权益快照
             total_eq = self._account.total_equity
-            cur.execute("""
+            cur.execute(
+                """
                 INSERT INTO paper_equity
                     (trade_date, total_equity, cash, position_count, max_drawdown)
                 VALUES (%s, %s, %s, %s, %s)
@@ -252,9 +263,15 @@ class PaperGateway(BaseGateway):
                 SET total_equity=EXCLUDED.total_equity,
                     cash=EXCLUDED.cash,
                     position_count=EXCLUDED.position_count
-            """, (date, round(total_eq, 2), round(self._account.cash, 2),
-                  len(self._account.positions),
-                  round(self._account.max_drawdown * 100, 4)))
+            """,
+                (
+                    date,
+                    round(total_eq, 2),
+                    round(self._account.cash, 2),
+                    len(self._account.positions),
+                    round(self._account.max_drawdown * 100, 4),
+                ),
+            )
 
             conn.commit()
             conn.close()
@@ -289,8 +306,8 @@ class PaperGateway(BaseGateway):
 
     def _save_state(self) -> None:
         state = {
-            "saved_at":  datetime.now().isoformat(),
-            "cash":      self._account.cash,
+            "saved_at": datetime.now().isoformat(),
+            "cash": self._account.cash,
             "positions": self._account.positions,
             "last_known_prices": self._account.last_known_prices,
             "trade_log": self._account.trade_log[-200:],  # 保留最近200条
@@ -309,9 +326,6 @@ class PaperGateway(BaseGateway):
             self._account.positions = state.get("positions", {})
             self._account.last_known_prices = state.get("last_known_prices", {})
             self._account.trade_log = state.get("trade_log", [])
-            self.write_log(
-                f"加载持久化状态: cash={self._account.cash:,.0f} "
-                f"positions={len(self._account.positions)}"
-            )
+            self.write_log(f"加载持久化状态: cash={self._account.cash:,.0f} positions={len(self._account.positions)}")
         except Exception as e:
             self.write_log(f"加载状态失败（使用初始状态）: {e}")

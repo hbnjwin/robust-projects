@@ -2,6 +2,7 @@
 因子数据集管理
 从 Parquet 加载因子数据，支持 train/valid/test 时间切分
 """
+
 import numpy as np
 import pandas as pd
 
@@ -41,19 +42,18 @@ class FactorDataset:
         df["trade_date"] = pd.to_datetime(df["trade_date"])
 
         # 识别因子列
-        self.feature_cols = [
-            c for c in df.columns
-            if c not in _META_COLS and c not in _LABEL_COLS
-        ]
+        self.feature_cols = [c for c in df.columns if c not in _META_COLS and c not in _LABEL_COLS]
 
         # 按时间切分
         self._train = self._slice(df, train_period)
         self._valid = self._slice(df, valid_period)
         self._test = self._slice(df, test_period)
 
-        print(f"[FactorDataset] features={len(self.feature_cols)}, "
-              f"train={len(self._train):,}, valid={len(self._valid):,}, "
-              f"test={len(self._test):,}, label={label_col}")
+        print(
+            f"[FactorDataset] features={len(self.feature_cols)}, "
+            f"train={len(self._train):,}, valid={len(self._valid):,}, "
+            f"test={len(self._test):,}, label={label_col}"
+        )
 
     def _slice(self, df: pd.DataFrame, period: tuple[str, str]) -> pd.DataFrame:
         start, end = pd.Timestamp(period[0]), pd.Timestamp(period[1])

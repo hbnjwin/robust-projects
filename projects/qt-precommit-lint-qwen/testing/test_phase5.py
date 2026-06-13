@@ -2,10 +2,12 @@
 Phase 5 集成测试
 验证: BaseGateway / PaperGateway / LiveEngine
 """
+
 import sys
 import numpy as np
 import pandas as pd
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
@@ -16,8 +18,8 @@ def make_prices(n_stocks=10, seed=42):
     for code in codes:
         p = 10.0 + np.random.uniform(0, 20)
         prices[code] = {
-            "close":      round(p, 2),
-            "volume":     int(np.random.uniform(1e6, 5e6)),
+            "close": round(p, 2),
+            "volume": int(np.random.uniform(1e6, 5e6)),
             "prev_close": round(p * 0.99, 2),
         }
     return prices
@@ -25,6 +27,7 @@ def make_prices(n_stocks=10, seed=42):
 
 def make_market_data(n_days=60, n_stocks=10):
     from datetime import datetime, timedelta
+
     np.random.seed(0)
     data = {}
     base = {f"{i:06d}.SZ": 10.0 + i for i in range(n_stocks)}
@@ -45,12 +48,13 @@ def test_base_gateway_interface():
     print("\n[T1] BaseGateway 接口约定")
     from core.gateway import BaseGateway
     import inspect
+
     abstract = {
-        name for name, method in inspect.getmembers(BaseGateway, predicate=inspect.isfunction)
+        name
+        for name, method in inspect.getmembers(BaseGateway, predicate=inspect.isfunction)
         if getattr(method, "__isabstractmethod__", False)
     }
-    required = {"connect", "disconnect", "subscribe", "send_order", "cancel_order",
-                "query_account", "query_positions"}
+    required = {"connect", "disconnect", "subscribe", "send_order", "cancel_order", "query_account", "query_positions"}
     assert required.issubset(abstract), f"缺少抽象方法: {required - abstract}"
     print(f"  抽象方法完整: {sorted(abstract)} ✓")
     print("[T1] PASS")
@@ -154,8 +158,7 @@ def test_paper_gateway_state_persistence():
     gw1 = PaperGateway(initial_cash=1_000_000, state_path=state_path)
     gw1.connect()
     prices = make_prices(5)
-    gw1.place_order("Trend", "000001.SZ", OrderSide.BUY,
-                    prices["000001.SZ"]["close"], 1000, "2024-01-02")
+    gw1.place_order("Trend", "000001.SZ", OrderSide.BUY, prices["000001.SZ"]["close"], 1000, "2024-01-02")
     gw1.on_daily_close("2024-01-02", prices)
     cash_after = gw1._account.cash
     gw1.disconnect()
@@ -218,13 +221,28 @@ def test_qmt_gateway_stub():
 
     class QmtGatewayStub(BaseGateway):
         """招商 QMT Gateway 存根，验证接口完整性"""
-        def connect(self, setting=None): self._connected = True; return True
-        def disconnect(self): self._connected = False
-        def subscribe(self, ts_codes): pass
-        def send_order(self, order): return order.order_id
-        def cancel_order(self, order_id): return True
-        def query_account(self): return {"balance": 0, "available": 0, "frozen": 0}
-        def query_positions(self): return {}
+
+        def connect(self, setting=None):
+            self._connected = True
+            return True
+
+        def disconnect(self):
+            self._connected = False
+
+        def subscribe(self, ts_codes):
+            pass
+
+        def send_order(self, order):
+            return order.order_id
+
+        def cancel_order(self, order_id):
+            return True
+
+        def query_account(self):
+            return {"balance": 0, "available": 0, "frozen": 0}
+
+        def query_positions(self):
+            return {}
 
     gw = QmtGatewayStub("QMT-招商")
     assert gw.connect() is True
@@ -244,11 +262,12 @@ if __name__ == "__main__":
         test_paper_gateway_state_persistence()
         test_live_engine_smoke()
         test_qmt_gateway_stub()
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("  Phase 5 ALL TESTS PASSED ✓")
-        print("="*50)
+        print("=" * 50)
     except Exception as e:
         import traceback
+
         print(f"\n[FAIL] {e}")
         traceback.print_exc()
         sys.exit(1)

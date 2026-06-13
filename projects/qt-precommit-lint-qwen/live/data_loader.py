@@ -61,7 +61,7 @@ def load_market_data(start, end, ts_code=None):
             market_data[str(date)][row["ts_code"]] = {
                 "close": float(row["close"]),
                 "volume": float(row["vol"]),
-                "prev_close": float(row["prev_close"])
+                "prev_close": float(row["prev_close"]),
             }
 
     return market_data

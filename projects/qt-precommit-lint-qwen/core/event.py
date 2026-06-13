@@ -10,6 +10,7 @@ core/event.py — 事件引擎封装
   EVENT_REGIME   — 市场状态切换
   EVENT_TIMER    — 定时器（继承自 vnpy）
 """
+
 import sys
 from pathlib import Path
 
@@ -18,15 +19,15 @@ _VNPY_PATH = Path(__file__).resolve().parent.parent / "vnpy"
 if str(_VNPY_PATH) not in sys.path:
     sys.path.insert(0, str(_VNPY_PATH))
 
-from vnpy.event import Event, EventEngine  # noqa: F401  re-export
+from vnpy.event import Event, EventEngine  # noqa: E402, F401  re-export (path modified above)
 
 # ── 量化系统专用事件类型 ──────────────────────────────────────
-EVENT_BAR    = "eBar"       # data: {"date": str, "prices": dict}
-EVENT_SIGNAL = "eSignal"    # data: {"strategy": str, "signals": list}
-EVENT_ORDER  = "eOrder"     # data: order dict
-EVENT_TRADE  = "eTrade"     # data: trade dict
-EVENT_REGIME = "eRegime"    # data: {"regime": str, "date": str}
-EVENT_TIMER  = "eTimer"     # 继承自 vnpy（1s 定时器）
+EVENT_BAR = "eBar"  # data: {"date": str, "prices": dict}
+EVENT_SIGNAL = "eSignal"  # data: {"strategy": str, "signals": list}
+EVENT_ORDER = "eOrder"  # data: order dict
+EVENT_TRADE = "eTrade"  # data: trade dict
+EVENT_REGIME = "eRegime"  # data: {"regime": str, "date": str}
+EVENT_TIMER = "eTimer"  # 继承自 vnpy（1s 定时器）
 
 __all__ = [
     "Event",

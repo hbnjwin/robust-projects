@@ -7,6 +7,7 @@ PG → DuckDB因子计算 → 截面标准化 → Parquet输出
     pipe = FactorPipeline()
     path = pipe.run(start_date="2016-01-01", end_date="2025-12-31")
 """
+
 import os
 import time
 from pathlib import Path
@@ -20,6 +21,7 @@ _SQL_DIR = Path(__file__).resolve().parent
 
 # PG 配置（复用 config.py）
 import sys
+
 sys.path.insert(0, str(_ROOT))
 from config import PG_CONFIG
 
@@ -42,16 +44,16 @@ class FactorPipeline:
             return
         self.con.execute("INSTALL postgres; LOAD postgres;")
         # 强制 127.0.0.1 避免 IPv6 ::1 被 pg_hba.conf 拒绝
-        host = PG_CONFIG['host']
-        if host == 'localhost':
-            host = '127.0.0.1'
+        host = PG_CONFIG["host"]
+        if host == "localhost":
+            host = "127.0.0.1"
         pg_parts = [
             f"dbname={PG_CONFIG['dbname']}",
             f"user={PG_CONFIG['user']}",
             f"password={PG_CONFIG['password']}",
             f"host={host}",
         ]
-        if 'port' in PG_CONFIG:
+        if "port" in PG_CONFIG:
             pg_parts.append(f"port={PG_CONFIG['port']}")
         pg_str = " ".join(pg_parts)
         self.con.execute(f"ATTACH '{pg_str}' AS pg (TYPE POSTGRES, READ_ONLY)")
@@ -99,10 +101,7 @@ class FactorPipeline:
         self.con.execute(create_sql)
 
         count = self.con.execute("SELECT COUNT(*) FROM raw_factors").fetchone()[0]
-        cols = [
-            desc[0]
-            for desc in self.con.execute("DESCRIBE raw_factors").fetchall()
-        ]
+        cols = [desc[0] for desc in self.con.execute("DESCRIBE raw_factors").fetchall()]
         factor_cols = [c for c in cols if c not in _SKIP_COLS]
         print(f"[factors] {count:,} rows × {len(factor_cols)} factors")
         return factor_cols
@@ -125,20 +124,14 @@ class FactorPipeline:
         全部在一条 SQL 里完成，避免多次扫描。
         """
         # 1. 计算每日每因子的 median
-        median_exprs = ",\n        ".join(
-            f"MEDIAN({c}) AS med_{c}" for c in factor_cols
-        )
+        median_exprs = ",\n        ".join(f"MEDIAN({c}) AS med_{c}" for c in factor_cols)
 
         # 2. 计算每日每因子的 MAD
-        mad_exprs = ",\n        ".join(
-            f"MEDIAN(ABS(f.{c} - m.med_{c})) AS mad_{c}" for c in factor_cols
-        )
+        mad_exprs = ",\n        ".join(f"MEDIAN(ABS(f.{c} - m.med_{c})) AS mad_{c}" for c in factor_cols)
 
         # 3. 标准化 + clip
         zscore_exprs = ",\n        ".join(
-            f"GREATEST(-3.0, LEAST(3.0, "
-            f"(f.{c} - m.med_{c}) / NULLIF(d.mad_{c} * 1.4826, 0)"
-            f")) AS {c}"
+            f"GREATEST(-3.0, LEAST(3.0, (f.{c} - m.med_{c}) / NULLIF(d.mad_{c} * 1.4826, 0))) AS {c}"
             for c in factor_cols
         )
 
@@ -179,8 +172,7 @@ class FactorPipeline:
         CS Rank Norm: (PERCENT_RANK() - 0.5) * 3.46
         """
         rank_exprs = ",\n        ".join(
-            f"(PERCENT_RANK() OVER (PARTITION BY trade_date ORDER BY {c}) - 0.5) * 3.46 AS {c}"
-            for c in factor_cols
+            f"(PERCENT_RANK() OVER (PARTITION BY trade_date ORDER BY {c}) - 0.5) * 3.46 AS {c}" for c in factor_cols
         )
         label_exprs = ", ".join(sorted(_LABEL_COLS))
 
@@ -200,9 +192,7 @@ class FactorPipeline:
         """导出为 Parquet"""
         output_path = str(Path(output_path).resolve())
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        self.con.execute(
-       f"COPY normalized_factors TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)"
-        )
+        self.con.execute(f"COPY normalized_factors TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)")
         size_mb = os.path.getsize(output_path) / 1024 / 1024
         print(f"[export] {output_path} ({size_mb:.1f} MB)")
 
@@ -230,14 +220,12 @@ class FactorPipeline:
         str : 输出文件路径
         """
         if output_path is None:
-            output_path = str(
-                _ROOT / "data" / f"factors_{norm_method}_{start_date}_{end_date}.parquet"
-            )
+            output_path = str(_ROOT / "data" / f"factors_{norm_method}_{start_date}_{end_date}.parquet")
 
         t0 = time.time()
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Factor Pipeline: {start_date} ~ {end_date}")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         # Step 1: 加载数据
         row_count = self._load_prices(start_date, end_date, ts_codes)
@@ -255,9 +243,9 @@ class FactorPipeline:
         self._export(output_path)
 
         elapsed = time.time() - t0
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         print(f"Done in {elapsed:.1f}s")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
 
         return output_path
 
@@ -272,9 +260,7 @@ class FactorPipeline:
         只计算因子，不做标准化（用于调试/IC分析）
         """
         if output_path is None:
-            output_path = str(
-                _ROOT / "data" / f"factors_raw_{start_date}_{end_date}.parquet"
-            )
+            output_path = str(_ROOT / "data" / f"factors_raw_{start_date}_{end_date}.parquet")
 
         t0 = time.time()
         row_count = self._load_prices(start_date, end_date, ts_codes)
@@ -286,11 +272,9 @@ class FactorPipeline:
         # 直接导出 raw_factors
         output_path = str(Path(output_path).resolve())
         os.makedirs(os.path.dirname(output_path), exist_ok=True)
-        self.con.execute(
-            f"COPY raw_factors TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)"
-        )
+        self.con.execute(f"COPY raw_factors TO '{output_path}' (FORMAT PARQUET, COMPRESSION ZSTD)")
         size_mb = os.path.getsize(output_path) / 1024 / 1024
-        print(f"[export raw] {output_path} ({size_mb:.1f} MB) in {time.time()-t0:.1f}s")
+        print(f"[export raw] {output_path} ({size_mb:.1f} MB) in {time.time() - t0:.1f}s")
         return output_path
 
     def query(self, sql: str) -> pd.DataFrame:

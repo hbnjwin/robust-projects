@@ -18,7 +18,7 @@ _VNPY_PATH = Path(__file__).resolve().parent.parent / "vnpy"
 if str(_VNPY_PATH) not in sys.path:
     sys.path.insert(0, str(_VNPY_PATH))
 
-from vnpy.event import Event, EventEngine  # noqa: F401  re-export
+from vnpy.event import Event, EventEngine  # noqa: E402, F401  re-export
 
 # ── 量化系统专用事件类型 ──────────────────────────────────────
 EVENT_BAR    = "eBar"       # data: {"date": str, "prices": dict}

@@ -2,6 +2,7 @@
 run_14day_stability.py — 14天稳定性回测
 使用 ReplayEngineV5 + 真实策略（TrendV2 / LowVol / Factor）
 """
+
 import sys
 import json
 import datetime
@@ -11,6 +12,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from live.data_loader import load_market_data
 from live.replay_engine_v5 import ReplayEngineV5
+
 
 def load_latest_ml_signals() -> dict:
     """加载最近一个交易日的 ML 信号"""
@@ -34,7 +36,7 @@ def run():
     today = datetime.date.today()
     # 取最近 30 个自然日（覆盖约 20 个交易日）
     start = (today - datetime.timedelta(days=30)).strftime("%Y-%m-%d")
-    end   = today.strftime("%Y-%m-%d")
+    end = today.strftime("%Y-%m-%d")
     # 回测窗口：最近 14 个交易日
     eval_start = (today - datetime.timedelta(days=20)).strftime("%Y-%m-%d")
 
@@ -68,13 +70,14 @@ def run():
         return
 
     import pandas as pd
+
     df = pd.DataFrame(curve)
 
-    final_equity  = df.iloc[-1]["equity"]
-    max_drawdown  = df["drawdown"].max() if "drawdown" in df.columns else 0.0
-    min_equity    = df["equity"].min()
-    trade_days    = len(df)
-    total_return  = (final_equity - 1_000_000) / 1_000_000 * 100
+    final_equity = df.iloc[-1]["equity"]
+    max_drawdown = df["drawdown"].max() if "drawdown" in df.columns else 0.0
+    min_equity = df["equity"].min()
+    trade_days = len(df)
+    total_return = (final_equity - 1_000_000) / 1_000_000 * 100
 
     print(f"\n=== 回测结果 ===")
     print(f"  交易日数:   {trade_days}")
@@ -87,15 +90,15 @@ def run():
     tz = datetime.timezone(datetime.timedelta(hours=8))
     status = "success" if trade_days > 0 else "warning"
     state = {
-        "last_run":     datetime.datetime.now(tz).isoformat(),
-        "status":       status,
-        "error":        "",
-        "trade_days":   trade_days,
+        "last_run": datetime.datetime.now(tz).isoformat(),
+        "status": status,
+        "error": "",
+        "trade_days": trade_days,
         "final_equity": round(final_equity, 2),
         "total_return": round(total_return, 4),
         "max_drawdown": round(float(max_drawdown), 4),
-        "eval_start":   eval_start,
-        "eval_end":     end,
+        "eval_start": eval_start,
+        "eval_end": end,
     }
     Path("/home/tulin/quant/control/task_state/daily_stability.json").write_text(
         json.dumps(state, ensure_ascii=False, indent=2)

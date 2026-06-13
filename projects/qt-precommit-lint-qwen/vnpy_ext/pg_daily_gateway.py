@@ -4,6 +4,7 @@ PgDailyGateway - 从 PostgreSQL daily_price 表读取日线数据，转换为 vn
 用于 T+1 日线级别模拟盘，不提供实时行情。
 每次调用 replay_date() 推送指定日期的全市场行情快照。
 """
+
 from __future__ import annotations
 
 from datetime import datetime
@@ -14,8 +15,14 @@ import psycopg
 from vnpy.event import EventEngine
 from vnpy.trader.gateway import BaseGateway
 from vnpy.trader.object import (
-    TickData, BarData, ContractData, SubscribeRequest,
-    OrderRequest, CancelRequest, HistoryRequest, AccountData
+    TickData,
+    BarData,
+    ContractData,
+    SubscribeRequest,
+    OrderRequest,
+    CancelRequest,
+    HistoryRequest,
+    AccountData,
 )
 from vnpy.trader.constant import Exchange, Product, Direction
 
@@ -102,7 +109,7 @@ class PgDailyGateway(BaseGateway):
                 exchange=exchange,
                 name=ts_code,
                 product=Product.EQUITY,
-                size=100,           # A股 1手 = 100股
+                size=100,  # A股 1手 = 100股
                 pricetick=0.01,
                 min_volume=100,
                 net_position=True,  # A股用净持仓模式
@@ -155,8 +162,7 @@ class PgDailyGateway(BaseGateway):
             )
         else:
             cur.execute(
-                "SELECT ts_code, open, high, low, close, vol "
-                "FROM daily_price WHERE trade_date = %s",
+                "SELECT ts_code, open, high, low, close, vol FROM daily_price WHERE trade_date = %s",
                 (trade_date,),
             )
 
@@ -208,8 +214,7 @@ class PgDailyGateway(BaseGateway):
             "SELECT trade_date, open, high, low, close, vol "
             "FROM daily_price WHERE ts_code = %s AND trade_date BETWEEN %s AND %s "
             "ORDER BY trade_date",
-            (ts_code, req.start.strftime("%Y-%m-%d"),
-             req.end.strftime("%Y-%m-%d") if req.end else "2099-12-31"),
+            (ts_code, req.start.strftime("%Y-%m-%d"), req.end.strftime("%Y-%m-%d") if req.end else "2099-12-31"),
         )
 
         bars: list[BarData] = []

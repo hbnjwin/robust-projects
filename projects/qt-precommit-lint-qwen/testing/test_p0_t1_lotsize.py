@@ -1,7 +1,9 @@
 """
 测试 P0-1: T+1 规则 + P1-4: 100股整手约束
 """
+
 import sys
+
 sys.path.insert(0, "/home/tulin/quant")
 
 from live.strategy_account import StrategyAccount
@@ -14,9 +16,7 @@ def test_t_plus_1():
     account = StrategyAccount("Test", 1_000_000)
     engine = ExecutionEngine(account)
 
-    prices = {
-        "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
-    }
+    prices = {"600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}}
 
     # Day1: 买入
     engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 1000}])
@@ -51,9 +51,7 @@ def test_t1_add_position():
     account = StrategyAccount("Test", 1_000_000)
     engine = ExecutionEngine(account)
 
-    prices = {
-        "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
-    }
+    prices = {"600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}}
 
     # Day1: 买入
     engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 500}])
@@ -88,9 +86,7 @@ def test_lot_size():
     account = StrategyAccount("Test", 1_000_000)
     engine = ExecutionEngine(account)
 
-    prices = {
-        "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
-    }
+    prices = {"600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}}
 
     # target_cash=1550, 价格约10.01(含滑点), 应买100股
     engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "target_cash": 1550}])
@@ -142,9 +138,7 @@ def test_buy_date_recorded():
     account = StrategyAccount("Test", 1_000_000)
     engine = ExecutionEngine(account)
 
-    prices = {
-        "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
-    }
+    prices = {"600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}}
 
     engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 1000}])
     engine.execute(prices, date="2026-03-10")

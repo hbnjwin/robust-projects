@@ -10,7 +10,7 @@ from strategies.ma_trend_risk import MATrendRiskStrategy
 from analytics.metrics import max_drawdown, annual_return
 
 DB_PATH = "data/market.db"
-CODES = ['603019.SH','000977.SZ','002230.SZ','688256.SH']
+CODES = ["603019.SH", "000977.SZ", "002230.SZ", "688256.SH"]
 
 
 def load_data(ts_code):
@@ -46,7 +46,7 @@ def main():
         df = load_data(code)
         eq = run_single(df)
         equities.append(eq)
-        print(code, "final:", round(eq[-1],2))
+        print(code, "final:", round(eq[-1], 2))
 
     min_len = min(len(e) for e in equities)
     aligned = [e[:min_len] for e in equities]
@@ -54,9 +54,9 @@ def main():
     portfolio_equity = np.sum(aligned, axis=0)
 
     print("\n=== Portfolio Result ===")
-    print("Final Equity:", round(portfolio_equity[-1],2))
-    print("Annual Return:", round(annual_return(portfolio_equity),4))
-    print("Max Drawdown:", round(max_drawdown(portfolio_equity),4))
+    print("Final Equity:", round(portfolio_equity[-1], 2))
+    print("Annual Return:", round(annual_return(portfolio_equity), 4))
+    print("Max Drawdown:", round(max_drawdown(portfolio_equity), 4))
 
 
 if __name__ == "__main__":

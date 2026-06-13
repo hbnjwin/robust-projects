@@ -6,6 +6,7 @@ RiskMonitor - vnpy 事件驱动风控监听器 + PostgreSQL 持仓持久化
 2. 风控规则检查（最大回撤、单日亏损、连续亏损冷却）
 3. 风控触发时自动撤单 + 通知回调
 """
+
 from __future__ import annotations
 
 import json
@@ -26,13 +27,13 @@ from .pg_daily_gateway import to_ts_code
 
 # 默认风控参数
 DEFAULT_RISK_CONFIG = {
-    "max_drawdown": 0.25,           # 最大回撤 25%
-    "daily_loss_limit": 0.05,       # 单日亏损限制 5%
-    "consecutive_loss_days": 3,     # 连续亏损天数触发冷却
-    "cooldown_days": 2,             # 冷却天数
-    "position_limit": 30,           # 最大持仓数量
-    "single_stock_weight": 0.15,    # 单只股票最大权重 15%
-    "commission_rate": 0.0003,      # 手续费率 0.03%
+    "max_drawdown": 0.25,  # 最大回撤 25%
+    "daily_loss_limit": 0.05,  # 单日亏损限制 5%
+    "consecutive_loss_days": 3,  # 连续亏损天数触发冷却
+    "cooldown_days": 2,  # 冷却天数
+    "position_limit": 30,  # 最大持仓数量
+    "single_stock_weight": 0.15,  # 单只股票最大权重 15%
+    "commission_rate": 0.0003,  # 手续费率 0.03%
 }
 
 
@@ -56,8 +57,11 @@ class RiskMonitor(BaseEngine):
         super().__init__(main_engine, event_engine, "RiskMonitor")
 
         self.pg_config = pg_config or {
-            "host": "localhost", "port": 5432,
-            "user": "postgres", "password": "limit123", "dbname": "quant",
+            "host": "localhost",
+            "port": 5432,
+            "user": "postgres",
+            "password": "limit123",
+            "dbname": "quant",
         }
         self.risk_config = {**DEFAULT_RISK_CONFIG, **(risk_config or {})}
         self.on_alert = on_alert or self._default_alert
@@ -165,44 +169,50 @@ class RiskMonitor(BaseEngine):
         drawdown = (self.peak_equity - self.current_equity) / self.peak_equity
         max_dd = self.risk_config["max_drawdown"]
         if drawdown >= max_dd:
-            alerts.append({
-                "level": "CRITICAL",
-                "rule": "max_drawdown",
-                "message": f"最大回撤触发: {drawdown:.2%} >= {max_dd:.2%}",
-                "details": {
-                    "drawdown": drawdown,
-                    "peak_equity": self.peak_equity,
-                    "current_equity": self.current_equity,
-                },
-            })
+            alerts.append(
+                {
+                    "level": "CRITICAL",
+                    "rule": "max_drawdown",
+                    "message": f"最大回撤触发: {drawdown:.2%} >= {max_dd:.2%}",
+                    "details": {
+                        "drawdown": drawdown,
+                        "peak_equity": self.peak_equity,
+                        "current_equity": self.current_equity,
+                    },
+                }
+            )
 
         # 2. 单日亏损检查
         if self.daily_start_equity > 0:
             daily_loss = (self.daily_start_equity - self.current_equity) / self.daily_start_equity
             daily_limit = self.risk_config["daily_loss_limit"]
             if daily_loss >= daily_limit:
-                alerts.append({
-                    "level": "WARNING",
-                    "rule": "daily_loss",
-                    "message": f"单日亏损触发: {daily_loss:.2%} >= {daily_limit:.2%}",
-                    "details": {
-                        "daily_loss": daily_loss,
-                        "start_equity": self.daily_start_equity,
-                        "current_equity": self.current_equity,
-                    },
-                })
+                alerts.append(
+                    {
+                        "level": "WARNING",
+                        "rule": "daily_loss",
+                        "message": f"单日亏损触发: {daily_loss:.2%} >= {daily_limit:.2%}",
+                        "details": {
+                            "daily_loss": daily_loss,
+                            "start_equity": self.daily_start_equity,
+                            "current_equity": self.current_equity,
+                        },
+                    }
+                )
 
         # 3. 持仓数量检查
         positions = self.main_engine.get_all_positions()
         active_count = sum(1 for p in positions if p.volume > 0)
         pos_limit = self.risk_config["position_limit"]
         if active_count > pos_limit:
-            alerts.append({
-                "level": "WARNING",
-                "rule": "position_limit",
-                "message": f"持仓数量超限: {active_count} > {pos_limit}",
-                "details": {"count": active_count, "limit": pos_limit},
-            })
+            alerts.append(
+                {
+                    "level": "WARNING",
+                    "rule": "position_limit",
+                    "message": f"持仓数量超限: {active_count} > {pos_limit}",
+                    "details": {"count": active_count, "limit": pos_limit},
+                }
+            )
 
         # 触发告警
         for alert in alerts:
@@ -256,10 +266,17 @@ class RiskMonitor(BaseEngine):
                      price, volume, turnover, commission, traded_at, reference)
                     VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)""",
                     (
-                        record["trade_date"], record["tradeid"], record["ts_code"],
-                        record["direction"], record["offset_flag"],
-                        record["price"], record["volume"], record["turnover"],
-                        record["commission"], record["traded_at"], record["reference"],
+                        record["trade_date"],
+                        record["tradeid"],
+                        record["ts_code"],
+                        record["direction"],
+                        record["offset_flag"],
+                        record["price"],
+                        record["volume"],
+                        record["turnover"],
+                        record["commission"],
+                        record["traded_at"],
+                        record["reference"],
                     ),
                 )
             conn.commit()
@@ -268,8 +285,13 @@ class RiskMonitor(BaseEngine):
             self._log(f"交易写入失败: {e}")
 
     def _persist_position(
-        self, ts_code: str, direction: str,
-        volume: float, price: float, pnl: float, frozen: float,
+        self,
+        ts_code: str,
+        direction: str,
+        volume: float,
+        price: float,
+        pnl: float,
+        frozen: float,
     ) -> None:
         """写入/更新持仓"""
         conn = self._ensure_conn()
@@ -302,7 +324,9 @@ class RiskMonitor(BaseEngine):
             self._log(f"持仓写入失败: {e}")
 
     def save_daily_snapshot(
-        self, trade_date: str, regime: str = "NEUTRAL",
+        self,
+        trade_date: str,
+        regime: str = "NEUTRAL",
     ) -> dict:
         """保存每日快照到 vnpy_snapshots"""
         positions = self.main_engine.get_all_positions()
@@ -348,9 +372,13 @@ class RiskMonitor(BaseEngine):
                             regime = EXCLUDED.regime,
                             created_at = NOW()""",
                         (
-                            trade_date, snapshot["total_equity"], snapshot["cash"],
-                            snapshot["position_value"], snapshot["positions_count"],
-                            snapshot["trades_count"], snapshot["max_drawdown"],
+                            trade_date,
+                            snapshot["total_equity"],
+                            snapshot["cash"],
+                            snapshot["position_value"],
+                            snapshot["positions_count"],
+                            snapshot["trades_count"],
+                            snapshot["max_drawdown"],
                             snapshot["regime"],
                         ),
                     )

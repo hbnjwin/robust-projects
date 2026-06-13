@@ -4,6 +4,7 @@
 
 调度: 15:12, depends_on: afternoon_sync
 """
+
 import os
 import sys
 import time
@@ -55,15 +56,13 @@ def main():
         ) TO '{csv_path}' (HEADER, DELIMITER ',')
     """)
     rows = con.execute(f"SELECT COUNT(*) FROM '{csv_path}'").fetchone()[0]
-    print(f"  CSV {year}: {rows:,} rows ({time.time()-t0:.1f}s)")
+    print(f"  CSV {year}: {rows:,} rows ({time.time() - t0:.1f}s)")
 
     # 2. 重建全量 Parquet（合并所有年度 CSV）
     t1 = time.time()
     csv_files = sorted(Path(CSV_DIR).glob("*.csv"))
     if csv_files:
-        union_sql = " UNION ALL ".join(
-            f"SELECT * FROM read_csv_auto('{f}')" for f in csv_files
-        )
+        union_sql = " UNION ALL ".join(f"SELECT * FROM read_csv_auto('{f}')" for f in csv_files)
         con.execute(f"""
             COPY (
                 SELECT * FROM ({union_sql}) ORDER BY trade_date, ts_code
@@ -71,7 +70,7 @@ def main():
         """)
         total = con.execute(f"SELECT COUNT(*) FROM '{PARQUET_PATH}'").fetchone()[0]
         size_mb = os.path.getsize(PARQUET_PATH) / 1024 / 1024
-        print(f"  Parquet: {total:,} rows, {size_mb:.1f} MB ({time.time()-t1:.1f}s)")
+        print(f"  Parquet: {total:,} rows, {size_mb:.1f} MB ({time.time() - t1:.1f}s)")
 
     con.close()
     print(f"[ml_data_export] Done")

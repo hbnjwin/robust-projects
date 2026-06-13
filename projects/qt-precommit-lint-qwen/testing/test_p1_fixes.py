@@ -7,8 +7,10 @@
 - P1-9: ReplayEngineV2 index_is_bull dict 查找
 - P1-10: 信号生成器日期校验
 """
+
 import sys
 import os
+
 sys.path.insert(0, "/home/tulin/quant")
 
 
@@ -91,11 +93,8 @@ def test_p1_7_lowvol_truncation():
 
     # 喂入大量数据
     for i in range(500):
-        prices = {
-            f"stock_{j}": {"close": 10 + j + (i % 5) * 0.1}
-            for j in range(10)
-        }
-        strategy.generate(f"2026-01-{i+1:03d}", prices)
+        prices = {f"stock_{j}": {"close": 10 + j + (i % 5) * 0.1} for j in range(10)}
+        strategy.generate(f"2026-01-{i + 1:03d}", prices)
 
     max_expected = 20 * 3  # lookback * 3
     for code, hist in strategy.history.items():
@@ -137,8 +136,7 @@ def test_p1_8_drawdown_fee():
     fee = revenue * 0.0003
     expected_cash = cash_before + revenue - fee
 
-    assert abs(account.cash - expected_cash) < 0.01, \
-        f"FAIL: cash={account.cash}, expected={expected_cash}"
+    assert abs(account.cash - expected_cash) < 0.01, f"FAIL: cash={account.cash}, expected={expected_cash}"
     assert len(account.positions) == 0, "FAIL: 持仓未清空"
     print(f"  强平后 cash={account.cash:.2f}, 预期={expected_cash:.2f} OK")
     print("  P1-8 测试通过\n")
@@ -175,8 +173,7 @@ def test_p1_8_drawdown_half_fee():
     fee = revenue * 0.0003
     expected_cash = cash_before + revenue - fee
 
-    assert abs(account.cash - expected_cash) < 0.01, \
-        f"FAIL: cash={account.cash}, expected={expected_cash}"
+    assert abs(account.cash - expected_cash) < 0.01, f"FAIL: cash={account.cash}, expected={expected_cash}"
     assert account.positions["600000.SH"]["shares"] == 5000, "FAIL: 未减半"
     print(f"  减半后 cash={account.cash:.2f}, 预期={expected_cash:.2f} OK")
     print("  P1-8 减半测试通过\n")
@@ -190,11 +187,12 @@ def test_p1_9_index_dict_lookup():
         content = f.read()
 
     assert "_index_lookup" in content, "FAIL: 未使用 _index_lookup dict"
-    assert '.get(' in content, "FAIL: 未使用 dict.get() 查找"
+    assert ".get(" in content, "FAIL: 未使用 dict.get() 查找"
 
     # 确认没有 DataFrame 过滤
     # index_is_bull 方法中不应有 self.index_df[self.index_df["date"] == date]
     import re
+
     old_pattern = re.compile(r'self\.index_df\[self\.index_df\["date"\]\s*==\s*date\]')
     assert not old_pattern.search(content), "FAIL: 仍有 DataFrame 全表扫描"
 
@@ -249,6 +247,7 @@ def test_p2_15_logger():
     assert os.path.exists("/home/tulin/quant/utils/logger.py"), "FAIL: logger.py 不存在"
 
     from utils.logger import get_logger
+
     logger = get_logger("test")
     assert logger is not None
     assert len(logger.handlers) >= 2, "FAIL: handler 数量不足"

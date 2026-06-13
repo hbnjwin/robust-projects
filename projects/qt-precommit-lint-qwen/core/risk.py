@@ -12,23 +12,24 @@ Phase 2 新增能力:
   - RiskGate 作为 OmsEngine.submit_order 的前置包装
   - 所有新能力可独立使用，互不依赖
 """
+
 from __future__ import annotations
 
 import json
-import time
 import threading
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from core.oms import OmsEngine, Order, OrderSide, OrderStatus
 from core.contract import contract_manager
-
+from core.oms import OmsEngine, Order, OrderSide, OrderStatus
 
 # ══════════════════════════════════════════════════════════════
 # 1. RiskGate — 下单前置风控
 # ══════════════════════════════════════════════════════════════
+
 
 @dataclass
 class RiskCheckResult:
@@ -59,12 +60,12 @@ class RiskGate:
     def __init__(
         self,
         oms: OmsEngine,
-        accounts: dict,                  # {strategy: StrategyAccount}
-        max_single_pct: float = 0.15,    # 单笔最大占账户净值比例
+        accounts: dict,  # {strategy: StrategyAccount}
+        max_single_pct: float = 0.15,  # 单笔最大占账户净值比例
     ):
         self._oms = oms
         self._accounts = accounts
-        self._prices: dict = {}          # {ts_code: {close, prev_close, volume}}
+        self._prices: dict = {}  # {ts_code: {close, prev_close, volume}}
         self.max_single_pct = max_single_pct
 
         # 风控日志
@@ -100,7 +101,7 @@ class RiskGate:
             prev_close = data.get("prev_close", 0)
             if prev_close > 0:
                 limit_range = contract_manager.limit_range(ts_code)
-                limit_up   = prev_close * (1 + limit_range)
+                limit_up = prev_close * (1 + limit_range)
                 limit_down = prev_close * (1 - limit_range)
 
                 if side == OrderSide.BUY and price >= limit_up:
@@ -110,9 +111,9 @@ class RiskGate:
 
         # ── 买入：资金检查 ────────────────────────────────────
         if side == OrderSide.BUY:
-            cfg      = contract_manager.get(ts_code)
+            cfg = contract_manager.get(ts_code)
             fee_rate = cfg.long_rate
-            cost     = volume * price * (1 + fee_rate)
+            cost = volume * price * (1 + fee_rate)
 
             if cost > account.cash:
                 return RiskCheckResult(False, f"资金不足: 需要{cost:.0f} 可用{account.cash:.0f}")
@@ -124,10 +125,7 @@ class RiskGate:
                 if isinstance(p, dict)
             )
             if net_value > 0 and cost / net_value > self.max_single_pct:
-                return RiskCheckResult(
-                    False,
-                    f"单笔超限: {cost/net_value:.1%} > {self.max_single_pct:.1%}"
-                )
+                return RiskCheckResult(False, f"单笔超限: {cost / net_value:.1%} > {self.max_single_pct:.1%}")
 
         # ── 卖出：持仓检查 ────────────────────────────────────
         if side == OrderSide.SELL:
@@ -154,15 +152,17 @@ class RiskGate:
         """
         result = self.check(strategy, ts_code, side, price, volume)
         if not result:
-            self._blocked.append({
-                "time": datetime.now().isoformat(),
-                "strategy": strategy,
-                "ts_code": ts_code,
-                "side": side.value,
-                "price": price,
-                "volume": volume,
-                "reason": result.reason,
-            })
+            self._blocked.append(
+                {
+                    "time": datetime.now().isoformat(),
+                    "strategy": strategy,
+                    "ts_code": ts_code,
+                    "side": side.value,
+                    "price": price,
+                    "volume": volume,
+                    "reason": result.reason,
+                }
+            )
             return None
 
         return self._oms.submit_order(
@@ -185,6 +185,7 @@ class RiskGate:
 # ══════════════════════════════════════════════════════════════
 # 2. OrderTimeoutManager — 超时自动撤单
 # ══════════════════════════════════════════════════════════════
+
 
 class OrderTimeoutManager:
     """
@@ -209,8 +210,8 @@ class OrderTimeoutManager:
     ):
         self._oms = oms
         self.timeout_seconds = timeout_seconds
-        self.check_interval  = check_interval
-        self.on_timeout      = on_timeout
+        self.check_interval = check_interval
+        self.on_timeout = on_timeout
 
         self._running = False
         self._thread: threading.Thread | None = None
@@ -252,6 +253,7 @@ class OrderTimeoutManager:
 # ══════════════════════════════════════════════════════════════
 # 3. CancelAndReplace — 撤单重报
 # ══════════════════════════════════════════════════════════════
+
 
 class CancelAndReplace:
     """
@@ -335,6 +337,7 @@ class CancelAndReplace:
 # ══════════════════════════════════════════════════════════════
 # 4. OrderPersistence — 订单持久化
 # ══════════════════════════════════════════════════════════════
+
 
 class OrderPersistence:
     """

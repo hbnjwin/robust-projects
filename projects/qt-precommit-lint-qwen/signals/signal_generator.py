@@ -4,6 +4,7 @@ ML 信号生成器
 
 信号格式兼容 FactorStrategy: {date_str: {ts_code: score}}
 """
+
 import json
 from pathlib import Path
 
@@ -70,9 +71,7 @@ class MLSignalGenerator:
 
         # 识别因子列
         if not self.feature_names:
-            self.feature_names = [
-                c for c in self.factors_df.columns if c not in _SKIP_COLS
-            ]
+            self.feature_names = [c for c in self.factors_df.columns if c not in _SKIP_COLS]
 
         # 加载 Regime 标签
         regime_df = pd.read_parquet(regime_path)
@@ -85,9 +84,9 @@ class MLSignalGenerator:
         self._date_groups = dict(list(self.factors_df.groupby("trade_date")))
 
         dates = sorted(self._date_groups.keys())
-        print(f"[signal] {len(dates)} trading days, "
-              f"{len(self.feature_names)} features, "
-              f"{len(self.models)} models loaded")
+        print(
+            f"[signal] {len(dates)} trading days, {len(self.feature_names)} features, {len(self.models)} models loaded"
+        )
 
     def _select_model(self, regime: str) -> BaseModel:
         """根据 Re选择模型，fallback 到 GLOBAL"""
@@ -152,7 +151,7 @@ class MLSignalGenerator:
                 all_signals[date_str] = signals
 
             if (i + 1) % 200 == 0:
-                print(f"[signal] {i+1}/{len(dates)} days processed...")
+                print(f"[signal] {i + 1}/{len(dates)} days processed...")
 
         print(f"[signal] Done: {len(all_signals)} days with signals")
         return all_signals

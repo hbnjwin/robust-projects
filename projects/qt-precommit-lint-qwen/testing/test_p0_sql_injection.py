@@ -2,6 +2,7 @@
 测试 P0-2: SQL 注入修复验证
 检查所有文件是否已移除 f-string SQL 拼接，改为参数化查询。
 """
+
 import sys
 import os
 import re
@@ -30,7 +31,7 @@ BASE = "/home/tulin/quant"
 
 # 危险模式：f-string 中包含 SQL 关键字
 DANGEROUS_PATTERNS = [
-    re.compile(r'''f["'].*(?:SELECT|INSERT|UPDATE|DELETE|WHERE|FROM).*\{.*\}.*["']''', re.IGNORECASE),
+    re.compile(r"""f["'].*(?:SELECT|INSERT|UPDATE|DELETE|WHERE|FROM).*\{.*\}.*["']""", re.IGNORECASE),
     re.compile(r'''f""".*(?:SELECT|INSERT|UPDATE|DELETE|WHERE|FROM).*\{.*\}.*"""''', re.IGNORECASE | re.DOTALL),
 ]
 

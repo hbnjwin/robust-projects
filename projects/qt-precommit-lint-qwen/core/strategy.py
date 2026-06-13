@@ -4,6 +4,7 @@ core/strategy.py — 统一策略基类
 向后兼容：旧策略的 generate(date, prices) 接口仍可用，
 通过 LegacyStrategyAdapter 包装后接入事件引擎。
 """
+
 from abc import ABC, abstractmethod
 from typing import Any
 

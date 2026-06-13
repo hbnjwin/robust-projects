@@ -6,6 +6,7 @@ TxRealtimeGateway - 腾讯实时行情 Gateway
 
 用于盘中实时模拟盘，配合 PaperEngine 使用。
 """
+
 from __future__ import annotations
 
 import threading
@@ -17,8 +18,14 @@ from typing import Optional
 from vnpy.event import EventEngine
 from vnpy.trader.gateway import BaseGateway
 from vnpy.trader.object import (
-    TickData, ContractData, SubscribeRequest,
-    OrderRequest, CancelRequest, HistoryRequest, BarData, AccountData
+    TickData,
+    ContractData,
+    SubscribeRequest,
+    OrderRequest,
+    CancelRequest,
+    HistoryRequest,
+    BarData,
+    AccountData,
 )
 from vnpy.trader.constant import Exchange, Product
 
@@ -46,7 +53,7 @@ TX_FIELD = {
     "last_price": 3,
     "pre_close": 4,
     "open": 5,
-    "volume": 6,        # 成交量（手）
+    "volume": 6,  # 成交量（手）
     "bid_price_1": 9,
     "bid_volume_1": 10,
     "bid_price_2": 11,
@@ -67,10 +74,10 @@ TX_FIELD = {
     "ask_volume_4": 26,
     "ask_price_5": 27,
     "ask_volume_5": 28,
-    "datetime": 30,      # 20260313161442
+    "datetime": 30,  # 20260313161442
     "high": 33,
     "low": 34,
-    "turnover": 37,      # 成交额（万元）
+    "turnover": 37,  # 成交额（万元）
     "limit_up": 47,
     "limit_down": 48,
 }
@@ -159,9 +166,7 @@ class TxRealtimeGateway(BaseGateway):
             return
 
         self.poll_active = True
-        self.poll_thread = threading.Thread(
-            target=self._poll_loop, name="tx-realtime-poll", daemon=True
-        )
+        self.poll_thread = threading.Thread(target=self._poll_loop, name="tx-realtime-poll", daemon=True)
         self.poll_thread.start()
         self.write_log("行情轮询已启动")
 
@@ -210,7 +215,7 @@ class TxRealtimeGateway(BaseGateway):
         all_ticks: dict[str, TickData] = {}
 
         for i in range(0, len(tx_codes), BATCH_SIZE):
-            batch = tx_codes[i:i + BATCH_SIZE]
+            batch = tx_codes[i : i + BATCH_SIZE]
             batch_ticks = self._fetch_batch(batch, vt_to_tx)
             all_ticks.update(batch_ticks)
 
@@ -220,9 +225,7 @@ class TxRealtimeGateway(BaseGateway):
 
         return all_ticks
 
-    def _fetch_batch(
-        self, tx_codes: list[str], vt_to_tx: dict[str, str]
-    ) -> dict[str, TickData]:
+    def _fetch_batch(self, tx_codes: list[str], vt_to_tx: dict[str, str]) -> dict[str, TickData]:
         """获取一批股票的实时行情"""
         url = TX_API_URL + ",".join(tx_codes)
         req = urllib.request.Request(url, headers={"User-Agent": USER_AGENT})

@@ -10,9 +10,10 @@
   short_rate  卖出手续费率（含印花税）
   min_volume  最小下单量（手）
 """
+
 import json
+from dataclasses import dataclass
 from pathlib import Path
-from dataclasses import dataclass, field
 
 _DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "contract_settings.json"
 
@@ -21,10 +22,10 @@ _DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "cont
 class ContractConfig:
     symbol: str
     pricetick: float = 0.01
-    size: int = 100           # 每手股数
+    size: int = 100  # 每手股数
     long_rate: float = 0.0003  # 买入费率（万3）
-    short_rate: float = 0.0013 # 卖出费率（万3 + 千1印花税）
-    min_volume: int = 1        # 最小下单手数
+    short_rate: float = 0.0013  # 卖出费率（万3 + 千1印花税）
+    min_volume: int = 1  # 最小下单手数
 
 
 # A股默认配置（无个股配置时使用）

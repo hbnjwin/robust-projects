@@ -3,6 +3,7 @@
 独立于回放引擎，每日收盘后运行一次，输出 JSON 格式交易信号。
 用途：从回测系统走向交易系统的第一步。
 """
+
 import json
 import os
 from datetime import datetime, timedelta
@@ -75,7 +76,7 @@ def generate_signals(lookback_days=120):
         "regime": regime,
         "trend_signals": trend_signals,
         "lowvol_signals": lowvol_signals,
-        "total_signals": len(trend_signals) + len(lowvol_signals)
+        "total_signals": len(trend_signals) + len(lowvol_signals),
     }
 
     # 保存

@@ -1,17 +1,14 @@
 """
 因子加载器：从 PostgreSQL factor_values 表加载预计算因子
 """
+
 import psycopg
 import sys
+
 sys.path.insert(0, "/home/tulin/quant")
 from config import PG_CONFIG
 
-FACTOR_NAMES = {
-    1: "MA_DIFF_5_21",
-    2: "MOM_60",
-    3: "VOL_20",
-    4: "VOL_RATIO_20"
-}
+FACTOR_NAMES = {1: "MA_DIFF_5_21", 2: "MOM_60", 3: "VOL_20", 4: "VOL_RATIO_20"}
 
 FACTOR_IDS = {v: k for k, v in FACTOR_NAMES.items()}
 

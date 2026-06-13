@@ -18,8 +18,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.oms import OmsEngine, OrderSide, OrderStatus
 from core.contract import contract_manager
+from core.oms import OmsEngine, OrderSide
 from live.strategy_account import StrategyAccount
 
 

@@ -1,6 +1,7 @@
 """
 模型基类
 """
+
 from abc import ABC, abstractmethod
 import pickle
 from pathlib import Path

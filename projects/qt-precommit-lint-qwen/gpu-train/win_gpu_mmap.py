@@ -140,10 +140,7 @@ class SequenceMemmapDataset(Dataset):
         self.extra_columns = list(meta.get("extra_columns", []))
         self._x_path = os.path.join(cache_dir, f"{split}_X.mmap")
         self._y_path = os.path.join(cache_dir, f"{split}_y.mmap")
-        self._extra_paths = {
-            col: os.path.join(cache_dir, f"{split}_{col}.mmap")
-            for col in self.extra_columns
-        }
+        self._extra_paths = {col: os.path.join(cache_dir, f"{split}_{col}.mmap") for col in self.extra_columns}
         self.X = None
         self.y = None
         self.extras = None

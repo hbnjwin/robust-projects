@@ -10,6 +10,7 @@
 
 状态持久化到 JSON 文件，进程重启后可恢复。
 """
+
 import json
 import os
 from datetime import datetime, timedelta
@@ -55,7 +56,7 @@ def init_state():
         "max_drawdown": 0,
         "trade_count": 0,
         "day_count": 0,
-        "equity_curve": []
+        "equity_curve": [],
     }
 
 
@@ -92,10 +93,7 @@ def run_paper_trading():
     account = StrategyAccount("PaperTrading", INITIAL_CAPITAL)
     account.cash = state["cash"]
     for code, pos in state["positions"].items():
-        account.positions[code] = {
-            "shares": pos["shares"],
-            "avg_cost": pos.get("avg_cost", 0)
-        }
+        account.positions[code] = {"shares": pos["shares"], "avg_cost": pos.get("avg_cost", 0)}
 
     engine = ExecutionEngine(account)
 
@@ -119,18 +117,11 @@ def run_paper_trading():
     state["cash"] = account.cash
     state["positions"] = {}
     for code, pos in account.positions.items():
-        state["positions"][code] = {
-            "shares": pos["shares"],
-            "avg_cost": pos.get("avg_cost", 0)
-        }
+        state["positions"][code] = {"shares": pos["shares"], "avg_cost": pos.get("avg_cost", 0)}
     state["total_equity"] = equity
     state["trade_count"] += len(account.trade_log)
     state["day_count"] += 1
-    state["equity_curve"].append({
-        "date": today_str,
-        "equity": equity,
-        "drawdown": dd
-    })
+    state["equity_curve"].append({"date": today_str, "equity": equity, "drawdown": dd})
 
     # 8. 保存状态
     save_state(state)
@@ -151,7 +142,7 @@ def run_paper_trading():
         "drawdown": dd,
         "max_drawdown": state["max_drawdown"],
         "trades_today": len(account.trade_log),
-        "signals_count": len(all_signals)
+        "signals_count": len(all_signals),
     }
     snap_path = os.path.join(SNAPSHOT_DIR, f"{today_str}.json")
     with open(snap_path, "w") as f:

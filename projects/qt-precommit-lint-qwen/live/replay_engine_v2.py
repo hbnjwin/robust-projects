@@ -3,11 +3,9 @@ from live.execution_engine_v2 import ExecutionEngine
 from live.data_loader import load_market_data
 import pandas as pd
 
-class ReplayEngine:
 
-    def __init__(self, strategy, market_data,
-                 start_date, end_date,
-                 initial_capital=1_000_000):
+class ReplayEngine:
+    def __init__(self, strategy, market_data, start_date, end_date, initial_capital=1_000_000):
 
         self.strategy = strategy
         self.market_data = market_data
@@ -75,7 +73,6 @@ class ReplayEngine:
 
     def run(self):
         for date, prices in self.market_data.items():
-
             # T+1 执行
             self.execution.execute(prices)
 
@@ -102,9 +99,7 @@ class ReplayEngine:
             # 最大回撤风控
             if drawdown > 0.25:
                 for code in list(self.portfolio.positions.keys()):
-                    self.execution.queue_orders([
-                        {"action": "sell", "ts_code": code}
-                    ])
+                    self.execution.queue_orders([{"action": "sell", "ts_code": code}])
                 self.portfolio.record(date, drawdown)
                 continue
 
@@ -119,11 +114,7 @@ class ReplayEngine:
 
             orders = []
             for s in signals:
-                orders.append({
-                    "action": "buy",
-                    "ts_code": s["ts_code"],
-                    "scale": scale
-                })
+                orders.append({"action": "buy", "ts_code": s["ts_code"], "scale": scale})
 
             self.execution.queue_orders(orders)
 

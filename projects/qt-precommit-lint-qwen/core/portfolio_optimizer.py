@@ -16,13 +16,15 @@ core/portfolio_optimizer.py — 组合权重优化器
     opt = PortfolioOptimizer(method="rp")
     weights = opt(cov_matrix, signals)   # 返回各股权重 Series
 """
+
 from __future__ import annotations
 
 import warnings
+from typing import Optional, Union
+
 import numpy as np
 import pandas as pd
 import scipy.optimize as so
-from typing import Optional, Union
 
 
 class PortfolioOptimizer:
@@ -40,30 +42,30 @@ class PortfolioOptimizer:
 
     OPT_GMV = "gmv"
     OPT_MVO = "mvo"
-    OPT_RP  = "rp"
+    OPT_RP = "rp"
     OPT_INV = "inv"
 
     def __init__(
         self,
-        method:       str   = "inv",
-        lamb:         float = 0.0,
-        delta:        float = 0.0,
-        alpha:        float = 0.0,
-        scale_return: bool  = True,
-        tol:          float = 1e-8,
+        method: str = "inv",
+        lamb: float = 0.0,
+        delta: float = 0.0,
+        alpha: float = 0.0,
+        scale_return: bool = True,
+        tol: float = 1e-8,
     ):
         assert method in [self.OPT_GMV, self.OPT_MVO, self.OPT_RP, self.OPT_INV]
-        self.method       = method
-        self.lamb         = lamb
-        self.delta        = delta
-        self.alpha        = alpha
+        self.method = method
+        self.lamb = lamb
+        self.delta = delta
+        self.alpha = alpha
         self.scale_return = scale_return
-        self.tol          = tol
+        self.tol = tol
 
     def __call__(
         self,
-        S:  Union[np.ndarray, pd.DataFrame],
-        r:  Optional[Union[np.ndarray, pd.Series]] = None,
+        S: Union[np.ndarray, pd.DataFrame],
+        r: Optional[Union[np.ndarray, pd.Series]] = None,
         w0: Optional[Union[np.ndarray, pd.Series]] = None,
     ) -> Union[np.ndarray, pd.Series]:
         """
@@ -117,20 +119,22 @@ class PortfolioOptimizer:
 
         # ── 全局最小方差 ──────────────────────────────────────
         if self.method == self.OPT_GMV:
+
             def objective(w):
-                return w @ S @ w + self.alpha * np.sum(w ** 2)
+                return w @ S @ w + self.alpha * np.sum(w**2)
 
             return self._solve(n, objective, S, r=None, w0=w0)
 
         # ── 风险平价 ──────────────────────────────────────────
         if self.method == self.OPT_RP:
+
             def objective(w):
                 port_var = w @ S @ w
                 # 各股风险贡献
                 rc = w * (S @ w) / (port_var + 1e-10)
                 # 最小化风险贡献差异（等风险贡献）
                 target = np.ones(n) / n
-                return np.sum((rc - target) ** 2) + self.alpha * np.sum(w ** 2)
+                return np.sum((rc - target) ** 2) + self.alpha * np.sum(w**2)
 
             return self._solve(n, objective, S, r=None, w0=w0)
 
@@ -140,12 +144,12 @@ class PortfolioOptimizer:
                 raise ValueError("mvo 方法需要传入预期收益 r")
 
             def objective(w):
-                ret  = w @ r
+                ret = w @ r
                 risk = w @ S @ w
                 turn = 0.0
                 if w0 is not None and self.delta > 0:
                     turn = self.delta * np.sum(np.abs(w - w0))
-                return -self.lamb * ret + risk + turn + self.alpha * np.sum(w ** 2)
+                return -self.lamb * ret + risk + turn + self.alpha * np.sum(w**2)
 
             return self._solve(n, objective, S, r=r, w0=w0)
 
@@ -162,15 +166,13 @@ class PortfolioOptimizer:
 
         # 换手率约束
         if w0 is not None and self.delta > 0:
-            constraints.append({
-                "type": "ineq",
-                "fun": lambda w: self.delta - np.sum(np.abs(w - w0))
-            })
+            constraints.append({"type": "ineq", "fun": lambda w: self.delta - np.sum(np.abs(w - w0))})
 
         bounds = [(0.0, 1.0)] * n
 
         result = so.minimize(
-            objective, x0,
+            objective,
+            x0,
             method="SLSQP",
             bounds=bounds,
             constraints=constraints,
@@ -189,10 +191,11 @@ class PortfolioOptimizer:
 
 # ── 便捷函数：从信号和历史收益计算协方差矩阵 ─────────────────
 
+
 def compute_cov_from_returns(
     returns_df: pd.DataFrame,
-    lookback:   int = 60,
-    shrinkage:  float = 0.1,
+    lookback: int = 60,
+    shrinkage: float = 0.1,
 ) -> pd.DataFrame:
     """
     从历史收益率计算协方差矩阵（含 Ledoit-Wolf 收缩）
@@ -207,7 +210,6 @@ def compute_cov_from_returns(
     """
     recent = returns_df.tail(lookback).dropna(axis=1, how="any")
     S = recent.cov().values
-    n = len(S)
 
     # Ledoit-Wolf 收缩：S = (1-α)S + α·diag(S)
     if shrinkage > 0:
@@ -218,11 +220,11 @@ def compute_cov_from_returns(
 
 
 def optimize_weights(
-    signals:    pd.Series,
+    signals: pd.Series,
     returns_df: pd.DataFrame,
-    method:     str   = "rp",
-    top_n:      int   = 20,
-    lookback:   int   = 60,
+    method: str = "rp",
+    top_n: int = 20,
+    lookback: int = 60,
     max_weight: float = 0.15,
 ) -> pd.Series:
     """

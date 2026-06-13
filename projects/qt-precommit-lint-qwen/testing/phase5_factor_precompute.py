@@ -7,6 +7,7 @@ Phase 5: Factor 信号预计算 + Factor vs HIST vs Fusion 对比
     source .venv/bin/activate
     python testing/phase5_factor_precompute.py
 """
+
 import sys, os, json, time
 from pathlib import Path
 from datetime import date
@@ -19,37 +20,37 @@ sys.path.insert(0, str(_ROOT))
 
 # ── 配置（与 hist_backtest_compare.py 保持一致）──────────────
 BACKTEST_START = "2024-07-01"
-BACKTEST_END   = "2026-03-13"
-INITIAL_CAP    = 1_000_000.0
-TOP_N          = 30
-COST_RATE      = 0.002
-REBAL_DAYS     = 5
-MMAP_DIR       = "/vol1/mmap_cache/hist_bt"
-FACTOR_CACHE   = "/vol1/mmap_cache/hist_bt/factor_signals.npy"
-OUT_PATH       = _ROOT / "data/backtest_compare/phase5_fusion.json"
+BACKTEST_END = "2026-03-13"
+INITIAL_CAP = 1_000_000.0
+TOP_N = 30
+COST_RATE = 0.002
+REBAL_DAYS = 5
+MMAP_DIR = "/vol1/mmap_cache/hist_bt"
+FACTOR_CACHE = "/vol1/mmap_cache/hist_bt/factor_signals.npy"
+OUT_PATH = _ROOT / "data/backtest_compare/phase5_fusion.json"
 os.makedirs(OUT_PATH.parent, exist_ok=True)
 
 # ── 1. 加载预计算 HIST/GRU 信号 ──────────────────────────────
 print("加载预计算信号矩阵 ...")
-bt_dates     = np.load(f"{MMAP_DIR}/bt_dates.npy", allow_pickle=True)
+bt_dates = np.load(f"{MMAP_DIR}/bt_dates.npy", allow_pickle=True)
 hist_signals = np.load(f"{MMAP_DIR}/hist_signals.npy")
-gru_signals  = np.load(f"{MMAP_DIR}/gru_signals.npy")
+gru_signals = np.load(f"{MMAP_DIR}/gru_signals.npy")
 
 # ── 2. 加载股票列表（与 hist_backtest_compare.py 一致）────────
 print("加载股票列表 ...")
-df_meta = pd.read_parquet(str(_ROOT / "data/factors_full.parquet"),
-    filters=[("trade_date", ">=", date(2024, 3, 1)),
-             ("trade_date", "<=", date(2026, 3, 13))],
-    columns=["ts_code", "trade_date"])
+df_meta = pd.read_parquet(
+    str(_ROOT / "data/factors_full.parquet"),
+    filters=[("trade_date", ">=", date(2024, 3, 1)), ("trade_date", "<=", date(2026, 3, 13))],
+    columns=["ts_code", "trade_date"],
+)
 df_meta["trade_date"] = pd.to_datetime(df_meta["trade_date"])
 all_stocks = sorted(df_meta["ts_code"].unique())
-stock2i    = {s: i for i, s in enumerate(all_stocks)}
-N_STOCKS   = len(all_stocks)
+stock2i = {s: i for i, s in enumerate(all_stocks)}
+N_STOCKS = len(all_stocks)
 print(f"  股票数: {N_STOCKS}")
 
 # ── 3. 过滤回测区间的日期 ─────────────────────────────────────
-trade_dates = [pd.Timestamp(str(d)) for d in bt_dates
-               if BACKTEST_START <= str(d) <= BACKTEST_END]
+trade_dates = [pd.Timestamp(str(d)) for d in bt_dates if BACKTEST_START <= str(d) <= BACKTEST_END]
 N_DATES = len(trade_dates)
 date_strs = [d.strftime("%Y-%m-%d") for d in trade_dates]
 date2di = {str(d): i for i, d in enumerate(bt_dates)}
@@ -58,10 +59,11 @@ print(f"  回测交易日: {N_DATES} ({BACKTEST_START} ~ {BACKTEST_END})")
 # ── 4. 加载价格数据 ───────────────────────────────────────────
 print("加载价格数据 ...")
 try:
-    price_df = pd.read_parquet(str(_ROOT / "data/daily_price_full.parquet"),
-        filters=[("trade_date", ">=", date(2024, 7, 1)),
-                 ("trade_date", "<=", date(2026, 3, 13))],
-        columns=["ts_code", "trade_date", "close"])
+    price_df = pd.read_parquet(
+        str(_ROOT / "data/daily_price_full.parquet"),
+        filters=[("trade_date", ">=", date(2024, 7, 1)), ("trade_date", "<=", date(2026, 3, 13))],
+        columns=["ts_code", "trade_date", "close"],
+    )
     price_df["trade_date"] = pd.to_datetime(price_df["trade_date"])
     price_pivot = price_df.pivot(index="trade_date", columns="ts_code", values="close")
     print(f"  价格: {price_pivot.shape}")
@@ -111,22 +113,21 @@ else:
 
         if (di + 1) % 50 == 0:
             elapsed = time.time() - t0
-            print(f"  [{di+1}/{len(bt_dates)}] {d_str} elapsed={elapsed:.0f}s", flush=True)
+            print(f"  [{di + 1}/{len(bt_dates)}] {d_str} elapsed={elapsed:.0f}s", flush=True)
 
     np.save(FACTOR_CACHE, factor_signals_full)
     print(f"  Factor 信号矩阵已保存: {FACTOR_CACHE}")
 
 # 截取回测区间
-factor_signals = np.array([
-    factor_signals_full[date2di[d]] for d in date_strs
-])
-hist_bt   = np.array([hist_signals[date2di[d]] for d in date_strs])
-gru_bt    = np.array([gru_signals[date2di[d]]  for d in date_strs])
+factor_signals = np.array([factor_signals_full[date2di[d]] for d in date_strs])
+hist_bt = np.array([hist_signals[date2di[d]] for d in date_strs])
+gru_bt = np.array([gru_signals[date2di[d]] for d in date_strs])
 print(f"  Factor 信号: {factor_signals.shape}, 有效率: {(~np.isnan(factor_signals)).mean():.1%}")
+
 
 # ── 6. 回测引擎（复用 hist_backtest_compare.py 的逻辑）────────
 def run_backtest(signals, label):
-    print(f"\n{'='*50}", flush=True)
+    print(f"\n{'=' * 50}", flush=True)
     print(f"回测: {label}", flush=True)
 
     cash = INITIAL_CAP
@@ -157,10 +158,10 @@ def run_backtest(signals, label):
 
         # 再平衡
         if di % REBAL_DAYS == 0 and valid.sum() > 0:
-            valid_idxs  = np.where(valid)[0]
-            top_scores  = sig[valid_idxs]
-            top_local   = np.argsort(top_scores)[::-1][:TOP_N]
-            top_global  = set(valid_idxs[top_local].tolist())
+            valid_idxs = np.where(valid)[0]
+            top_scores = sig[valid_idxs]
+            top_local = np.argsort(top_scores)[::-1][:TOP_N]
+            top_global = set(valid_idxs[top_local].tolist())
 
             for si in list(positions.keys()):
                 if si not in top_global:
@@ -195,7 +196,7 @@ def run_backtest(signals, label):
 
         if (di + 1) % 40 == 0:
             ret = (total_eq / INITIAL_CAP - 1) * 100
-            print(f"  [{di+1}/{N_DATES}] {td.date()} eq={total_eq:,.0f} ret={ret:+.2f}%", flush=True)
+            print(f"  [{di + 1}/{N_DATES}] {td.date()} eq={total_eq:,.0f} ret={ret:+.2f}%", flush=True)
 
     eq = np.array(equity_curve, dtype=float)
     rets = np.diff(eq) / np.where(eq[:-1] > 0, eq[:-1], 1)
@@ -205,13 +206,18 @@ def run_backtest(signals, label):
     total_ret = eq[-1] / eq[0] - 1
     ann_ret = total_ret / N_DATES * 240
 
-    r = {"model": label, "total_return": round(total_ret, 4),
-         "ann_return": round(ann_ret, 4), "sharpe": round(sharpe, 4),
-         "max_drawdown": round(max_dd, 4),
-         "calmar": round(ann_ret / max_dd, 4) if max_dd > 0 else 0,
-         "n_trades": n_trades}
-    print(f"  {label}: ret={total_ret*100:+.2f}% sharpe={sharpe:.3f} dd={max_dd*100:.2f}%", flush=True)
+    r = {
+        "model": label,
+        "total_return": round(total_ret, 4),
+        "ann_return": round(ann_ret, 4),
+        "sharpe": round(sharpe, 4),
+        "max_drawdown": round(max_dd, 4),
+        "calmar": round(ann_ret / max_dd, 4) if max_dd > 0 else 0,
+        "n_trades": n_trades,
+    }
+    print(f"  {label}: ret={total_ret * 100:+.2f}% sharpe={sharpe:.3f} dd={max_dd * 100:.2f}%", flush=True)
     return r
+
 
 # ── 7. 构建融合信号（Rank 标准化后加权）─────────────────────
 def rank_normalize(signals):
@@ -226,44 +232,48 @@ def rank_normalize(signals):
         result[di, np.where(valid)[0]] = ranks / (valid.sum() - 1)
     return result
 
+
 print("\n构建融合信号 ...")
 factor_rank = rank_normalize(factor_signals)
-hist_rank   = rank_normalize(hist_bt)
+hist_rank = rank_normalize(hist_bt)
 
 # Factor(0.4) + HIST(0.6) Rank 融合
 fusion_04_06 = np.where(
     ~np.isnan(factor_rank) & ~np.isnan(hist_rank),
     0.4 * factor_rank + 0.6 * hist_rank,
-    np.where(~np.isnan(hist_rank), hist_rank, factor_rank)
+    np.where(~np.isnan(hist_rank), hist_rank, factor_rank),
 )
 
 # Factor(0.5) + HIST(0.5) 等权融合
 fusion_05_05 = np.where(
     ~np.isnan(factor_rank) & ~np.isnan(hist_rank),
     0.5 * factor_rank + 0.5 * hist_rank,
-    np.where(~np.isnan(hist_rank), hist_rank, factor_rank)
+    np.where(~np.isnan(hist_rank), hist_rank, factor_rank),
 )
 
 # ── 8. 运行所有对比 ───────────────────────────────────────────
-r_factor     = run_backtest(factor_signals, "Factor_only")
-r_hist       = run_backtest(hist_bt,        "HIST_only")
-r_f04_h06    = run_backtest(fusion_04_06,   "Factor0.4_HIST0.6_rank")
-r_f05_h05    = run_backtest(fusion_05_05,   "Factor0.5_HIST0.5_rank")
+r_factor = run_backtest(factor_signals, "Factor_only")
+r_hist = run_backtest(hist_bt, "HIST_only")
+r_f04_h06 = run_backtest(fusion_04_06, "Factor0.4_HIST0.6_rank")
+r_f05_h05 = run_backtest(fusion_05_05, "Factor0.5_HIST0.5_rank")
 
 # ── 9. 汇总输出 ───────────────────────────────────────────────
-print(f"\n{'='*70}", flush=True)
+print(f"\n{'=' * 70}", flush=True)
 print(f"{'模型':<32} {'总收益':>8} {'年化':>8} {'Sharpe':>8} {'最大回撤':>10} {'Calmar':>8}", flush=True)
-print(f"{'-'*70}", flush=True)
+print(f"{'-' * 70}", flush=True)
 for r in [r_factor, r_hist, r_f04_h06, r_f05_h05]:
-    print(f"{r['model']:<32} {r['total_return']*100:>7.2f}% "
-          f"{r['ann_return']*100:>7.2f}% {r['sharpe']:>8.3f} "
-          f"{r['max_drawdown']*100:>9.2f}% {r['calmar']:>8.3f}", flush=True)
+    print(
+        f"{r['model']:<32} {r['total_return'] * 100:>7.2f}% "
+        f"{r['ann_return'] * 100:>7.2f}% {r['sharpe']:>8.3f} "
+        f"{r['max_drawdown'] * 100:>9.2f}% {r['calmar']:>8.3f}",
+        flush=True,
+    )
 
 result = {
     "generated_at": pd.Timestamp.now().isoformat(),
     "period": f"{BACKTEST_START} ~ {BACKTEST_END}",
-    "factor_only":          r_factor,
-    "hist_only":            r_hist,
+    "factor_only": r_factor,
+    "hist_only": r_hist,
     "fusion_factor04_hist06": r_f04_h06,
     "fusion_factor05_hist05": r_f05_h05,
 }

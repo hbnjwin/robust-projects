@@ -6,6 +6,7 @@
     from services.realtime_quotes import get_realtime_quotes
     quotes = get_realtime_quotes(["000001.SZ", "600000.SH"])
 """
+
 import urllib.request
 from datetime import datetime
 
@@ -34,7 +35,7 @@ def get_realtime_quotes(ts_codes: list[str], timeout: int = 10) -> dict:
     results = {}
     # 每批最多 50 只
     for i in range(0, len(ts_codes), 50):
-        batch = ts_codes[i:i + 50]
+        batch = ts_codes[i : i + 50]
         tencent_codes = [_to_tencent(c) for c in batch]
         url = f"http://qt.gtimg.cn/q={','.join(tencent_codes)}"
 

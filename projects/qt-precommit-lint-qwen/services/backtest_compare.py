@@ -8,6 +8,7 @@ services/backtest_compare.py — 回测引擎对比
 对比: 年化收益、Sharpe、最大回撤、Calmar、胜率
 输出: data/backtest_compare/{date_range}.json + 飞书推送
 """
+
 from __future__ import annotations
 
 import json
@@ -33,6 +34,7 @@ FACTORS_FULL_PATH = "data/factors_full.parquet"
 
 # ── Qlib-style 回测引擎 ──────────────────────────────────────
 
+
 class QlibStyleBacktest:
     """
     标准化信号回测（模拟 qlib TopkDropout 策略）
@@ -47,12 +49,12 @@ class QlibStyleBacktest:
     def __init__(
         self,
         scores: dict[str, dict[str, float]],  # {date: {ts_code: score}}
-        prices: dict[str, dict[str, dict]],    # {date: {ts_code: {close, ...}}}
+        prices: dict[str, dict[str, dict]],  # {date: {ts_code: {close, ...}}}
         top_k: int = 30,
         rebalance_days: int = 5,
         initial_capital: float = 1_000_000,
         commission: float = 0.001,  # 单边千一
-        slippage: float = 0.001,    # 滑点千一
+        slippage: float = 0.001,  # 滑点千一
     ):
         self.scores = scores
         self.prices = prices
@@ -90,14 +92,14 @@ class QlibStyleBacktest:
                     # 只选有行情的
                     available = {c: s for c, s in day_scores.items() if c in day_prices}
                     ranked = sorted(available.items(), key=lambda x: x[1], reverse=True)
-                    new_holdings = {c: 1.0 / self.top_k for c, _ in ranked[:self.top_k]}
+                    new_holdings = {c: 1.0 / self.top_k for c, _ in ranked[: self.top_k]}
 
                     # 计算换手成本
                     old_set = set(holdings.keys())
                     new_set = set(new_holdings.keys())
                     turnover = len(old_set - new_set) + len(new_set - old_set)
                     cost = turnover * (self.commission + self.slippage) / self.top_k
-                    capital *= (1 - cost)
+                    capital *= 1 - cost
                     trade_count += turnover
 
                     holdings = new_holdings
@@ -122,16 +124,18 @@ class QlibStyleBacktest:
                 if valid_weight > 0:
                     port_return = port_return / valid_weight * sum(holdings.values())
 
-                capital *= (1 + port_return)
+                capital *= 1 + port_return
                 daily_returns.append(port_return)
             else:
                 daily_returns.append(0.0)
 
-            equity_curve.append({
-                "date": date,
-                "equity": round(capital, 2),
-                "n_holdings": len(holdings),
-            })
+            equity_curve.append(
+                {
+                    "date": date,
+                    "equity": round(capital, 2),
+                    "n_holdings": len(holdings),
+                }
+            )
 
         # 计算指标
         metrics = self._calc_metrics(daily_returns, equity_curve, trade_count)
@@ -186,6 +190,7 @@ class QlibStyleBacktest:
 
 
 # ── 加载 ML 信号 ─────────────────────────────────────────────
+
 
 def load_all_signals(start: str, end: str) -> dict[str, dict[str, float]]:
     """从 factors_full 生成每日 ML 信号（LGB+GRU 集成）"""
@@ -263,6 +268,7 @@ def generate_signals_from_model(start: str, end: str) -> dict[str, dict[str, flo
 
 # ── 主函数 ────────────────────────────────────────────────────
 
+
 def compare(
     start: str = "2025-07-01",
     end: str = "2026-03-13",
@@ -275,7 +281,7 @@ def compare(
     # 1. 加载行情
     t0 = time.time()
     market_data = load_market_data_fast(start, end)
-    print(f"  行情: {len(market_data)} 天 ({time.time()-t0:.1f}s)")
+    print(f"  行情: {len(market_data)} 天 ({time.time() - t0:.1f}s)")
 
     # 2. 加载/生成信号
     signals = load_all_signals(start, end)
@@ -299,7 +305,7 @@ def compare(
         rebalance_days=rebalance_days,
     )
     qlib_result = qlib_bt.run()
-    print(f"  耗时: {time.time()-t1:.1f}s")
+    print(f"  耗时: {time.time() - t1:.1f}s")
     print(f"  指标: {json.dumps(qlib_result['metrics'], indent=2)}")
 
     # 4. Replay Engine V5 回测（纯 Factor 模式，与 Qlib-style 公平对比）
@@ -318,13 +324,13 @@ def compare(
         factor_rebalance_days=rebalance_days,
     )
     v5_curve = v5_engine.run()
-    print(f"  耗时: {time.time()-t2:.1f}s")
+    print(f"  耗时: {time.time() - t2:.1f}s")
 
     # V5 指标计算
     v5_equities = [c["equity"] for c in v5_curve]
     v5_returns = []
     for i in range(1, len(v5_equities)):
-        v5_returns.append((v5_equities[i] - v5_equities[i-1]) / v5_equities[i-1])
+        v5_returns.append((v5_equities[i] - v5_equities[i - 1]) / v5_equities[i - 1])
 
     v5_r = np.array(v5_returns)
     n = len(v5_r)
@@ -364,7 +370,7 @@ def compare(
         q = qlib_result["metrics"].get(key, 0)
         v = v5_metrics.get(key, 0)
         comparison["diff"][key] = round(q - v, 4)
-        print(f"  {key:15s}  qlib={q:+.4f}  v5={v:+.4f}  diff={q-v:+.4f}")
+        print(f"  {key:15s}  qlib={q:+.4f}  v5={v:+.4f}  diff={q - v:+.4f}")
 
     # 保存
     out_path = os.path.join(OUTPUT_DIR, f"{start}_{end}.json")

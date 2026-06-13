@@ -87,41 +87,25 @@ def run_task(task):
                 check=True,
                 timeout=600,  # 10 分钟超时
                 capture_output=True,
-                text=True
+                text=True,
             )
-            state = {
-                "last_run": now_str,
-                "status": "success",
-                "attempt": attempts + 1
-            }
+            state = {"last_run": now_str, "status": "success", "attempt": attempts + 1}
             log(f"✅ {name} succeeded (attempt {attempts + 1})")
             success = True
             break
         except subprocess.TimeoutExpired:
             log(f"⏰ {name} timed out (attempt {attempts + 1})")
-            state = {
-                "last_run": now_str,
-                "status": "timeout",
-                "attempt": attempts + 1
-            }
+            state = {"last_run": now_str, "status": "timeout", "attempt": attempts + 1}
         except Exception as e:
             log(f"❌ {name} failed (attempt {attempts + 1}): {e}")
-            state = {
-                "last_run": now_str,
-                "status": "failed",
-                "error": str(e),
-                "attempt": attempts + 1
-            }
+            state = {"last_run": now_str, "status": "failed", "error": str(e), "attempt": attempts + 1}
         attempts += 1
 
     with open(state_path, "w") as f:
         json.dump(state, f, indent=4)
 
     # 归档历史
-    history_file = os.path.join(
-        HISTORY_DIR,
-        f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
-    )
+    history_file = os.path.join(HISTORY_DIR, f"{name}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json")
     with open(history_file, "w") as f:
         json.dump(state, f, indent=4)
 

@@ -84,8 +84,8 @@ class PostgresDataFeed(BaseDataFeed):
         end: str,
         ts_codes: list[str] | None = None,
     ) -> dict:
-        import psycopg
         import pandas as pd
+        import psycopg
 
         code_filter = ""
         params: list = [start, end]
@@ -195,6 +195,7 @@ class SQLiteDataFeed(BaseDataFeed):
         ts_codes: list[str] | None = None,
     ) -> dict:
         import sqlite3
+
         import pandas as pd
 
         conn = sqlite3.connect(self._db)

@@ -19,6 +19,7 @@ core/gateway.py — BaseGateway 抽象层
   on_trade(trade)          — 成交回报
   on_account(data)         — 账户资金更新
 """
+
 from __future__ import annotations
 
 from abc import ABC, abstractmethod
@@ -26,15 +27,14 @@ from typing import Callable
 
 
 class BaseGateway(ABC):
-
     def __init__(self, name: str):
         self.name = name
         self._connected = False
 
         # 回调注册（由 LiveEngine 注入）
-        self.on_tick:    Callable | None = None
-        self.on_order:   Callable | None = None
-        self.on_trade:   Callable | None = None
+        self.on_tick: Callable | None = None
+        self.on_order: Callable | None = None
+        self.on_trade: Callable | None = None
         self.on_account: Callable | None = None
 
     @property

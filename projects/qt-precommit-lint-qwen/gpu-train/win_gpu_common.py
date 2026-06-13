@@ -163,11 +163,7 @@ def create_runtime(use_amp):
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
     pin_memory = device.type == "cuda"
     amp_enabled = use_amp and device.type == "cuda"
-    amp_dtype = (
-        torch.bfloat16
-        if amp_enabled and torch.cuda.is_bf16_supported()
-        else torch.float16
-    )
+    amp_dtype = torch.bfloat16 if amp_enabled and torch.cuda.is_bf16_supported() else torch.float16
     scaler = torch.cuda.amp.GradScaler(enabled=amp_enabled and amp_dtype == torch.float16)
     return RuntimeContext(
         device=device,
@@ -232,9 +228,7 @@ def run_epoch(
                 model_inputs = (model_inputs,)
 
             amp_ctx = (
-                torch.autocast(device_type="cuda", dtype=runtime.amp_dtype)
-                if runtime.amp_enabled
-                else nullcontext()
+                torch.autocast(device_type="cuda", dtype=runtime.amp_dtype) if runtime.amp_enabled else nullcontext()
             )
             with amp_ctx:
                 pred = model(*model_inputs)
@@ -261,18 +255,13 @@ def run_epoch(
                 all_pred.append(pred.detach().float().cpu())
                 all_label.append(target.detach().float().cpu())
 
-            if (
-                is_train
-                and step_log_every > 0
-                and ((step_idx % step_log_every == 0) or (step_idx == total_steps))
-            ):
+            if is_train and step_log_every > 0 and ((step_idx % step_log_every == 0) or (step_idx == total_steps)):
                 avg_loss = total_loss / max(total_seen, 1)
                 elapsed = time.time() - start_time
                 prefix = f"[{step_log_label}] " if step_log_label else ""
                 epoch_text = f"epoch {epoch} " if epoch is not None else ""
                 print(
-                    f"{prefix}{epoch_text}step {step_idx}/{total_steps} "
-                    f"loss={avg_loss:.4f} elapsed={elapsed:.0f}s",
+                    f"{prefix}{epoch_text}step {step_idx}/{total_steps} loss={avg_loss:.4f} elapsed={elapsed:.0f}s",
                     flush=True,
                 )
 
