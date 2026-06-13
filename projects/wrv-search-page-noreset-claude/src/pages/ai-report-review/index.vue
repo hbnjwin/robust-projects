@@ -22,11 +22,11 @@
 								m-r-15px
 								placeholder="请选择"
 								clearable
-								@change="getTableList"
+								@change="handleFilterChange"
 							>
 								<t-option v-for="item in statusOptions" :key="item.value" :value="item.value" :label="item.label"></t-option>
 							</t-select>
-							<t-input placeholder="请输入任务标题" style="width: 260px" @change="getTableList" clearable v-model="table.search.keyWord">
+							<t-input placeholder="请输入任务标题" style="width: 260px" @change="handleFilterChange" clearable v-model="table.search.keyWord">
 								<template #suffixIcon>
 									<i class="iconfont icon-sousuo" text="14px"></i>
 								</template>
@@ -168,6 +168,11 @@ const uploadDialogRef = ref(null)
 const taskDetailDialogRef = ref(null)
 const handleOpenUploadDialog = () => {
 	uploadDialogRef.value.show()
+}
+
+const handleFilterChange = () => {
+	table.pagination.page = 1
+	getTableList()
 }
 
 const handlePageSizeChange = (newPageSize) => {
