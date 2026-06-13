@@ -1,0 +1,53 @@
+[[criterion]]
+name = "System.out.println替换覆盖"
+description = "[Explicit] 是否完整替换了项目中50处以上的System.out.println输出为结构化日志。1: 替换不到20处；2: 替换了20-30处；3: 替换了30-40处；4: 替换了40-50处；5: 替换了50处以上，覆盖所有已知的System.out调用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "共替换了53处System.out/err和e.printStackTrace()调用，覆盖了DocumentOcrProcessorService、ProcessRealFile、DocumentsServiceImpl、StandardPdfAnalyzeService、LinkyoyoAgentConfig、DocumentsController所有已知位置。"
+
+[[criterion]]
+name = "System.err和异常堆栈替换"
+description = "[Explicit] 是否将21处e.printStackTrace()替换为log.error并传入异常对象，以及System.err.println替换为log.error。1: 未处理e.printStackTrace；2: 处理了部分；3: 处理了一半以上；4: 大部分替换完成但可能遗漏1-2处；5: 所有e.printStackTrace和System.err都替换为log.error(msg, e)格式。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "替换了DocumentOcrProcessorService的3处e.printStackTrace和5处System.err、DocumentsServiceImpl的1处e.printStackTrace和1处System.err、ProcessRealFile的2处System.err，覆盖了主要文件中的异常堆栈输出。"
+
+[[criterion]]
+name = "日志级别合理选择"
+description = "[Implicit] 是否为不同类型的输出选择了合理的日志级别（info用于正常流程、warn用于可恢复异常、error用于不可恢复错误、debug用于调试信息）。1: 全部使用同一级别；2: 仅区分info和error；3: 区分了info、error但部分选择不当；4: 合理区分info、warn、error三级；5: 完整区分debug/info/warn/error，调试信息使用debug级别。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将正常流程输出替换为log.info、异常和错误替换为log.error，ProcessRealFile中的OCR转换进度信息使用了合理的info级别。"
+
+[[criterion]]
+name = "@Slf4j注解添加"
+description = "[Explicit] 是否为缺少日志注解的类（如DocumentOcrProcessorService、ProcessRealFile、LinkyoyoAgentConfig）正确添加了@Slf4j注解。1: 未添加注解直接使用log变量；2: 手动创建Logger而非使用@Slf4j；3: 添加了@Slf4j但遗漏了部分类；4: 所有需要的类都添加了@Slf4j；5: 添加@Slf4j并正确导入lombok.extern.slf4j.Slf4j。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "为DocumentOcrProcessorService、ProcessRealFile、LinkyoyoAgentConfig添加了@Slf4j注解，已有@Slf4j的DocumentsServiceImpl和StandardPdfAnalyzeService无需修改。"
+
+[[criterion]]
+name = "结构化日志参数化"
+description = "[Implicit] 是否在替换时使用了SLF4J的参数化日志格式（如log.info的花括号占位符）而非字符串拼接，避免不必要的字符串构建开销。1: 全部使用字符串拼接；2: 混用拼接和参数化；3: 大部分使用参数化但部分仍拼接；4: 基本都使用参数化格式；5: 所有日志调用使用参数化格式且异常对象作为最后参数传入。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "替换时使用了SLF4J参数化格式，异常处理中使用log.error传入异常对象作为最后参数。"
+
+[[criterion]]
+name = "文件覆盖完整性"
+description = "[Explicit] 是否覆盖了题目提到的所有文件包括DocumentOcrProcessorService(11处)、DocumentsServiceImpl(6处)、StandardPdfAnalyzeService(5处)、ProcessRealFile(约30处)、LinkyoyoAgentConfig(3处)以及DocumentsController等含e.printStackTrace的类。1: 只修改了1-2个文件；2: 修改了3个文件；3: 修改了4-5个文件；4: 修改了6个以上文件覆盖主要位置；5: 所有相关文件都已修改且用grep确认无遗漏。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改了相同的6个文件覆盖了所有主要位置。"
