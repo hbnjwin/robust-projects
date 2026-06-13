@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "在pyproject.toml中配置了--cov和--cov-report，但初始配置时遗漏了live模块的覆盖度量，后续补充。"
+rationale = "配置了--cov=core、--cov=analytics、--cov=live等完整模块覆盖和html+term双报告，但首次配置写入了项目外路径（C:/Users/wt/Desktop/quant_project），后手动复制到项目目录，配置过程存在路径混乱。"
 
 [[criterion]]
 name = "覆盖率门槛设置"
@@ -13,8 +13,8 @@ description = "[Explicit] 是否配置--cov-fail-under=40作为初始基线。1:
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "配置了--cov-fail-under=40，但配置位置在单独的pytest.ini中而非统一到pyproject.toml。"
+score = 4
+rationale = "--cov-fail-under=40在pyproject.toml的[tool.pytest.ini_options] addopts中正确配置，当覆盖率低于40%时pytest返回非零退出码，实测31%正确触发门槛告警。"
 
 [[criterion]]
 name = ".coveragerc排除目录"
@@ -31,8 +31,8 @@ description = "[Explicit] 是否按模块列出core/、analytics/、live/、fact
 type = "likert"
 points = 5
 weight = 1.0
-score = 2
-rationale = "运行了pytest-cov输出了term报告，但未按要求整理为按模块分列的摘要，也未标注覆盖最差的5个文件。"
+score = 3
+rationale = "最终总结中按core/analytics/live/factor_engine/ml列出了各模块覆盖率并标注了覆盖最差的5个文件，但报告以文本形式输出，未生成独立的摘要文件供后续查阅。"
 
 [[criterion]]
 name = "Makefile命令配置"
@@ -40,8 +40,8 @@ description = "[Explicit] 是否在Makefile中添加make test-cov命令一键运
 type = "likert"
 points = 5
 weight = 1.0
-score = 3
-rationale = "在Makefile中添加了test-cov目标，但同时修改了项目外的文件（C:/Users/wt/Desktop/quant_project），操作范围超出了项目目录。"
+score = 2
+rationale = "Makefile中test-cov目标配置正确，但cov-detail目标的命令体不完整（pytest调用被截断为空），无法正常执行详细覆盖率报告生成。"
 
 [[criterion]]
 name = "requirements依赖声明"
