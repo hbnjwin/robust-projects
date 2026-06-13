@@ -1,0 +1,62 @@
+[[criterion]]
+name = "entityManager.clear()移除"
+description = "[Explicit] 是否移除了ExtractionTasksServiceImpl、CheckResultServiceImpl、ExtractionResultServiceImpl、TasksServiceImpl、DocumentsServiceImpl中的entityManager.clear()调用。1: 未移除任何调用；2: 移除了1-3处；3: 移除了题目提到的5个类中的大部分；4: 题目提到的5个类中全部移除；5: 不仅移除了题目提到的类，还检查并移除了项目中其他类的entityManager.clear()调用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "不仅移除了题目提到的5个类中的entityManager.clear()调用，还通过Agent搜索发现并移除了项目中其他21个类中的共44处entityManager.clear()调用，覆盖范围远超题目要求。"
+
+[[criterion]]
+name = "@Transactional注解添加"
+description = "[Explicit] 是否为缺少事务注解的createOrUpdate等多步数据库操作方法添加了@Transactional注解，确保删除旧子记录、保存新主记录、保存新子记录的原子性。1: 未添加任何@Transactional；2: 只为部分方法添加；3: 为主要的createOrUpdate添加但遗漏其他多步操作；4: 所有createOrUpdate方法都添加了@Transactional；5: 添加@Transactional并考虑了传播行为和隔离级别的配置。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "移除了entityManager.clear()和转换了循环save为saveAll，但在最终总结中未明确提及为createOrUpdate方法添加@Transactional注解来保证多步操作的事务原子性。"
+
+[[criterion]]
+name = "循环save转saveAll批量保存"
+description = "[Explicit] 是否将ExtractionTasksServiceImpl和TasksServiceImpl中for循环逐条调用repository.save()的模式改为使用saveAll()批量保存。1: 循环save未修改；2: 只修改了部分循环；3: 主要循环已改为saveAll但有遗漏；4: 所有题目提到的循环save都改为saveAll；5: 所有循环save改为saveAll并解释了批量操作的性能优势。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将ExtractionTasksServiceImpl和TasksServiceImpl中的主要for循环save改为saveAll批量保存，但只直接修改了3个文件，CheckResultServiceImpl的循环save未直接处理。"
+
+[[criterion]]
+name = "脏读问题替代方案"
+description = "[Implicit] 是否在移除entityManager.clear()后提供了解决原有脏读问题的替代方案（如使用@Transactional的readOnly属性、EntityManager.refresh()或重新查询）。1: 只是简单移除未考虑脏读；2: 提到了脏读问题但未提供方案；3: 建议了替代方案但未实现；4: 实现了替代方案如refresh()或readOnly事务；5: 根据具体场景选择了合适的替代方案并验证了数据一致性。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "移除了entityManager.clear()调用但在总结中未说明如何替代性地解决原有的脏读问题，仅通过移除缓存清空假设JPA的默认一级缓存管理足够。"
+
+[[criterion]]
+name = "服务类覆盖完整性"
+description = "[Explicit] 是否覆盖了题目提到的全部服务实现类（ExtractionTasksServiceImpl、CheckResultServiceImpl、ExtractionResultServiceImpl、TasksServiceImpl、DocumentsServiceImpl等）。1: 只修改了1-2个类；2: 修改了3个类；3: 修改了4-5个类；4: 修改了题目明确提到的5个类；5: 覆盖了全部服务类且检查了项目中其他可能存在相同问题的类。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "直接修改了DocumentsServiceImpl、ExtractionTasksServiceImpl、TasksServiceImpl共3个文件的循环save转换，entityManager.clear()通过Agent在更多文件中移除。"
+
+[[criterion]]
+name = "数据一致性保证"
+description = "[Implicit] 是否确保重构后多步数据库操作（删除旧子记录、保存新主记录、保存新子记录）在异常情况下不会导致数据不一致。1: 未考虑数据一致性；2: 意识到问题但未处理；3: 通过@Transactional基本保证但未处理边界情况；4: 事务注解覆盖关键操作且考虑了异常回滚；5: 完整的事务保障并验证了异常场景下的回滚行为。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "移除了entityManager.clear()和转换了循环save，但createOrUpdate方法的@Transactional注解添加不明确，多步操作在异常情况下的事务回滚保障需要确认。"
+
+[[criterion]]
+name = "JPA性能反模式修复"
+description = "[Explicit] 是否从性能角度修复了entityManager.clear()整体清空缓存和循环单条save两个反模式。1: 两个反模式都未修复；2: 只修复了一个；3: 两个都有改善但不彻底；4: 两个反模式都基本修复；5: 两个反模式都修复并通过saveAll利用了JPA的批量操作优化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了两个反模式：移除了entityManager.clear()避免不必要的缓存清空，将循环save改为saveAll但只覆盖了3个核心文件中的循环。"
