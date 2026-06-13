@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "赔付计算流水线"
+description = "[Explicit] 是否完整解读了从损失金额到最终应赔金额的计算步骤链。1: 未描述流水线；2: 只描述了部分步骤；3: 步骤链基本完整但缺少已赔扣除环节；4: 完整描述了损失→免赔→比例→限额→已赔扣除五步流水线；5: 流水线分析完整且每步引用了具体的计算方法和参数配置"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "分析了理赔计算的五步链路：assess_loss→apply_deductible→apply_ratio→check_limit→deduct_paid，每步的输入输出和计算公式都做了说明"
+
+[[criterion]]
+name = "免赔额两种模式"
+description = "[Explicit] 是否区分并解释了绝对免赔和相对免赔两种计算方式的差异。1: 未区分两种模式；2: 提到了两种但解释不清；3: 区分了绝对和相对但计算示例不完整；4: 两种模式的计算公式和适用场景都分析清晰；5: 分析完整且指出了两种模式组合使用时的计算顺序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在apply_deductible方法中区分了ABSOLUTE（扣除固定金额）和RELATIVE（扣除损失百分比）两种模式，解释了保单配置中deductible_type和deductible_value的含义"
+
+[[criterion]]
+name = "累计限额追踪"
+description = "[Explicit] 是否分析了多次出险的累计赔付限额追踪机制。1: 未分析累计限额；2: 提到了限额但未分析追踪方式；3: 分析了单次限额但累计追踪不完整；4: 分析了保单年度维度的累计追踪和剩余额度计算；5: 累计追踪分析完整且处理了跨保单年度的额度重置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了累计限额追踪机制——check_annual_limit方法查询同一policy_id在当前保单年度内所有已赔付记录的SUM(paid_amount)，用max_annual减去累计已赔得到剩余可赔额度，本次赔付金额不超过该额度。指出了保单周年日（而非自然年）作为年度分界的计算"
+
+[[criterion]]
+name = "少赔案例定位"
+description = "[Explicit] 是否还原了10万损失应赔7万但系统只算出4.5万的具体计算步骤并定位差额来源。1: 未分析该案例；2: 尝试分析但计算过程不完整；3: 还原了主要计算步骤但差额来源不精确；4: 完整还原了计算步骤并定位到具体哪一步出了差额；5: 计算步骤还原精确且逐步给出了预期值vs实际值的对比"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在calculate方法中逐步还原了10万损失案例的完整计算链：损失100000→免赔（绝对5000+相对10%=10000+5000=15000）→赔后基数85000→比例70%=59500→单次限额OK→年度累计已赔15000→年度限额200000→剩余185000>59500→最终59500。定位了少赔根因是免赔额重复计算——绝对免赔和相对免赔被叠加扣除而非取较高者"
+
+[[criterion]]
+name = "条款配置数据结构"
+description = "[Implicit] 是否解读了保险条款的配置数据结构和除外责任的实现方式。1: 未分析配置结构；2: 提到了配置但未解读字段；3: 解读了主要配置字段但除外责任未涉及；4: 配置结构和除外责任条款的匹配逻辑都分析清晰；5: 配置分析完整且评估了条款配置的灵活性和可扩展性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在PolicyConfig类中解读了完整的配置结构含免赔参数、比例阶梯表、限额配置和除外责任列表，分析了exclusions通过event_type字段精确匹配排除，不在exclusions中的事故类型才进入赔付计算流程"

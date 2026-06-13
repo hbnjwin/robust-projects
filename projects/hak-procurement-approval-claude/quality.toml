@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "审批链路由逻辑"
+description = "[Explicit] 是否分析了根据采购金额和类别自动选择审批链的路由规则。1: 未分析路由；2: 列出了金额阈值但未分析代码实现；3: 分析了金额阈值但类别条件路由遗漏；4: 金额阈值和IT类别额外审批的路由规则都分析清晰；5: 路由逻辑分析完整且指出了阈值配置的灵活性和边界处理"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "完整分析了build_approval_chain方法的路由逻辑——先按金额确定基础审批链（<5万部门经理，<20万加财务总监，<100万加VP，≥100万加CEO），再检查category是否为IT_EQUIPMENT，是则在链末追加CTO节点"
+
+[[criterion]]
+name = "拆单检测策略"
+description = "[Explicit] 是否分析了95万拆成50万+45万绕过VP审批的拆单检测缺失问题。1: 未分析拆单；2: 提到了拆单但未分析检测策略；3: 指出了检测缺失但未给出检测方案；4: 分析了缺失原因并给出了基于供应商+时间窗口的检测方案；5: 拆单检测方案完整含阈值配置和告警机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "分析了拆单检测应在submit_purchase方法中增加pre_check环节——查询同一supplier_id在过去72小时内所有pending和approved的采购单金额累计，如果累计金额超过更高阈值则按累计金额重新路由审批链。给出了检测规则的配置化方案和人工审核告警机制"
+
+[[criterion]]
+name = "代理人审批机制"
+description = "[Explicit] 是否分析了代理人审批后原审批人重复操作的问题根因。1: 未分析代理人机制；2: 描述了代理但未分析重复操作；3: 分析了代理授权但重复操作的锁定机制缺失；4: 准确定位了代理人审批后节点状态未锁定导致原审批人仍可操作的根因；5: 根因分析精确且给出了审批节点状态机防重复方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "定位了根因——approve方法只检查了operator是否为当前节点的approver或delegate，但没有检查节点是否已被审批过（status是否还是pending）。代理人审批后节点status变为approved，但approve方法在修改状态前没有做status=pending的前置校验"
+
+[[criterion]]
+name = "紧急采购补审机制"
+description = "[Explicit] 是否分析了紧急采购先执行后补审的流程和48小时冻结逻辑。1: 未分析紧急采购；2: 提到了紧急但未分析补审流程；3: 描述了补审概念但48小时冻结的实现不清楚；4: 分析了紧急采购的状态流转和定时冻结任务；5: 补审机制分析完整且处理了补审被拒的回滚处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了紧急采购的状态流转：URGENT_SUBMITTED→URGENT_EXECUTING→PENDING_APPROVAL，48小时定时任务check_urgent_timeout扫描超时未审批的紧急采购单将状态改为FROZEN并通知采购人和审批人"
+
+[[criterion]]
+name = "审批操作幂等性"
+description = "[Implicit] 是否分析了审批操作的幂等性保证（防止重复审批导致流程异常推进）。1: 未分析幂等性；2: 提到了但未分析实现；3: 分析了问题但方案不完整；4: 分析了乐观锁或状态前置校验的幂等方案；5: 幂等性分析完整含并发场景和前端防重复提交"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了approve方法应增加status=pending的前置检查作为幂等保证——UPDATE approval_nodes SET status='approved' WHERE id=? AND status='pending'，通过affected_rows判断是否为重复操作"

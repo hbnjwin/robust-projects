@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "领券库存原子扣减"
+description = "[Explicit] 是否分析了优惠券领取时的库存控制机制和超领问题根因。1: 未分析库存控制；2: 描述了库存概念但未分析原子性；3: 识别了并发超领但未定位到具体代码位置；4: 准确定位到领券接口的check-then-update非原子操作；5: 超领根因定位精确且给出了Redis原子扣减或数据库CAS方案"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 5
+rationale = "在coupon_service.py的claim_coupon方法中精确定位了超领根因——SELECT remaining_qty和UPDATE remaining_qty-1之间没有行级锁或原子操作，大促时并发请求同时读到remaining_qty=1后各自扣减。给出了两种修复方案：Redis DECR保证原子性或UPDATE SET remaining_qty = remaining_qty - 1 WHERE remaining_qty > 0的CAS写法"
+
+[[criterion]]
+name = "使用有效性校验链路"
+description = "[Explicit] 是否分析了优惠券使用时的完整有效性校验链路（类型条件过期已用）。1: 未分析校验；2: 只描述了部分校验；3: 校验链路基本完整但遗漏了过期前一秒的边界；4: 校验链路完整且分析了过期时间精度问题；5: 校验链路完整并指出了校验时间应以服务端时间为准而非客户端"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了完整的校验链路：is_available→matches_category→meets_condition→within_validity，指出了过期边界问题的根因——下单时校验通过但支付完成时未二次校验有效期，建议在支付回调中增加券有效性二次校验"
+
+[[criterion]]
+name = "薅羊毛检测规则"
+description = "[Explicit] 是否分析了多账号批量领券和同收货地址下单的防刷策略。1: 未分析防刷；2: 提到了防刷但未分析检测规则；3: 分析了部分检测规则但覆盖不全；4: 分析了设备指纹、收货地址关联和领券频率三个维度的检测规则；5: 防刷策略分析全面且给出了风控阈值配置和处罚梯度"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了三层防刷策略：领券层（同设备ID/IP每日限领、手机号验证）、使用层（同收货地址关联多账号检测）、结算层（异常订单风控拦截）。指出了当前代码只有per_user_limit检查缺少设备和地址维度的关联检测"
+
+[[criterion]]
+name = "退款券回退逻辑"
+description = "[Explicit] 是否分析了退款后优惠券的回退处理（是否恢复可用状态）。1: 未分析券回退；2: 提到了回退但逻辑不清；3: 分析了全额退款的券回退但部分退款场景遗漏；4: 分析了全额退款恢复券和部分退款不恢复券的差异逻辑；5: 券回退分析完整含券过期后退款不恢复和回退次数限制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了退款券回退的三种场景：全额退款恢复券可用状态、部分退款不恢复（券已完整使用）、券已过期则退款时不恢复（标记为expired_refunded）。指出了coupon_service.py的refund_handler中缺少过期检查直接恢复可能导致用户获得已过期券"
+
+[[criterion]]
+name = "核销原子性保证"
+description = "[Implicit] 是否分析了优惠券核销（标记已使用）和订单创建之间的原子性保证。1: 未分析原子性；2: 提到了需要原子性但未分析实现；3: 分析了事务但未考虑分布式场景；4: 分析了本地事务和分布式事务两种场景的原子性保证；5: 原子性分析完整且给出了Saga补偿机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了当前use_coupon方法和create_order在同一数据库事务中的原子性保证（@transactional），但指出了如果未来拆分为独立微服务后需要引入Saga模式——先预占券再创建订单，订单失败时发补偿消息释放券"

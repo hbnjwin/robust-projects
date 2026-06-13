@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "首重续重阶梯计费"
+description = "[Explicit] 是否解读了首重+续重的阶梯运费计算公式。1: 未分析计费公式；2: 只描述了首重概念；3: 公式基本正确但续重的进位规则不清楚；4: 公式完整且解释了续重不足0.5kg按0.5kg计的进位规则；5: 计费公式分析完整且用具体重量示例验证了计算结果"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "在shipping_calculator.py中分析了calc_shipping方法的计费公式：运费=首重价格+ceil((总重量-首重)/续重单位)×续重单价，并用1.3kg示例验证了结果（12+ceil(0.3/0.5)×2=14元）"
+
+[[criterion]]
+name = "合并包装失效根因"
+description = "[Explicit] 是否定位了5件200g商品分别计费60元而非合并后12元的根因。1: 未分析合并包装；2: 提到了问题但未定位代码；3: 定位到计算逻辑但根因不精确；4: 准确定位到合并包装优化算法未被调用或判断条件有误的根因；5: 根因定位精确且通过测试验证了修复效果"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在_calc_merged_shipping方法中定位了合并包装失效的根因——merge_eligible标志位只在商品属于同一卖家且配送地址相同时为True，但多商品场景下is_mergeable方法检查的是商品属性packaging_type='standard'，而有一件商品的packaging_type为空字符串导致整组不可合并"
+
+[[criterion]]
+name = "体积重计算"
+description = "[Explicit] 是否分析了体积重（长×宽×高/6000）和实际重取较大值的计费规则。1: 未分析体积重；2: 提到了体积重但公式不完整；3: 公式正确但未分析体积重大于实际重的场景；4: 体积重和实际重取max的逻辑分析清晰并用示例说明；5: 分析完整且指出了不同物流商除数不同（5000/6000/8000）的配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了体积重=长×宽×高/6000的计算公式和取max(实际重, 体积重)的规则，但对不同物流商可能使用不同的除数（如国际快递用5000）的配置灵活性未分析"
+
+[[criterion]]
+name = "偏远地区判断"
+description = "[Explicit] 是否分析了偏远地区（新疆西藏）加价50%的区域判断逻辑。1: 未分析偏远地区；2: 提到了加价但未分析判断方式；3: 分析了加价规则但区域映射表不清楚；4: 分析了区域映射表和加价计算方式；5: 区域判断分析完整且包含邮编范围和行政区划code两种映射方式"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了is_remote_area方法通过province字段匹配远程地区列表（新疆、西藏、青海等），命中后运费乘以1.5倍，但对区域列表的配置方式（硬编码vs配置文件）分析不够具体"
+
+[[criterion]]
+name = "包邮活动判断"
+description = "[Implicit] 是否分析了满件/满额包邮活动的判断逻辑和优先级。1: 未分析包邮；2: 提到了包邮但未分析判断逻辑；3: 分析了满额包邮但满件包邮遗漏；4: 分析了两种包邮条件和优先级（包邮优先于加价）；5: 包邮分析完整且处理了部分商品包邮和混合订单的运费分摊"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "提到了满N件或满N元包邮的规则但对具体判断逻辑（是整单金额还是单品类金额）和包邮与偏远加价的优先级关系未分析"

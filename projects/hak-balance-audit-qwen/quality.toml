@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "流水链式校验机制"
+description = "[Explicit] 是否解读了余额变动流水的链式校验规则（前一条的变动后余额等于后一条的变动前余额）。1: 未分析链式校验；2: 描述了流水记录但未分析链式校验；3: 分析了链式校验规则但中断检测机制不清楚；4: 完整分析了链式校验的实现和断链检测的定时对账方式；5: 链式校验分析完整且包含断链修复方案和审计日志"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "在balance_audit.py中分析了每条流水记录包含balance_before、amount、balance_after三个字段且balance_after = balance_before + amount（或-amount），链式校验要求第N+1条的balance_before等于第N条的balance_after"
+
+[[criterion]]
+name = "并发余额变动竞态"
+description = "[Explicit] 是否分析了并发充值和消费同时发生时两条流水变动前余额相同导致链式断裂的根因。1: 未分析并发问题；2: 提到了并发但未分析时序；3: 分析了竞态但未给出修复方案；4: 用时序图说明了两条流水同时读取相同快照的竞态过程；5: 并发分析完整且给出了SELECT FOR UPDATE或事务序列化等修复方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了两个并发操作同时读取balance_before=100的问题——充值+20得到balance_after=120，消费-20得到balance_after=80，但实际正确余额应该是100+20-20=100，两条流水的链式校验也断裂了"
+
+[[criterion]]
+name = "冻结余额处理"
+description = "[Explicit] 是否分析了冻结操作只记录流水但未减少可用余额导致被冻结金额仍可消费的bug根因。1: 未分析冻结bug；2: 提到了冻结但未分析根因；3: 分析了冻结逻辑但根因不精确；4: 准确定位到冻结只写了流水但未更新accounts表可用余额的代码缺陷；5: 根因定位精确且给出了双余额（total_balance和available_balance）设计方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了freeze方法创建了type='freeze'的流水记录但可能未同步减少accounts表中的可用余额，导致被冻结的金额仍参与消费的额度计算"
+
+[[criterion]]
+name = "对账重算一致性"
+description = "[Explicit] 是否分析了定时对账任务从流水重算余额与current_balance比对的逻辑。1: 未分析对账；2: 描述了对账概念但未分析重算方式；3: 分析了重算逻辑但SUM和链式重算的差异未区分；4: 分析了SUM(amount)重算和逐条链式重算两种方式的区别；5: 对账分析完整且指出了两种方式在异常数据下的不同结果"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了reconcile方法通过SUM(amount) WHERE user_id=?从零重算最终余额并与accounts.current_balance比对，不一致则标记异常"
+
+[[criterion]]
+name = "审计日志防篡改"
+description = "[Implicit] 是否分析了流水记录的防篡改机制（如哈希链或数字签名）。1: 未分析防篡改；2: 提到了需要防篡改但未分析实现；3: 分析了可能的方案但当前代码未实现；4: 分析了当前缺少防篡改机制的风险并给出了哈希链方案；5: 防篡改分析完整含HMAC签名方案和篡改检测审计"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "提到了流水记录应该有防篡改保护但未分析当前代码是否有任何防篡改机制（如行级哈希或HMAC签名）"

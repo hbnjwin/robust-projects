@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "累计预扣预缴算法"
+description = "[Explicit] 是否完整解读了个税累计预扣预缴的计算公式和预扣税率表。1: 未分析累计预扣；2: 只描述了公式但未解释累计的含义；3: 公式正确但税率表跳档的影响未分析；4: 完整解读了累计应纳税所得额×税率-速算扣除数-累计已预扣的公式和7级税率表；5: 算法分析完整且用具体月薪示例演示了逐月累计的税率跳档过程"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "在tax_calculator.py中分析了calculate_cumulative_tax方法的核心公式：本月应预扣=累计应纳税所得额×适用税率-速算扣除数-累计已预扣税额。解读了7级超额累进税率表（3%→45%）和跳档计算"
+
+[[criterion]]
+name = "专项附加扣除处理"
+description = "[Explicit] 是否分析了七项专项附加扣除的分月处理逻辑。1: 未分析附加扣除；2: 列出了扣除项但未分析分月逻辑；3: 分析了部分扣除项但大病医疗的年度汇算特殊处理遗漏；4: 分析了六项按月扣除和大病医疗按年汇算的差异；5: 附加扣除分析完整含扣除金额标准和适用条件校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "列出了子女教育(2000/月)、继续教育(400/月)、住房贷款(1000/月)等扣除项的金额标准，但对大病医疗只能在年度汇算时扣除（不参与月度预扣）的特殊处理未提及"
+
+[[criterion]]
+name = "年终奖计税方式选择"
+description = "[Explicit] 是否分析了年终奖单独计税和并入综合所得两种方式的比较逻辑。1: 未分析年终奖；2: 只描述了一种方式；3: 描述了两种方式但最优选择逻辑不清楚；4: 分析了两种方式的税额计算和自动选择最优的比较逻辑；5: 分析完整且指出了年终奖断档陷阱的检测"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了年终奖可以单独计税（除以12找税率）和并入综合所得两种方式，但对系统如何自动选择最优方式的比较逻辑描述不够具体"
+
+[[criterion]]
+name = "累进税率跳档bug根因"
+description = "[Explicit] 是否定位了1月和2月个税一样多的根因——累进效果未体现。1: 未分析该bug；2: 提到了bug但未定位代码；3: 分析了可能原因但不精确；4: 准确定位到使用monthly_taxable而非cumulative_taxable的代码错误；5: 定位精确且用具体数值还原了错误计算过程"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在calculate_cumulative_tax方法第140行定位了bug——使用monthly_taxable（当月应纳税所得额）而非cumulative_taxable（累计应纳税所得额）查找税率表，导致每月独立按当月金额找税率而非按累计金额找税率，跳档效果失效"
+
+[[criterion]]
+name = "年终奖断档陷阱"
+description = "[Explicit] 是否分析了年终奖在临界点多发1元导致到手少几千元的断档问题。1: 未分析断档；2: 提到了断档概念但未具体分析；3: 列出了断档临界点但未分析系统是否有检测；4: 分析了断档临界点和系统缺少断档检测的问题；5: 断档分析完整含所有6个临界点和自动避税建议方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "提到了年终奖存在税率跳档时多发少到的断档陷阱，但未列出具体的临界点金额（如36000→36001），也未分析系统是否有断档检测和提醒"

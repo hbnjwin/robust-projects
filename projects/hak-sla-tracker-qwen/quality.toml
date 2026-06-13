@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "工作时间计算算法"
+description = "[Explicit] 是否分析了SLA只计工作日9-18时且排除节假日的剩余时间计算方式。1: 未分析时间计算；2: 描述了工作时间概念但算法不清楚；3: 分析了基本算法但跨日跨周场景处理不完整；4: 完整分析了跨工作日的分段计时算法；5: 算法分析完整且处理了节假日、调休日和时区差异"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "在sla_tracker.py中分析了calculate_remaining方法按工作日工作时间逐日累加的计算方式，但对跨周末的时间跳过逻辑和法定节假日的排除机制分析不够详细"
+
+[[criterion]]
+name = "挂起恢复计时逻辑"
+description = "[Explicit] 是否分析了工单挂起暂停SLA和恢复后续接计时的逻辑。1: 未分析挂起恢复；2: 描述了挂起概念但续接逻辑不清楚；3: 分析了暂停但恢复后从0重新计时的bug未识别；4: 准确识别了恢复后应续接剩余时间而非重新计算的问题；5: 挂起恢复分析完整且处理了多次挂起恢复的累计时间"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了pause_sla方法记录挂起时间点和resume_sla方法恢复计时的逻辑，指出了恢复后应该从挂起时刻的剩余时间继续倒计时而非重新从SLA总时长开始计算"
+
+[[criterion]]
+name = "周五工单时间计算bug"
+description = "[Explicit] 是否定位了周五17时30分创建P1工单显示剩余30分钟的bug根因。1: 未分析该bug；2: 提到了bug但未定位；3: 分析了可能原因但不精确；4: 准确定位到计时不跳过周末直接用自然时间计算的代码bug；5: 根因定位精确且给出了修复方案和边界测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了周五17时30分到SLA截止应跳过周末从周一9时开始计算2小时响应时间，定位到计时使用了自然小时数而非工作小时数导致只算了到18时的30分钟"
+
+[[criterion]]
+name = "预警通知时间控制"
+description = "[Explicit] 是否分析了预警通知在凌晨2点误发给值班经理的根因。1: 未分析通知问题；2: 提到了通知但未分析时间控制；3: 分析了通知触发但发送时间限制的缺失未指出；4: 准确指出了通知发送逻辑缺少工作时间窗口判断；5: 根因分析精确且给出了通知队列和延迟发送方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "指出了send_escalation方法在SLA倒计时到达阈值时立即发送通知，没有判断当前是否在工作时间内，导致凌晨也会发送邮件"
+
+[[criterion]]
+name = "SLA升级通知机制"
+description = "[Implicit] 是否分析了SLA即将超时和已超时的多级通知升级策略。1: 未分析升级策略；2: 描述了通知但未分析升级层级；3: 分析了预警通知但超时后每小时催办的逻辑不完整；4: 分析了30%预警和超时后每小时催办的双层通知策略；5: 通知策略分析完整含升级层级（处理人→组长→经理）和去重机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "描述了SLA超时前30%时发预警通知的规则，但对超时后每小时催办通知的实现和通知去重（防止重复发送同一条预警）的机制未分析"
