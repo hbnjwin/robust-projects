@@ -1,7 +1,5 @@
 package com.linkyoyo.reportaudit.util.llm;
 
-import javax.persistence.EntityManager;
-import javax.persistence.PersistenceContext;
 import com.linkyoyo.reportaudit.entity.CheckItems;
 import com.linkyoyo.reportaudit.entity.ExtractionRules;
 import com.linkyoyo.reportaudit.entity.ExtractionTasks;
@@ -9,10 +7,10 @@ import com.linkyoyo.reportaudit.entity.Tasks;
 import com.linkyoyo.reportaudit.service.WorkflowEventRecorderService;
 import com.linkyoyo.reportaudit.util.WorkflowEvent;
 import com.linkyoyo.reportaudit.util.WorkflowItemResult;
+import com.linkyoyo.reportaudit.util.WorkflowQueryHelper;
 import com.linkyoyo.reportaudit.util.WorkflowResult;
 import com.linkyoyo.reportaudit.util.llm.model.LLMMessage;
 import com.linkyoyo.reportaudit.util.llm.model.LLMResponse;
-import com.querydsl.jpa.impl.JPAQueryFactory;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
@@ -20,17 +18,12 @@ import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
 import javax.annotation.PostConstruct;
-import javax.persistence.EntityManager;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
-
-import static com.linkyoyo.reportaudit.entity.QCheckItems.checkItems;
-import static com.linkyoyo.reportaudit.entity.QExtractionRules.extractionRules;
 
 /**
  * LLM工作流处理器
@@ -46,8 +39,8 @@ public class LLMWorkflowProcessor {
     @Autowired
     private WorkflowEventRecorderService eventRecorderService;
 
-    @PersistenceContext
-    private EntityManager entityManager;
+    @Autowired
+    private WorkflowQueryHelper queryHelper;
 
     // 可配置的线程池参数
     @Value("${llm.workflow.thread-pool.core-size:4}")
@@ -62,12 +55,8 @@ public class LLMWorkflowProcessor {
     // 自定义线程池
     private ExecutorService llmExecutorService;
 
-    private JPAQueryFactory queryFactory;
-
     @PostConstruct
     public void init() {
-        this.queryFactory = new JPAQueryFactory(entityManager);
-        
         // 初始化自定义线程池
         this.llmExecutorService = new ThreadPoolExecutor(
             corePoolSize,
@@ -107,10 +96,10 @@ public class LLMWorkflowProcessor {
                     Map.of("taskType", "extraction", "processor", "LLM"));
 
                 // 获取选中的抽取项
-                List<Integer> selectedItems = parseSelectedItems(extractionTask.getSelectedItems());
+                List<Integer> selectedItems = queryHelper.parseSelectedItems(extractionTask.getSelectedItems());
 
                 // 获取抽取规则
-                List<ExtractionRules> rules = getExtractionRules(selectedItems);
+                List<ExtractionRules> rules = queryHelper.getExtractionRulesOrdered(selectedItems);
 
                 WorkflowResult result = new WorkflowResult();
                 result.setTaskId(extractionTask.getId());
@@ -184,10 +173,10 @@ public class LLMWorkflowProcessor {
                     Map.of("taskType", "check", "processor", "LLM"));
 
                 // 获取选中的检查项
-                List<Integer> selectedItems = parseSelectedItems(task.getSelectedItems());
+                List<Integer> selectedItems = queryHelper.parseSelectedItems(task.getSelectedItems());
 
                 // 获取检查规则
-                List<CheckItems> checkItems = getCheckItems(selectedItems);
+                List<CheckItems> checkItems = queryHelper.getCheckItemsOrdered(selectedItems);
 
                 WorkflowResult result = new WorkflowResult();
                 result.setTaskId(task.getId());
@@ -537,71 +526,6 @@ public class LLMWorkflowProcessor {
         } catch (Exception e) {
             log.error("记录检查结果失败: taskId={}, checkItemId={}, error={}", taskId, checkItem.getId(), e.getMessage(), e);
         }
-    }
-
-    /**
-     * 解析选中项目字符串为ID列表
-     * 支持多种格式：
-     * 1. 数组格式：[1, 3, 5] 或 [1,3,5]
-     * 2. 逗号分隔：1,3,5 或 1, 3, 5
-     * 3. 单个数字：5
-     */
-    private List<Integer> parseSelectedItems(String selectedItems) {
-        List<Integer> itemIds = new ArrayList<>();
-        if (StringUtils.hasText(selectedItems)) {
-            try {
-                // 移除数组括号和空格，统一处理
-                String cleanedItems = selectedItems.trim()
-                    .replaceAll("^\\[", "")  // 移除开头的 [
-                    .replaceAll("\\]$", "")  // 移除结尾的 ]
-                    .replaceAll("\\s+", ""); // 移除所有空格
-                
-                if (StringUtils.hasText(cleanedItems)) {
-                    String[] items = cleanedItems.split(",");
-                    for (String item : items) {
-                        if (StringUtils.hasText(item)) {
-                            itemIds.add(Integer.parseInt(item.trim()));
-                        }
-                    }
-                }
-                
-                log.debug("解析选中项目成功: selectedItems={} -> itemIds={}", selectedItems, itemIds);
-            } catch (Exception e) {
-                log.error("解析选中项目失败: selectedItems={}, error={}", selectedItems, e.getMessage());
-                // 返回空列表而不是抛出异常，保证程序继续运行
-            }
-        }
-        return itemIds;
-    }
-
-    /**
-     * 获取抽取规则列表
-     */
-    private List<ExtractionRules> getExtractionRules(List<Integer> selectedItems) {
-        if (selectedItems.isEmpty()) {
-            return new ArrayList<>();
-        }
-        
-        return queryFactory.selectFrom(extractionRules)
-                .where(extractionRules.id.in(selectedItems)
-                        .and(extractionRules.delFlag.isNull().or(extractionRules.delFlag.eq(false))))
-                .orderBy(extractionRules.priority.desc(), extractionRules.id.asc())
-                .fetch();
-    }
-
-    /**
-     * 获取检查项列表
-     */
-    private List<CheckItems> getCheckItems(List<Integer> selectedItems) {
-        if (selectedItems.isEmpty()) {
-            return new ArrayList<>();
-        }
-        
-        return queryFactory.selectFrom(checkItems)
-                .where(checkItems.id.in(selectedItems)
-                        .and(checkItems.delFlag.isNull().or(checkItems.delFlag.eq(false))))
-                .orderBy(checkItems.sequence.asc(), checkItems.id.asc())
-                .fetch();
     }
 
     /**
