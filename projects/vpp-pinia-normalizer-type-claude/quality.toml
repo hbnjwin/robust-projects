@@ -1,44 +1,44 @@
 [[criterion]]
 name = "数值类型强制转换"
-description = "[Explicit] 是否在normalizeResource中对device_count等可能为字符串的字段做Number()强制转换。1: 仍假设number类型未转换; 2: 转换了device_count但遗漏capacity_kw等同类字段; 3: 所有数值字段都用Number()转换但未处理转换失败NaN; 4: Number()转换加NaN回退默认值0的安全处理; 5: 安全转换加TypeScript branded type标记已验证数值"
+description = "[Explicit] 是否在normalizeResource中对device_count等可能为字符串的字段做Number()强制转换防止字符串拼接。1: 仍假设number类型未转换导致100+200=100200; 2: 转换了device_count但遗漏capacity_kw等同类字段; 3: 所有数值字段都用Number()转换但未处理转换失败NaN; 4: Number()转换加NaN回退默认值0的安全处理; 5: 安全转换加TypeScript泛型工具函数统一处理所有normalizer的数值字段"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "normalizeResource中所有数值字段统一使用Number()转换，且对转换结果通过Number.isNaN检查后回退到0默认值"
+rationale = "normalizeResource中所有数值字段统一使用Number()转换，且对转换结果通过Number.isNaN检查后回退到0默认值确保totalPower计算正确"
 
 [[criterion]]
-name = "时间解析兼容性"
-description = "[Explicit] 是否修复normalizeContract中start_time对ISO 8601带时区格式的解析失败。1: 仍使用简单的Date构造函数解析失败; 2: 用正则提取但未处理时区偏移; 3: 使用Date.parse()兼容ISO格式但不处理非标准格式; 4: 专用parseDate工具函数支持ISO 8601含时区和常见中文日期格式; 5: parseDate加时区归一化加无效日期回退加格式自动检测"
+name = "Safari日期解析兼容"
+description = "[Explicit] 是否修复normalizeContract中ISO日期字符串在Safari上解析为Invalid Date的问题。1: Safari上仍解析失败返回Invalid Date; 2: 用正则提取但未处理时区偏移; 3: 使用Date.parse()兼容ISO格式但不处理非标准格式; 4: 专用parseDate工具函数支持ISO 8601含时区和Safari兼容的日期格式; 5: parseDate加时区归一化加无效日期回退加格式自动检测"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "date.ts的parseDate函数显式处理ISO 8601带时区格式，通过正则匹配提取年月日时分秒和时区偏移量，手动计算UTC时间后构造Date对象"
+rationale = "date.ts的parseDate函数将ISO字符串中的横杠和T分隔符做Safari兼容处理，通过正则匹配提取各时间分量手动构造Date对象避免浏览器差异"
+
+[[criterion]]
+name = "isTauri环境检测修复"
+description = "[Explicit] 是否修复isTauri()在生产构建后因window.__TAURI__被tree-shake导致始终返回false的问题。1: 生产包中isTauri()仍始终返回false; 2: 改为直接检测window属性但被minifier优化掉; 3: 使用in操作符检测window中是否存在__TAURI__属性; 4: 通过运行时动态属性检测如Reflect.has(window, \"__TAURI__\")或typeof window.__TAURI__避免被tree-shake; 5: 环境检测加构建配置define排除加开发/生产模式统一行为验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "env.ts中isTauri()改为使用typeof window !== \"undefined\" && \"__TAURI__\" in window的运行时属性检测方式，避免Vite对全局变量引用的tree-shake优化"
 
 [[criterion]]
 name = "可选字段安全访问"
-description = "[Explicit] 是否移除对可能为undefined的可选字段的as number类型断言防止运行时崩溃。1: 仍使用as number断言在undefined上崩溃; 2: 移除断言但用非空断言!替代; 3: 用可选链?.访问但计算结果可能为undefined; 4: 可选字段用??提供默认值后再做类型转换; 5: TypeScript严格模式下所有可选字段通过类型守卫或??处理"
+description = "[Explicit] 是否移除对可能为undefined的可选字段的as number类型断言防止运行时崩溃。1: 仍使用as number断言在undefined上崩溃; 2: 移除断言但用非空断言!替代; 3: 用可选链?.访问但计算结果可能为undefined; 4: 可选字段用??提供默认值后再做类型转换; 5: TypeScript严格模式下所有可选字段通过类型守卫或??处理且编译期无报错"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "所有可选字段使用??操作符提供默认值如raw.optional_field ?? 0，避免undefined参与数学运算"
+rationale = "所有可选字段使用??操作符提供默认值如raw.optional_field ?? 0，避免undefined参与数学运算导致NaN"
 
 [[criterion]]
-name = "Normalizer返回类型"
-description = "[Implicit] 是否确保normalizer函数的返回类型与Pinia state中定义的接口完全匹配。1: 返回类型为any或未标注; 2: 标注了返回类型但字段缺失导致编译警告; 3: 返回类型匹配但可选字段处理不一致; 4: 返回类型与接口精确匹配且所有字段都有值（可选字段有默认值）; 5: 返回类型加readonly修饰防止store外直接mutation"
+name = "Normalizer返回类型一致性"
+description = "[Implicit] 是否确保normalizer函数的返回类型与Pinia state中定义的接口完全匹配。1: 返回类型为any或未标注; 2: 标注了返回类型但字段缺失导致编译警告; 3: 返回类型匹配但可选字段处理不一致; 4: 返回类型与接口精确匹配且所有字段都有值即可选字段有默认值; 5: 返回类型加readonly修饰防止store外直接mutation"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
 rationale = "normalizer函数返回对象严格匹配Pinia state接口定义，所有可选字段通过??提供默认值确保返回完整对象"
-
-[[criterion]]
-name = "环境变量类型安全"
-description = "[Implicit] 是否为import.meta.env中的自定义环境变量提供TypeScript类型声明。1: 使用import.meta.env.VITE_X时为any类型; 2: env.d.ts声明了但类型过于宽泛全为string; 3: env.d.ts中声明了具体的VITE_前缀变量名和string类型; 4: env.ts封装了环境变量读取加默认值回退加类型转换; 5: env.ts加运行时校验必要环境变量是否存在加启动时报错"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "env.ts封装getEnv工具函数读取import.meta.env变量，支持string/number/boolean类型转换和默认值回退"
