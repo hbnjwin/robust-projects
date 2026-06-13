@@ -60,7 +60,7 @@ public class TextinService {
 
     @Value("${paraSet.standardDocPath}")
     private String standardDocPath;
-    
+
     @Value("${paraSet.uploadPath:d:/data/upload}")
     private String uploadPath;
 
@@ -74,9 +74,30 @@ public class TextinService {
             .readTimeout(120, TimeUnit.SECONDS)
             .build();
     private final ObjectMapper objectMapper = new ObjectMapper();
-    
+
     @Autowired
     private SysParasetRepository sysParasetRepository;
+
+    // ========== SysParaset OCR 配置内部类 ==========
+
+    /**
+     * 封装从sys_paraset表加载的OCR配置参数
+     */
+    private static class SysParasetOcrConfig {
+        final String authToken;
+        final String uploadApiUrl;
+        final String markdownApiUrl;
+        final JsonNode bodyNode;
+
+        SysParasetOcrConfig(String authToken, String uploadApiUrl, String markdownApiUrl, JsonNode bodyNode) {
+            this.authToken = authToken;
+            this.uploadApiUrl = uploadApiUrl;
+            this.markdownApiUrl = markdownApiUrl;
+            this.bodyNode = bodyNode;
+        }
+    }
+
+    // ========== 文件保存工具方法 ==========
 
     /**
      * 将Markdown内容保存到指定路径下的MD文件
@@ -160,6 +181,8 @@ public class TextinService {
         }
     }
 
+    // ========== 任务管理方法 ==========
+
     /**
      * 创建一个PDF转Markdown的转换任务
      *
@@ -190,6 +213,292 @@ public class TextinService {
         return conversionTaskRepository.findById(taskId);
     }
 
+    // ========== 提取的私有辅助方法 ==========
+
+    /**
+     * 安全读取HTTP响应体，防止response.body()为null时的NPE
+     *
+     * @param response OkHttp响应对象
+     * @return 响应体字符串
+     * @throws IOException 如果响应体为null或读取失败
+     */
+    private String getResponseBody(Response response) throws IOException {
+        ResponseBody body = response.body();
+        if (body == null) {
+            throw new IOException("Response body is null, HTTP status: " + response.code());
+        }
+        return body.string();
+    }
+
+    /**
+     * 创建带长超时设置的OkHttpClient（用于Markdown转换等耗时请求）
+     *
+     * @return 配置了60s连接/60s写入/120s读取超时的OkHttpClient
+     */
+    private OkHttpClient createLongTimeoutClient() {
+        return okHttpClient.newBuilder()
+                .connectTimeout(60, TimeUnit.SECONDS)
+                .readTimeout(120, TimeUnit.SECONDS)
+                .writeTimeout(60, TimeUnit.SECONDS)
+                .build();
+    }
+
+    /**
+     * 调用Textin API执行PDF/URL到Markdown的转换
+     *
+     * @param requestBody 请求体（二进制文件或URL文本）
+     * @param queryParams URL查询参数（如 "?image_output_type=base64str"），可为null
+     * @return API响应体JSON字符串
+     * @throws IOException 如果HTTP请求失败
+     */
+    private String callTextinApi(RequestBody requestBody, String queryParams) throws IOException {
+        String url = textinConfig.getApiUrl() + "/ai/service/v1/pdf_to_markdown"
+                + (queryParams != null ? queryParams : "");
+
+        Request request = new Request.Builder()
+                .url(url)
+                .addHeader("x-ti-app-id", textinConfig.getAppId())
+                .addHeader("x-ti-secret-code", textinConfig.getSecretCode())
+                .post(requestBody)
+                .build();
+
+        try (Response response = okHttpClient.newCall(request).execute()) {
+            if (!response.isSuccessful()) {
+                log.error("Textin API request failed: {}", response);
+                throw new IOException("Textin API request failed: " + response.code());
+            }
+            String responseBody = getResponseBody(response);
+            log.info("Textin API response: {}", responseBody);
+            return responseBody;
+        }
+    }
+
+    /**
+     * 解析Textin API响应为完整的TextinResponse DTO（用于同步方法）
+     *
+     * @param responseBody API响应体JSON字符串
+     * @return TextinResponse对象
+     * @throws IOException 如果JSON解析失败
+     */
+    private TextinResponse parseTextinResponse(String responseBody) throws IOException {
+        JsonNode rootNode = objectMapper.readTree(responseBody);
+
+        TextinResponse textinResponse = new TextinResponse();
+        if (rootNode.has("duration")) {
+            textinResponse.setDuration(rootNode.get("duration").asInt());
+        }
+        if (rootNode.has("message")) {
+            textinResponse.setMessage(rootNode.get("message").asText());
+        }
+
+        if (rootNode.has("result")) {
+            JsonNode resultNode = rootNode.get("result");
+            TextinResponse.TextinResult result = new TextinResponse.TextinResult();
+
+            if (resultNode.has("markdown")) {
+                result.setMarkdown(resultNode.get("markdown").asText());
+            }
+            if (resultNode.has("success_count")) {
+                result.setSuccess_count(resultNode.get("success_count").asInt());
+            }
+            if (resultNode.has("pages")) {
+                result.setPages(resultNode.get("pages").asInt());
+            }
+
+            textinResponse.setResult(result);
+        }
+
+        return textinResponse;
+    }
+
+    /**
+     * 从Textin API响应中提取Markdown内容（用于异步方法）
+     *
+     * @param responseBody API响应体JSON字符串
+     * @return Markdown内容字符串
+     * @throws IOException 如果响应中没有markdown内容
+     */
+    private String extractTextinMarkdown(String responseBody) throws IOException {
+        JsonNode rootNode = objectMapper.readTree(responseBody);
+        if (rootNode.has("result") && rootNode.get("result").has("markdown")) {
+            return rootNode.get("result").get("markdown").asText();
+        }
+        throw new IOException("No markdown content in Textin API response");
+    }
+
+    /**
+     * 上传文件到BlueCloud/SysParaset风格的API（两步转换的第一步）
+     *
+     * @param fileBytes 文件字节数组
+     * @param fileName 文件名
+     * @param contentType 文件MIME类型
+     * @param uploadUrl 上传API的URL
+     * @param authToken 认证令牌
+     * @return 上传后获得的文件ID
+     * @throws IOException 如果上传失败
+     */
+    private String uploadToBlueCloud(byte[] fileBytes, String fileName, String contentType,
+                                     String uploadUrl, String authToken) throws IOException {
+        RequestBody requestBody = new MultipartBody.Builder()
+                .setType(MultipartBody.FORM)
+                .addFormDataPart("file", fileName,
+                        RequestBody.create(MediaType.parse(contentType), fileBytes))
+                .build();
+
+        Request uploadRequest = new Request.Builder()
+                .url(uploadUrl)
+                .addHeader("Authorization", authToken)
+                .post(requestBody)
+                .build();
+
+        try (Response uploadResponse = okHttpClient.newCall(uploadRequest).execute()) {
+            if (!uploadResponse.isSuccessful()) {
+                log.error("Error uploading file to cloud API: {}", uploadResponse);
+                throw new IOException("Failed to upload file to cloud API: " + uploadResponse.code());
+            }
+
+            String uploadResponseBody = getResponseBody(uploadResponse);
+            log.info("Cloud AI upload response: {}", uploadResponseBody);
+
+            BlueCloudAiResponse uploadResult = objectMapper.readValue(uploadResponseBody, BlueCloudAiResponse.class);
+            String fileId = uploadResult.getId();
+            log.info("文件上传成功，获取到文件ID: {}", fileId);
+            return fileId;
+        }
+    }
+
+    /**
+     * 请求BlueCloud/SysParaset风格的API将已上传文件转换为Markdown（两步转换的第二步）
+     *
+     * @param markdownUrl Markdown转换API的URL
+     * @param authToken 认证令牌
+     * @param jsonBody JSON请求体字符串
+     * @return 转换后的Markdown内容
+     * @throws IOException 如果转换失败
+     */
+    private String requestBlueCloudMarkdown(String markdownUrl, String authToken, String jsonBody) throws IOException {
+        RequestBody markdownRequestBody = RequestBody.create(MediaType.parse("application/json"), jsonBody);
+
+        Request markdownRequest = new Request.Builder()
+                .url(markdownUrl)
+                .addHeader("Authorization", authToken)
+                .post(markdownRequestBody)
+                .build();
+
+        OkHttpClient clientWithTimeout = createLongTimeoutClient();
+
+        try (Response markdownResponse = clientWithTimeout.newCall(markdownRequest).execute()) {
+            if (!markdownResponse.isSuccessful()) {
+                log.error("Error converting file to Markdown via cloud API: {}", markdownResponse);
+                throw new IOException("Failed to convert file to Markdown via cloud API: " + markdownResponse.code());
+            }
+
+            String markdownResponseBody = getResponseBody(markdownResponse);
+            log.info("Cloud AI markdown response: {}", markdownResponseBody);
+
+            BlueCloudAiMarkdownResponse markdownResult = objectMapper.readValue(markdownResponseBody, BlueCloudAiMarkdownResponse.class);
+
+            if (markdownResult.getCode() == 0 && markdownResult.getData() != null) {
+                return markdownResult.getData().getMarkdown_content();
+            } else {
+                throw new IOException("Failed to get markdown content from cloud API");
+            }
+        }
+    }
+
+    /**
+     * 使用BlueCloudAiConfig构建BlueCloud Markdown转换API的JSON请求体
+     *
+     * @param fileId 已上传文件的ID
+     * @return JSON请求体字符串
+     */
+    private String buildBlueCloudJsonBody(String fileId) {
+        return String.format("{"
+                + "\"file_id\": \"%s\","
+                + "\"process_figures\": false,"
+                + "\"provider_name\":\"%s\","
+                + "\"img_model\": {"
+                + "\"provider\": \"%s\","
+                + "\"name\": \"%s\","
+                + "\"is_system\": true,"
+                + "\"completion_params\": {"
+                + "\"temperature\": %s"
+                + "},"
+                + "\"query\": \"%s\""
+                + "}"
+                + "}", fileId, blueCloudAiConfig.getProviderName(), "azure_openai",
+                blueCloudAiConfig.getModelName(), blueCloudAiConfig.getTemperature(), blueCloudAiConfig.getQuery());
+    }
+
+    /**
+     * 使用SysParaset body模板构建Markdown转换API的JSON请求体
+     *
+     * @param bodyNode JSON body模板节点
+     * @param fileId 已上传文件的ID
+     * @return JSON请求体字符串
+     */
+    private String buildSysParasetJsonBody(JsonNode bodyNode, String fileId) {
+        String bodyTemplate = bodyNode.toString();
+        return bodyTemplate.replace("\"%s\"", "\"" + fileId + "\"");
+    }
+
+    /**
+     * 从sys_paraset表加载并验证OCR配置参数
+     *
+     * @return SysParasetOcrConfig 配置对象
+     * @throws IOException 如果配置缺失或无效
+     */
+    private SysParasetOcrConfig loadSysParasetOcrConfig() throws IOException {
+        SysParaset sysParaset = sysParasetRepository.findAll().stream()
+                .filter(SysParaset::getEnabled)
+                .findFirst()
+                .orElseThrow(() -> new IOException("未找到启用的sys_paraset参数配置"));
+
+        String ocrParaJson = sysParaset.getOcrPara();
+        if (ocrParaJson == null || ocrParaJson.isEmpty()) {
+            throw new IOException("sys_paraset表中未配置OCR参数");
+        }
+
+        JsonNode ocrParaNode = objectMapper.readTree(ocrParaJson);
+        JsonNode ocrAgentNode = ocrParaNode.get("ocrAgent");
+        if (ocrAgentNode == null) {
+            throw new IOException("OCR参数中未找到ocrAgent配置");
+        }
+
+        JsonNode aiNode = ocrAgentNode.get("ai");
+        if (aiNode == null) {
+            throw new IOException("OCR参数中未找到AI配置");
+        }
+
+        JsonNode bodyNode = ocrAgentNode.get("body");
+        if (bodyNode == null) {
+            throw new IOException("OCR参数中未找到body配置");
+        }
+
+        return new SysParasetOcrConfig(
+                aiNode.get("authToken").asText(),
+                aiNode.get("uploadApiUrl").asText(),
+                aiNode.get("markdownApiUrl").asText(),
+                bodyNode
+        );
+    }
+
+    /**
+     * 保存转换结果：持久化文档实体并将Markdown写入文件
+     *
+     * @param markdown Markdown内容
+     * @param fileName 文件名
+     * @param customPath 自定义保存路径，如果为null则使用默认路径
+     * @return 保存的Document对象
+     */
+    private Document saveConversionResult(String markdown, String fileName, String customPath) {
+        Document document = documentRepository.save(fileName, null, markdown);
+        saveMarkdownToFile(markdown, fileName, customPath);
+        return document;
+    }
+
+    // ========== Textin 转换方法 ==========
+
     /**
      * 异步转换PDF到Markdown（二进制文件上传）
      *
@@ -199,76 +508,25 @@ public class TextinService {
     @Async
     public CompletableFuture<String> convertPdfToMarkdownAsync(MultipartFile file, String taskId) {
         try {
-            // 更新任务状态为处理中
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 10);
 
-            // 获取文件字节数组
-            byte[] fileBytes = file.getBytes();
-            String contentType = file.getContentType();
+            RequestBody requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file.getBytes());
 
-            // 创建请求体（使用原始二进制数据）
-            RequestBody requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), fileBytes);
-
-            // 更新进度
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 30);
-
-            // 创建请求头
-            Request request = new Request.Builder()
-                    .url(textinConfig.getApiUrl() + "/ai/service/v1/pdf_to_markdown?image_output_type=base64str")
-                    .addHeader("x-ti-app-id", textinConfig.getAppId())
-                    .addHeader("x-ti-secret-code", textinConfig.getSecretCode())
-                    .post(requestBody)
-                    .build();
-
-            // 更新进度
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 50);
 
-            // 执行请求
-            try (Response response = okHttpClient.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    log.error("Error converting PDF to Markdown: {}", response);
-                    conversionTaskRepository.fail(taskId, "Failed to convert PDF to Markdown: " + response.code());
-                    return CompletableFuture.completedFuture(null);
-                }
+            String responseBody = callTextinApi(requestBody, "?image_output_type=base64str");
 
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 70);
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 70);
 
-                // 解析响应
-                String responseBody = response.body().string();
-                log.info("Textin API response: {}", responseBody);
+            saveJsonResponseToFile(responseBody, file.getOriginalFilename());
+            String markdown = extractTextinMarkdown(responseBody);
 
-                // 将JSON响应内容保存到文件
-                saveJsonResponseToFile(responseBody, file.getOriginalFilename());
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
 
-                // 使用JsonNode解析JSON
-                JsonNode rootNode = objectMapper.readTree(responseBody);
-
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
-
-                // 提取result->markdown内容
-                if (rootNode.has("result") && rootNode.get("result").has("markdown")) {
-                    String markdown = rootNode.get("result").get("markdown").asText();
-
-                    // 存储文档
-                    Document document = documentRepository.save(
-                            file.getOriginalFilename(),
-                            null, // Text field is no longer available in the API response
-                            markdown
-                    );
-
-                    // 同时将Markdown内容保存到/doc目录下的MD文件
-                    saveMarkdownToFile(markdown, file.getOriginalFilename());
-
-                    // 更新任务状态为完成
-                    conversionTaskRepository.complete(taskId, document.getId());
-                    return CompletableFuture.completedFuture(document.getId());
-                } else {
-                    conversionTaskRepository.fail(taskId, "Failed to convert PDF to Markdown: No markdown content");
-                    return CompletableFuture.completedFuture(null);
-                }
-            }
+            Document document = saveConversionResult(markdown, file.getOriginalFilename(), null);
+            conversionTaskRepository.complete(taskId, document.getId());
+            return CompletableFuture.completedFuture(document.getId());
         } catch (Exception e) {
             log.error("Error converting PDF to Markdown", e);
             conversionTaskRepository.fail(taskId, e.getMessage());
@@ -286,74 +544,26 @@ public class TextinService {
     @Async
     public CompletableFuture<String> convertUrlToMarkdownAsync(String fileUrl, String fileName, String taskId) {
         try {
-            // 更新任务状态为处理中
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 10);
 
-            // 创建请求体（纯文本，包含URL）
             RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), fileUrl);
 
-            // 更新进度
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 30);
-
-            // 创建请求头
-            Request request = new Request.Builder()
-                    .url(textinConfig.getApiUrl() + "/ai/service/v1/pdf_to_markdown?image_output_type=base64str")
-                    .addHeader("x-ti-app-id", textinConfig.getAppId())
-                    .addHeader("x-ti-secret-code", textinConfig.getSecretCode())
-                    .post(requestBody)
-                    .build();
-
-            // 更新进度
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 50);
 
-            // 执行请求
-            try (Response response = okHttpClient.newCall(request).execute()) {
-                if (!response.isSuccessful()) {
-                    log.error("Error converting URL to Markdown: {}", response);
-                    conversionTaskRepository.fail(taskId, "Failed to convert URL to Markdown: " + response.code());
-                    return CompletableFuture.completedFuture(null);
-                }
+            String responseBody = callTextinApi(requestBody, "?image_output_type=base64str");
 
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 70);
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 70);
 
-                // 解析响应
-                String responseBody = response.body().string();
-                log.info("Textin API response: {}", responseBody);
+            String docName = fileName != null ? fileName : fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+            saveJsonResponseToFile(responseBody, docName);
+            String markdown = extractTextinMarkdown(responseBody);
 
-                // 将JSON响应内容保存到文件
-                String jsonFileName = fileName != null ? fileName : fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-                saveJsonResponseToFile(responseBody, jsonFileName);
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
 
-                // 使用JsonNode解析JSON
-                JsonNode rootNode = objectMapper.readTree(responseBody);
-
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
-
-                // 提取result->markdown内容
-                if (rootNode.has("result") && rootNode.get("result").has("markdown")) {
-                    String markdown = rootNode.get("result").get("markdown").asText();
-
-                    // 存储文档
-                    String docName = fileName != null ? fileName : fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-                    Document document = documentRepository.save(
-                            docName,
-                            null, // Text field is no longer available in the API response
-                            markdown
-                    );
-
-                    // 同时将Markdown内容保存到/doc目录下的MD文件
-                    saveMarkdownToFile(markdown, docName);
-
-                    // 更新任务状态为完成
-                    conversionTaskRepository.complete(taskId, document.getId());
-                    return CompletableFuture.completedFuture(document.getId());
-                } else {
-                    conversionTaskRepository.fail(taskId, "Failed to convert URL to Markdown: No markdown content");
-                    return CompletableFuture.completedFuture(null);
-                }
-            }
+            Document document = saveConversionResult(markdown, docName, null);
+            conversionTaskRepository.complete(taskId, document.getId());
+            return CompletableFuture.completedFuture(document.getId());
         } catch (Exception e) {
             log.error("Error converting URL to Markdown", e);
             conversionTaskRepository.fail(taskId, e.getMessage());
@@ -369,80 +579,18 @@ public class TextinService {
      * @throws IOException 如果转换过程中发生错误
      */
     public TextinResponse convertPdfToMarkdown(MultipartFile file) throws IOException {
-        // 获取文件字节数组
-        byte[] fileBytes = file.getBytes();
-        String contentType = file.getContentType();
+        RequestBody requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), file.getBytes());
 
-        // 创建请求体（使用原始二进制数据）
-        RequestBody requestBody = RequestBody.create(MediaType.parse("application/octet-stream"), fileBytes);
+        String responseBody = callTextinApi(requestBody, "?image_output_type=base64str&get_image=objects");
+        saveJsonResponseToFile(responseBody, file.getOriginalFilename());
 
-        // 创建请求头
-        Request request = new Request.Builder()
-                .url(textinConfig.getApiUrl() + "/ai/service/v1/pdf_to_markdown?image_output_type=base64str&get_image=objects")
-                .addHeader("x-ti-app-id", textinConfig.getAppId())
-                .addHeader("x-ti-secret-code", textinConfig.getSecretCode())
-                .post(requestBody)
-                .build();
+        TextinResponse textinResponse = parseTextinResponse(responseBody);
 
-        // 执行请求
-        try (Response response = okHttpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                log.error("Error converting PDF to Markdown: {}", response);
-                throw new IOException("Failed to convert PDF to Markdown: " + response.code());
-            }
-
-            // 解析响应
-            String responseBody = response.body().string();
-            log.info("Textin API response: {}", responseBody);
-
-            // 将JSON响应内容保存到文件
-            saveJsonResponseToFile(responseBody, file.getOriginalFilename());
-
-            // 使用JsonNode解析JSON
-            JsonNode rootNode = objectMapper.readTree(responseBody);
-
-            // 创建TextinResponse对象
-            TextinResponse textinResponse = new TextinResponse();
-            if (rootNode.has("duration")) {
-                textinResponse.setDuration(rootNode.get("duration").asInt());
-            }
-            if (rootNode.has("message")) {
-                textinResponse.setMessage(rootNode.get("message").asText());
-            }
-
-            // 提取result->markdown内容
-            if (rootNode.has("result")) {
-                JsonNode resultNode = rootNode.get("result");
-                TextinResponse.TextinResult result = new TextinResponse.TextinResult();
-
-                if (resultNode.has("markdown")) {
-                    String markdown = resultNode.get("markdown").asText();
-                    result.setMarkdown(markdown);
-
-                    // 存储文档
-                    documentRepository.save(
-                            file.getOriginalFilename(),
-                            null, // Text field is no longer available in the API response
-                            markdown
-                    );
-
-                    // 同时将Markdown内容保存到/doc目录下的MD文件
-                    saveMarkdownToFile(markdown, file.getOriginalFilename());
-                }
-
-                if (resultNode.has("success_count")) {
-                    result.setSuccess_count(resultNode.get("success_count").asInt());
-                }
-
-                if (resultNode.has("pages")) {
-                    result.setPages(resultNode.get("pages").asInt());
-                }
-
-                textinResponse.setResult(result);
-            }
-
-            return textinResponse;
+        if (textinResponse.getResult() != null && textinResponse.getResult().getMarkdown() != null) {
+            saveConversionResult(textinResponse.getResult().getMarkdown(), file.getOriginalFilename(), null);
         }
+
+        return textinResponse;
     }
 
     /**
@@ -454,79 +602,23 @@ public class TextinService {
      * @throws IOException 如果转换过程中发生错误
      */
     public TextinResponse convertUrlToMarkdown(String fileUrl, String fileName) throws IOException {
-        // 创建请求体（纯文本，包含URL）
         RequestBody requestBody = RequestBody.create(MediaType.parse("text/plain"), fileUrl);
 
-        // 创建请求头
-        Request request = new Request.Builder()
-                .url(textinConfig.getApiUrl() + "/ai/service/v1/pdf_to_markdown")
-                .addHeader("x-ti-app-id", textinConfig.getAppId())
-                .addHeader("x-ti-secret-code", textinConfig.getSecretCode())
-                .post(requestBody)
-                .build();
+        String responseBody = callTextinApi(requestBody, null);
 
-        // 执行请求
-        try (Response response = okHttpClient.newCall(request).execute()) {
-            if (!response.isSuccessful()) {
-                log.error("Error converting URL to Markdown: {}", response);
-                throw new IOException("Failed to convert URL to Markdown: " + response.code());
-            }
+        String docName = fileName != null ? fileName : fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
+        saveJsonResponseToFile(responseBody, docName);
 
-            // 解析响应
-            String responseBody = response.body().string();
-            log.info("Textin API response: {}", responseBody);
+        TextinResponse textinResponse = parseTextinResponse(responseBody);
 
-            // 将JSON响应内容保存到文件
-            String jsonFileName = fileName != null ? fileName : fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-            saveJsonResponseToFile(responseBody, jsonFileName);
-
-            // 使用JsonNode解析JSON
-            JsonNode rootNode = objectMapper.readTree(responseBody);
-
-            // 创建TextinResponse对象
-            TextinResponse textinResponse = new TextinResponse();
-            if (rootNode.has("duration")) {
-                textinResponse.setDuration(rootNode.get("duration").asInt());
-            }
-            if (rootNode.has("message")) {
-                textinResponse.setMessage(rootNode.get("message").asText());
-            }
-
-            // 提取result->markdown内容
-            if (rootNode.has("result")) {
-                JsonNode resultNode = rootNode.get("result");
-                TextinResponse.TextinResult result = new TextinResponse.TextinResult();
-
-                if (resultNode.has("markdown")) {
-                    String markdown = resultNode.get("markdown").asText();
-                    result.setMarkdown(markdown);
-
-                    // 存储文档
-                    String docName = fileName != null ? fileName : fileUrl.substring(fileUrl.lastIndexOf('/') + 1);
-                    documentRepository.save(
-                            docName,
-                            null, // Text field is no longer available in the API response
-                            markdown
-                    );
-
-                    // 同时将Markdown内容保存到/doc目录下的MD文件
-                    saveMarkdownToFile(markdown, docName);
-                }
-
-                if (resultNode.has("success_count")) {
-                    result.setSuccess_count(resultNode.get("success_count").asInt());
-                }
-
-                if (resultNode.has("pages")) {
-                    result.setPages(resultNode.get("pages").asInt());
-                }
-
-                textinResponse.setResult(result);
-            }
-
-            return textinResponse;
+        if (textinResponse.getResult() != null && textinResponse.getResult().getMarkdown() != null) {
+            saveConversionResult(textinResponse.getResult().getMarkdown(), docName, null);
         }
+
+        return textinResponse;
     }
+
+    // ========== Blue Cloud AI 转换方法 ==========
 
     /**
      * 使用Blue Cloud AI上传PDF文件并转换为Markdown
@@ -567,114 +659,22 @@ public class TextinService {
      */
     private String uploadByBlueCloudAiInternal(byte[] fileBytes, String fileName, String contentType, String customPath) throws IOException {
         log.info("开始使用Blue Cloud AI上传文件: {}", fileName);
-
-        // 记录开始时间
         long startTime = System.currentTimeMillis();
 
         try {
-            // 第一步：上传文件到Blue Cloud AI
-            // 创建multipart请求体
-            RequestBody requestBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("file", fileName,
-                            RequestBody.create(MediaType.parse(contentType), fileBytes))
-                    .build();
+            log.info("ai phrase model:{}", blueCloudAiConfig.getProviderName());
 
-            // 创建请求头
-            Request uploadRequest = new Request.Builder()
-                    .url(blueCloudAiConfig.getUploadApiUrl())
-                    .addHeader("Authorization", blueCloudAiConfig.getAuthToken())
-                    .post(requestBody)
-                    .build();
+            String fileId = uploadToBlueCloud(fileBytes, fileName, contentType,
+                    blueCloudAiConfig.getUploadApiUrl(), blueCloudAiConfig.getAuthToken());
 
-            // 执行上传请求
-            try (Response uploadResponse = okHttpClient.newCall(uploadRequest).execute()) {
-                if (!uploadResponse.isSuccessful()) {
-                    log.error("Error uploading file to Blue Cloud AI: {}", uploadResponse);
-                    throw new IOException("Failed to upload file to Blue Cloud AI: " + uploadResponse.code());
-                }
+            String jsonBody = buildBlueCloudJsonBody(fileId);
+            String markdown = requestBlueCloudMarkdown(
+                    blueCloudAiConfig.getMarkdownApiUrl(), blueCloudAiConfig.getAuthToken(), jsonBody);
 
-                // 解析上传响应
-                String uploadResponseBody = uploadResponse.body().string();
-                log.info("Blue Cloud AI upload response: {}", uploadResponseBody);
-
-                // 解析上传响应获取文件ID
-                BlueCloudAiResponse uploadResult = objectMapper.readValue(uploadResponseBody, BlueCloudAiResponse.class);
-                String fileId = uploadResult.getId();
-                log.info("文件上传成功，获取到文件ID: {}", fileId);
-
-                log.info("ai phrase model:{}",blueCloudAiConfig.getProviderName());
-                // 第二步：请求转换为Markdown
-                // 创建JSON请求体    completion_params  《-model_parameters  model -》name
-                String jsonBody = String.format("{"
-                        + "\"file_id\": \"%s\","
-                        + "\"process_figures\": false,"
-                        + "\"provider_name\":\"%s\","
-                        + "\"img_model\": {"
-                        + "\"provider\": \"%s\","
-                        + "\"name\": \"%s\","
-                        + "\"is_system\": true,"
-                        + "\"completion_params\": {"
-                        + "\"temperature\": %s"
-                        + "},"
-                        + "\"query\": \"%s\""
-                        + "}"
-                        + "}", fileId, blueCloudAiConfig.getProviderName(), "azure_openai",
-                        blueCloudAiConfig.getModelName(), blueCloudAiConfig.getTemperature(), blueCloudAiConfig.getQuery());
-
-                RequestBody markdownRequestBody = RequestBody.create(MediaType.parse("application/json"), jsonBody);
-
-                // 创建请求头
-                Request markdownRequest = new Request.Builder()
-                        .url(blueCloudAiConfig.getMarkdownApiUrl())
-                        .addHeader("Authorization", blueCloudAiConfig.getAuthToken())
-                        .post(markdownRequestBody)
-                        .build();
-
-                // 创建带有超时设置的OkHttpClient
-                OkHttpClient clientWithTimeout = okHttpClient.newBuilder()
-                        .connectTimeout(60, TimeUnit.SECONDS)
-                        .readTimeout(120, TimeUnit.SECONDS)
-                        .writeTimeout(60, TimeUnit.SECONDS)
-                        .build();
-
-                // 执行Markdown转换请求
-                try (Response markdownResponse = clientWithTimeout.newCall(markdownRequest).execute()) {
-                    if (!markdownResponse.isSuccessful()) {
-                        log.error("Error converting file to Markdown with Blue Cloud AI: {}", markdownResponse);
-                        throw new IOException("Failed to convert file to Markdown with Blue Cloud AI: " + markdownResponse.code());
-                    }
-
-                    // 解析Markdown响应
-                    String markdownResponseBody = markdownResponse.body().string();
-                    log.info("Blue Cloud AI markdown response: {}", markdownResponseBody);
-
-                    // 解析Markdown响应获取内容
-                    BlueCloudAiMarkdownResponse markdownResult = objectMapper.readValue(markdownResponseBody, BlueCloudAiMarkdownResponse.class);
-
-                    if (markdownResult.getCode() == 0 && markdownResult.getData() != null) {
-                        String markdown = markdownResult.getData().getMarkdown_content();
-
-                        // 存储文档
-                        Document document = documentRepository.save(
-                                fileName,
-                                null,
-                                markdown
-                        );
-
-                        // 同时将Markdown内容保存到指定目录下的MD文件
-                        saveMarkdownToFile(markdown, fileName, customPath);
-
-                        return document.getId();
-                    } else {
-                        throw new IOException("Failed to get markdown content from Blue Cloud AI");
-                    }
-                }
-            }
+            Document document = saveConversionResult(markdown, fileName, customPath);
+            return document.getId();
         } finally {
-            // 计算并记录总耗时
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
+            long duration = System.currentTimeMillis() - startTime;
             log.info("Blue Cloud AI 处理完成，总耗时: {} 毫秒", duration);
         }
     }
@@ -687,148 +687,46 @@ public class TextinService {
      */
     @Async
     public CompletableFuture<String> uploadByBlueCloudAiAsync(MultipartFile file, String taskId) {
-        // 记录开始时间
         long startTime = System.currentTimeMillis();
 
         try {
-            // 更新任务状态为处理中
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 10);
 
             log.info("开始异步使用Blue Cloud AI上传文件: {}", file.getOriginalFilename());
-
-            // 第一步：上传文件到Blue Cloud AI
-            // 获取文件字节数组
             byte[] fileBytes = file.getBytes();
 
-            // 更新进度
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 20);
-
-            // 创建multipart请求体
-            RequestBody requestBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("file", file.getOriginalFilename(),
-                            RequestBody.create(MediaType.parse(file.getContentType()), fileBytes))
-                    .build();
-
-            // 创建请求头
-            Request uploadRequest = new Request.Builder()
-                    .url(blueCloudAiConfig.getUploadApiUrl())
-                    .addHeader("Authorization", blueCloudAiConfig.getAuthToken())
-                    .post(requestBody)
-                    .build();
-
-            // 更新进度
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 40);
 
-            // 执行上传请求
-            try (Response uploadResponse = okHttpClient.newCall(uploadRequest).execute()) {
-                if (!uploadResponse.isSuccessful()) {
-                    log.error("Error uploading file to Blue Cloud AI: {}", uploadResponse);
-                    conversionTaskRepository.fail(taskId, "Failed to upload file to Blue Cloud AI: " + uploadResponse.code());
-                    return CompletableFuture.completedFuture(null);
-                }
+            String fileId = uploadToBlueCloud(fileBytes, file.getOriginalFilename(), file.getContentType(),
+                    blueCloudAiConfig.getUploadApiUrl(), blueCloudAiConfig.getAuthToken());
 
-                // 解析上传响应
-                String uploadResponseBody = uploadResponse.body().string();
-                log.info("Blue Cloud AI upload response: {}", uploadResponseBody);
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 60);
 
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 60);
+            String jsonBody = buildBlueCloudJsonBody(fileId);
 
-                // 解析上传响应获取文件ID
-                BlueCloudAiResponse uploadResult = objectMapper.readValue(uploadResponseBody, BlueCloudAiResponse.class);
-                String fileId = uploadResult.getId();
-                log.info("文件上传成功，获取到文件ID: {}", fileId);
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 80);
 
-                // 第二步：请求转换为Markdown
-                // 创建JSON请求体
-                String jsonBody = String.format("{"
-                        + "\"file_id\": \"%s\","
-                        + "\"process_figures\": false,"
-                        + "\"provider_name\":\"%s\","
-                        + "\"img_model\": {"
-                        + "\"provider\": \"%s\","
-                        + "\"model\": \"%s\","
-                        + "\"is_system\": true,"
-                        + "\"model_parameters\": {"
-                        + "\"temperature\": %s"
-                        + "},"
-                        + "\"query\": \"%s\""
-                        + "}"
-                        + "}", fileId, blueCloudAiConfig.getProviderName(), blueCloudAiConfig.getProviderName(),
-                        blueCloudAiConfig.getModelName(), blueCloudAiConfig.getTemperature(), blueCloudAiConfig.getQuery());
+            String markdown = requestBlueCloudMarkdown(
+                    blueCloudAiConfig.getMarkdownApiUrl(), blueCloudAiConfig.getAuthToken(), jsonBody);
 
-                RequestBody markdownRequestBody = RequestBody.create(MediaType.parse("application/json"), jsonBody);
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
 
-                // 创建请求头
-                Request markdownRequest = new Request.Builder()
-                        .url(blueCloudAiConfig.getMarkdownApiUrl())
-                        .addHeader("Authorization", blueCloudAiConfig.getAuthToken())
-                        .post(markdownRequestBody)
-                        .build();
-
-                // 创建带有超时设置的OkHttpClient
-                OkHttpClient clientWithTimeout = okHttpClient.newBuilder()
-                        .connectTimeout(60, TimeUnit.SECONDS)
-                        .readTimeout(120, TimeUnit.SECONDS)
-                        .writeTimeout(60, TimeUnit.SECONDS)
-                        .build();
-
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 80);
-
-                // 执行Markdown转换请求
-                try (Response markdownResponse = clientWithTimeout.newCall(markdownRequest).execute()) {
-                    if (!markdownResponse.isSuccessful()) {
-                        log.error("Error converting file to Markdown with Blue Cloud AI: {}", markdownResponse);
-                        conversionTaskRepository.fail(taskId, "Failed to convert file to Markdown with Blue Cloud AI: " + markdownResponse.code());
-                        return CompletableFuture.completedFuture(null);
-                    }
-
-                    // 解析Markdown响应
-                    String markdownResponseBody = markdownResponse.body().string();
-                    log.info("Blue Cloud AI markdown response: {}", markdownResponseBody);
-
-                    // 更新进度
-                    conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
-
-                    // 解析Markdown响应获取内容
-                    BlueCloudAiMarkdownResponse markdownResult = objectMapper.readValue(markdownResponseBody, BlueCloudAiMarkdownResponse.class);
-
-                    if (markdownResult.getCode() == 0 && markdownResult.getData() != null) {
-                        String markdown = markdownResult.getData().getMarkdown_content();
-
-                        // 存储文档
-                        Document document = documentRepository.save(
-                                file.getOriginalFilename(),
-                                null,
-                                markdown
-                        );
-
-                        // 同时将Markdown内容保存到/doc目录下的MD文件
-                        saveMarkdownToFile(markdown, file.getOriginalFilename());
-
-                        // 更新任务状态为完成
-                        conversionTaskRepository.complete(taskId, document.getId());
-                        return CompletableFuture.completedFuture(document.getId());
-                    } else {
-                        conversionTaskRepository.fail(taskId, "Failed to get markdown content from Blue Cloud AI");
-                        return CompletableFuture.completedFuture(null);
-                    }
-                }
-            }
+            Document document = saveConversionResult(markdown, file.getOriginalFilename(), null);
+            conversionTaskRepository.complete(taskId, document.getId());
+            return CompletableFuture.completedFuture(document.getId());
         } catch (Exception e) {
             log.error("Error processing file with Blue Cloud AI", e);
             conversionTaskRepository.fail(taskId, e.getMessage());
             return CompletableFuture.completedFuture(null);
         } finally {
-            // 计算并记录总耗时
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
+            long duration = System.currentTimeMillis() - startTime;
             log.info("Blue Cloud AI 异步处理完成，总耗时: {} 毫秒", duration);
         }
     }
-    
+
+    // ========== SysParaset OCR 转换方法 ==========
+
     /**
      * 使用sys_paraset表中的OCR参数上传PDF文件并转换为Markdown
      *
@@ -838,146 +736,26 @@ public class TextinService {
      */
     public String uploadBySysParasetOcr(File file) throws IOException {
         log.info("开始使用sys_paraset表中的OCR参数上传文件: {}", file.getName());
-        
-        // 记录开始时间
         long startTime = System.currentTimeMillis();
-        
+
         try {
-            // 从sys_paraset表中获取第一个启用的参数集
-            SysParaset sysParaset = sysParasetRepository.findAll().stream()
-                    .filter(SysParaset::getEnabled)
-                    .findFirst()
-                    .orElseThrow(() -> new IOException("未找到启用的sys_paraset参数配置"));
-            
-            // 获取OCR参数JSON字符串
-            String ocrParaJson = sysParaset.getOcrPara();
-            if (ocrParaJson == null || ocrParaJson.isEmpty()) {
-                throw new IOException("sys_paraset表中未配置OCR参数");
-            }
-            
-            // 解析OCR参数JSON
-            JsonNode ocrParaNode = objectMapper.readTree(ocrParaJson);
-            JsonNode ocrAgentNode = ocrParaNode.get("ocrAgent");
-            if (ocrAgentNode == null) {
-                throw new IOException("OCR参数中未找到ocrAgent配置");
-            }
-            
-            // 解析AI配置
-            JsonNode aiNode = ocrAgentNode.get("ai");
-            if (aiNode == null) {
-                throw new IOException("OCR参数中未找到AI配置");
-            }
-            
-            String authToken = aiNode.get("authToken").asText();
-            String uploadApiUrl = aiNode.get("uploadApiUrl").asText();
-            String markdownApiUrl = aiNode.get("markdownApiUrl").asText();
-            
-            // 解析body配置
-            JsonNode bodyNode = ocrAgentNode.get("body");
-            if (bodyNode == null) {
-                throw new IOException("OCR参数中未找到body配置");
-            }
-            
-            // 读取文件内容
+            SysParasetOcrConfig config = loadSysParasetOcrConfig();
+
             byte[] fileBytes = Files.readAllBytes(file.toPath());
-            String fileName = file.getName();
-            String contentType = "application/pdf"; // 默认为PDF类型
-            String filePath = file.getParent(); // 获取文件所在目录
-            
-            // 第一步：上传文件到Blue Cloud AI
-            // 创建multipart请求体
-            RequestBody requestBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("file", fileName,
-                            RequestBody.create(MediaType.parse(contentType), fileBytes))
-                    .build();
-            
-            // 创建请求头
-            Request uploadRequest = new Request.Builder()
-                    .url(uploadApiUrl)
-                    .addHeader("Authorization", authToken)
-                    .post(requestBody)
-                    .build();
-            
-            // 执行上传请求
-            try (Response uploadResponse = okHttpClient.newCall(uploadRequest).execute()) {
-                if (!uploadResponse.isSuccessful()) {
-                    log.error("Error uploading file to Blue Cloud AI: {}", uploadResponse);
-                    throw new IOException("Failed to upload file to Blue Cloud AI: " + uploadResponse.code());
-                }
-                
-                // 解析上传响应
-                String uploadResponseBody = uploadResponse.body().string();
-                log.info("Blue Cloud AI upload response: {}", uploadResponseBody);
-                
-                // 解析上传响应获取文件ID
-                BlueCloudAiResponse uploadResult = objectMapper.readValue(uploadResponseBody, BlueCloudAiResponse.class);
-                String fileId = uploadResult.getId();
-                log.info("文件上传成功，获取到文件ID: {}", fileId);
-                
-                // 第二步：请求转换为Markdown
-                // 创建JSON请求体
-                // 使用配置中的body模板，只替换file_id
-                String bodyTemplate = bodyNode.toString();
-                String jsonBody = bodyTemplate.replace("\"%s\"", "\"" + fileId + "\"");
-                
-                RequestBody markdownRequestBody = RequestBody.create(MediaType.parse("application/json"), jsonBody);
-                
-                // 创建请求头
-                Request markdownRequest = new Request.Builder()
-                        .url(markdownApiUrl)
-                        .addHeader("Authorization", authToken)
-                        .post(markdownRequestBody)
-                        .build();
-                
-                // 创建带有超时设置的OkHttpClient
-                OkHttpClient clientWithTimeout = okHttpClient.newBuilder()
-                        .connectTimeout(60, TimeUnit.SECONDS)
-                        .readTimeout(120, TimeUnit.SECONDS)
-                        .writeTimeout(60, TimeUnit.SECONDS)
-                        .build();
-                
-                // 执行Markdown转换请求
-                try (Response markdownResponse = clientWithTimeout.newCall(markdownRequest).execute()) {
-                    if (!markdownResponse.isSuccessful()) {
-                        log.error("Error converting file to Markdown with Blue Cloud AI: {}", markdownResponse);
-                        throw new IOException("Failed to convert file to Markdown with Blue Cloud AI: " + markdownResponse.code());
-                    }
-                    
-                    // 解析Markdown响应
-                    String markdownResponseBody = markdownResponse.body().string();
-                    log.info("Blue Cloud AI markdown response: {}", markdownResponseBody);
-                    
-                    // 解析Markdown响应获取内容
-                    BlueCloudAiMarkdownResponse markdownResult = objectMapper.readValue(markdownResponseBody, BlueCloudAiMarkdownResponse.class);
-                    
-                    if (markdownResult.getCode() == 0 && markdownResult.getData() != null) {
-                        String markdown = markdownResult.getData().getMarkdown_content();
-                        
-                        // 存储文档
-                        Document document = documentRepository.save(
-                                fileName,
-                                null,
-                                markdown
-                        );
-                        
-                        // 同时将Markdown内容保存到指定目录下的MD文件
-                        saveMarkdownToFile(markdown, fileName, filePath);
-                        
-                        return document.getId();
-                    } else {
-                        throw new IOException("Failed to get markdown content from Blue Cloud AI");
-                    }
-                }
-            }
+            String fileId = uploadToBlueCloud(fileBytes, file.getName(), "application/pdf",
+                    config.uploadApiUrl, config.authToken);
+
+            String jsonBody = buildSysParasetJsonBody(config.bodyNode, fileId);
+            String markdown = requestBlueCloudMarkdown(config.markdownApiUrl, config.authToken, jsonBody);
+
+            Document document = saveConversionResult(markdown, file.getName(), file.getParent());
+            return document.getId();
         } finally {
-            // 计算并记录总耗时
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
+            long duration = System.currentTimeMillis() - startTime;
             log.info("使用sys_paraset OCR参数处理完成，总耗时: {} 毫秒", duration);
         }
     }
-    
+
     /**
      * 使用sys_paraset表中的OCR参数上传PDF文件并转换为Markdown（接受File参数）
      *
@@ -988,146 +766,31 @@ public class TextinService {
      */
     public String uploadBySysParasetOcr(java.io.File originalFile, com.linkyoyo.reportaudit.entity.Documents document) throws IOException {
         log.info("开始使用sys_paraset表中的OCR参数上传文件: {}", originalFile.getName());
-        
-        // 获取原始文件所在目录路径（用于保存MD文件）
         String customSavePath = originalFile.getParent();
-        
-        // 记录开始时间
         long startTime = System.currentTimeMillis();
-        
+
         try {
-            // 从sys_paraset表中获取第一个启用的参数集
-            SysParaset sysParaset = sysParasetRepository.findAll().stream()
-                    .filter(SysParaset::getEnabled)
-                    .findFirst()
-                    .orElseThrow(() -> new IOException("未找到启用的sys_paraset参数配置"));
-            
-            // 获取OCR参数JSON字符串
-            String ocrParaJson = sysParaset.getOcrPara();
-            if (ocrParaJson == null || ocrParaJson.isEmpty()) {
-                throw new IOException("sys_paraset表中未配置OCR参数");
-            }
-            
-            // 解析OCR参数JSON
-            JsonNode ocrParaNode = objectMapper.readTree(ocrParaJson);
-            JsonNode ocrAgentNode = ocrParaNode.get("ocrAgent");
-            if (ocrAgentNode == null) {
-                throw new IOException("OCR参数中未找到ocrAgent配置");
-            }
-            
-            // 解析AI配置
-            JsonNode aiNode = ocrAgentNode.get("ai");
-            if (aiNode == null) {
-                throw new IOException("OCR参数中未找到AI配置");
-            }
-            
-            String authToken = aiNode.get("authToken").asText();
-            String uploadApiUrl = aiNode.get("uploadApiUrl").asText();
-            String markdownApiUrl = aiNode.get("markdownApiUrl").asText();
-            
-            // 解析body配置
-            JsonNode bodyNode = ocrAgentNode.get("body");
-            if (bodyNode == null) {
-                throw new IOException("OCR参数中未找到body配置");
-            }
-            
-            // 直接使用配置中的body模板，只需要替换file_id
-            
-            // 获取文件内容
-            byte[] fileBytes = java.nio.file.Files.readAllBytes(originalFile.toPath());
-            String fileName = originalFile.getName();
-            String contentType = getContentTypeByFileName(fileName);
-            
-            // 第一步：上传文件到Blue Cloud AI
-            // 创建multipart请求体
-            RequestBody requestBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("file", fileName,
-                            RequestBody.create(MediaType.parse(contentType), fileBytes))
-                    .build();
-            
-            // 创建请求头
-            Request uploadRequest = new Request.Builder()
-                    .url(uploadApiUrl)
-                    .addHeader("Authorization", authToken)
-                    .post(requestBody)
-                    .build();
-            
-            // 执行上传请求
-            try (Response uploadResponse = okHttpClient.newCall(uploadRequest).execute()) {
-                if (!uploadResponse.isSuccessful()) {
-                    log.error("Error uploading file to Blue Cloud AI: {}", uploadResponse);
-                    throw new IOException("Failed to upload file to Blue Cloud AI: " + uploadResponse.code());
-                }
-                
-                // 解析上传响应
-                String uploadResponseBody = uploadResponse.body().string();
-                log.info("Blue Cloud AI upload response: {}", uploadResponseBody);
-                
-                // 解析上传响应获取文件ID
-                BlueCloudAiResponse uploadResult = objectMapper.readValue(uploadResponseBody, BlueCloudAiResponse.class);
-                String fileId = uploadResult.getId();
-                log.info("文件上传成功，获取到文件ID: {}", fileId);
-                
-                // 第二步：请求转换为Markdown
-                // 创建JSON请求体
-                // 使用配置中的body模板，只替换file_id
-                String bodyTemplate = bodyNode.toString();
-                String jsonBody = bodyTemplate.replace("\"%s\"", "\"" + fileId + "\"");
-                
-                RequestBody markdownRequestBody = RequestBody.create(MediaType.parse("application/json"), jsonBody);
-                
-                // 创建请求头
-                Request markdownRequest = new Request.Builder()
-                        .url(markdownApiUrl)
-                        .addHeader("Authorization", authToken)
-                        .post(markdownRequestBody)
-                        .build();
-                
-                // 创建带有超时设置的OkHttpClient
-                OkHttpClient clientWithTimeout = okHttpClient.newBuilder()
-                        .connectTimeout(60, TimeUnit.SECONDS)
-                        .readTimeout(120, TimeUnit.SECONDS)
-                        .writeTimeout(60, TimeUnit.SECONDS)
-                        .build();
-                
-                // 执行Markdown转换请求
-                try (Response markdownResponse = clientWithTimeout.newCall(markdownRequest).execute()) {
-                    if (!markdownResponse.isSuccessful()) {
-                        log.error("Error converting file to Markdown with Blue Cloud AI: {}", markdownResponse);
-                        throw new IOException("Failed to convert file to Markdown with Blue Cloud AI: " + markdownResponse.code());
-                    }
-                    
-                    // 解析Markdown响应
-                    String markdownResponseBody = markdownResponse.body().string();
-                    log.info("Blue Cloud AI markdown response: {}", markdownResponseBody);
-                    
-                    // 解析Markdown响应获取内容
-                    BlueCloudAiMarkdownResponse markdownResult = objectMapper.readValue(markdownResponseBody, BlueCloudAiMarkdownResponse.class);
-                    
-                    if (markdownResult.getCode() == 0 && markdownResult.getData() != null) {
-                        String markdown = markdownResult.getData().getMarkdown_content();
-                        
-                        // 更新Documents实体的mdContent字段
-                        document.setMdContent(markdown);
-                        
-                        // 将Markdown内容保存到原始文件同级目录下，文件名与原始文件名相同（但扩展名为.md）
-                        saveMarkdownToFile(markdown, fileName, customSavePath);
-                        
-                        return document.getId().toString();
-                    } else {
-                        throw new IOException("Failed to get markdown content from Blue Cloud AI");
-                    }
-                }
-            }
+            SysParasetOcrConfig config = loadSysParasetOcrConfig();
+
+            byte[] fileBytes = Files.readAllBytes(originalFile.toPath());
+            String contentType = getContentTypeByFileName(originalFile.getName());
+            String fileId = uploadToBlueCloud(fileBytes, originalFile.getName(), contentType,
+                    config.uploadApiUrl, config.authToken);
+
+            String jsonBody = buildSysParasetJsonBody(config.bodyNode, fileId);
+            String markdown = requestBlueCloudMarkdown(config.markdownApiUrl, config.authToken, jsonBody);
+
+            // 此重载方法更新已有Documents实体，而非创建新Document
+            document.setMdContent(markdown);
+            saveMarkdownToFile(markdown, originalFile.getName(), customSavePath);
+
+            return document.getId().toString();
         } finally {
-            // 计算并记录总耗时
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
+            long duration = System.currentTimeMillis() - startTime;
             log.info("使用sys_paraset OCR参数处理完成，总耗时: {} 毫秒", duration);
         }
     }
-    
+
     /**
      * 异步使用sys_paraset表中的OCR参数上传PDF文件并转换为Markdown
      *
@@ -1136,185 +799,49 @@ public class TextinService {
      */
     @Async
     public CompletableFuture<String> uploadBySysParasetOcrAsync(MultipartFile file, String taskId) {
-        // 记录开始时间
         long startTime = System.currentTimeMillis();
-        
+
         try {
-            // 更新任务状态为处理中
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 10);
-            
+
             log.info("开始异步使用sys_paraset表中的OCR参数上传文件: {}", file.getOriginalFilename());
-            
-            // 从sys_paraset表中获取第一个启用的参数集
-            SysParaset sysParaset = sysParasetRepository.findAll().stream()
-                    .filter(SysParaset::getEnabled)
-                    .findFirst()
-                    .orElse(null);
-            
-            if (sysParaset == null) {
-                conversionTaskRepository.fail(taskId, "未找到启用的sys_paraset参数配置");
-                return CompletableFuture.completedFuture(null);
-            }
-            
-            // 获取OCR参数JSON字符串
-            String ocrParaJson = sysParaset.getOcrPara();
-            if (ocrParaJson == null || ocrParaJson.isEmpty()) {
-                conversionTaskRepository.fail(taskId, "sys_paraset表中未配置OCR参数");
-                return CompletableFuture.completedFuture(null);
-            }
-            
-            // 解析OCR参数JSON
-            JsonNode ocrParaNode = objectMapper.readTree(ocrParaJson);
-            JsonNode ocrAgentNode = ocrParaNode.get("ocrAgent");
-            if (ocrAgentNode == null) {
-                conversionTaskRepository.fail(taskId, "OCR参数中未找到ocrAgent配置");
-                return CompletableFuture.completedFuture(null);
-            }
-            
-            // 解析AI配置
-            JsonNode aiNode = ocrAgentNode.get("ai");
-            if (aiNode == null) {
-                conversionTaskRepository.fail(taskId, "OCR参数中未找到AI配置");
-                return CompletableFuture.completedFuture(null);
-            }
-            
-            String authToken = aiNode.get("authToken").asText();
-            String uploadApiUrl = aiNode.get("uploadApiUrl").asText();
-            String markdownApiUrl = aiNode.get("markdownApiUrl").asText();
-            
-            // 解析body配置
-            JsonNode bodyNode = ocrAgentNode.get("body");
-            if (bodyNode == null) {
-                conversionTaskRepository.fail(taskId, "OCR参数中未找到body配置");
-                return CompletableFuture.completedFuture(null);
-            }
-            
-            // 更新进度
+            SysParasetOcrConfig config = loadSysParasetOcrConfig();
+
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 20);
-            
-            // 获取文件内容
+
             byte[] fileBytes = file.getBytes();
-            String fileName = file.getOriginalFilename();
-            String contentType = file.getContentType();
-            
-            // 更新进度
+
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 30);
-            
-            // 第一步：上传文件到Blue Cloud AI
-            // 创建multipart请求体
-            RequestBody requestBody = new MultipartBody.Builder()
-                    .setType(MultipartBody.FORM)
-                    .addFormDataPart("file", fileName,
-                            RequestBody.create(MediaType.parse(contentType), fileBytes))
-                    .build();
-            
-            // 创建请求头
-            Request uploadRequest = new Request.Builder()
-                    .url(uploadApiUrl)
-                    .addHeader("Authorization", authToken)
-                    .post(requestBody)
-                    .build();
-            
-            // 更新进度
             conversionTaskRepository.updateStatus(taskId, "PROCESSING", 40);
-            
-            // 执行上传请求
-            try (Response uploadResponse = okHttpClient.newCall(uploadRequest).execute()) {
-                if (!uploadResponse.isSuccessful()) {
-                    log.error("Error uploading file to Blue Cloud AI: {}", uploadResponse);
-                    conversionTaskRepository.fail(taskId, "Failed to upload file to Blue Cloud AI: " + uploadResponse.code());
-                    return CompletableFuture.completedFuture(null);
-                }
-                
-                // 解析上传响应
-                String uploadResponseBody = uploadResponse.body().string();
-                log.info("Blue Cloud AI upload response: {}", uploadResponseBody);
-                
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 60);
-                
-                // 解析上传响应获取文件ID
-                BlueCloudAiResponse uploadResult = objectMapper.readValue(uploadResponseBody, BlueCloudAiResponse.class);
-                String fileId = uploadResult.getId();
-                log.info("文件上传成功，获取到文件ID: {}", fileId);
-                
-                // 第二步：请求转换为Markdown
-                // 创建JSON请求体
-                // 使用配置中的body模板，只替换file_id
-                String bodyTemplate = bodyNode.toString();
-                String jsonBody = bodyTemplate.replace("\"%s\"", "\"" + fileId + "\"");
-                
-                RequestBody markdownRequestBody = RequestBody.create(MediaType.parse("application/json"), jsonBody);
-                
-                // 创建请求头
-                Request markdownRequest = new Request.Builder()
-                        .url(markdownApiUrl)
-                        .addHeader("Authorization", authToken)
-                        .post(markdownRequestBody)
-                        .build();
-                
-                // 创建带有超时设置的OkHttpClient
-                OkHttpClient clientWithTimeout = okHttpClient.newBuilder()
-                        .connectTimeout(60, TimeUnit.SECONDS)
-                        .readTimeout(120, TimeUnit.SECONDS)
-                        .writeTimeout(60, TimeUnit.SECONDS)
-                        .build();
-                
-                // 更新进度
-                conversionTaskRepository.updateStatus(taskId, "PROCESSING", 80);
-                
-                // 执行Markdown转换请求
-                try (Response markdownResponse = clientWithTimeout.newCall(markdownRequest).execute()) {
-                    if (!markdownResponse.isSuccessful()) {
-                        log.error("Error converting file to Markdown with Blue Cloud AI: {}", markdownResponse);
-                        conversionTaskRepository.fail(taskId, "Failed to convert file to Markdown with Blue Cloud AI: " + markdownResponse.code());
-                        return CompletableFuture.completedFuture(null);
-                    }
-                    
-                    // 解析Markdown响应
-                    String markdownResponseBody = markdownResponse.body().string();
-                    log.info("Blue Cloud AI markdown response: {}", markdownResponseBody);
-                    
-                    // 更新进度
-                    conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
-                    
-                    // 解析Markdown响应获取内容
-                    BlueCloudAiMarkdownResponse markdownResult = objectMapper.readValue(markdownResponseBody, BlueCloudAiMarkdownResponse.class);
-                    
-                    if (markdownResult.getCode() == 0 && markdownResult.getData() != null) {
-                        String markdown = markdownResult.getData().getMarkdown_content();
-                        
-                        // 存储文档
-                        Document document = documentRepository.save(
-                                fileName,
-                                null,
-                                markdown
-                        );
-                        
-                        // 同时将Markdown内容保存到/doc目录下的MD文件
-                        saveMarkdownToFile(markdown, fileName);
-                        
-                        // 更新任务状态为完成
-                        conversionTaskRepository.complete(taskId, document.getId());
-                        return CompletableFuture.completedFuture(document.getId());
-                    } else {
-                        conversionTaskRepository.fail(taskId, "Failed to get markdown content from Blue Cloud AI");
-                        return CompletableFuture.completedFuture(null);
-                    }
-                }
-            }
+
+            String fileId = uploadToBlueCloud(fileBytes, file.getOriginalFilename(), file.getContentType(),
+                    config.uploadApiUrl, config.authToken);
+
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 60);
+
+            String jsonBody = buildSysParasetJsonBody(config.bodyNode, fileId);
+
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 80);
+
+            String markdown = requestBlueCloudMarkdown(config.markdownApiUrl, config.authToken, jsonBody);
+
+            conversionTaskRepository.updateStatus(taskId, "PROCESSING", 90);
+
+            Document doc = saveConversionResult(markdown, file.getOriginalFilename(), null);
+            conversionTaskRepository.complete(taskId, doc.getId());
+            return CompletableFuture.completedFuture(doc.getId());
         } catch (Exception e) {
             log.error("Error processing file with sys_paraset OCR parameters", e);
             conversionTaskRepository.fail(taskId, e.getMessage());
             return CompletableFuture.completedFuture(null);
         } finally {
-            // 计算并记录总耗时
-            long endTime = System.currentTimeMillis();
-            long duration = endTime - startTime;
+            long duration = System.currentTimeMillis() - startTime;
             log.info("使用sys_paraset OCR参数异步处理完成，总耗时: {} 毫秒", duration);
         }
     }
-    
+
+    // ========== 工具方法 ==========
+
     /**
      * 根据文件名获取对应的ContentType
      *
@@ -1337,10 +864,6 @@ public class TextinService {
         }
     }
 
-
-
-
-    
     /**
      * 规范化已有#开头的标题
      */
@@ -1350,26 +873,26 @@ public class TextinService {
         while (hashCount < titleLine.length() && titleLine.charAt(hashCount) == '#') {
             hashCount++;
         }
-        
+
         String titleContent = titleLine.substring(hashCount).trim();
-        
+
         // 如果标题内容包含章节编号，根据编号确定正确的层级
         if (titleContent.matches("^\\d+(\\.\\d+)*\\s+.*")) {
             int dotCount = countDots(titleContent);
             String correctHashPrefix = generateHashPrefix(dotCount + 1);
             return correctHashPrefix + " " + titleContent;
         }
-        
+
         // 如果是附表类标题，统一使用##
         if (titleContent.contains("附表") || titleContent.contains("附录")) {
             return "## " + titleContent;
         }
-        
+
         // 其他情况保持原有格式，但确保至少有两个#
         if (hashCount < 2) {
             return "## " + titleContent;
         }
-        
+
         return titleLine;
     }
 
@@ -1380,7 +903,7 @@ public class TextinService {
         if ("appendix".equals(chapterNumber)) {
             return 1; // 附表作为二级标题
         }
-        
+
         int dots = 0;
         for (char c : chapterNumber.toCharArray()) {
             if (c == '.') {
@@ -1405,7 +928,7 @@ public class TextinService {
 
     /**
      * 保存章节整理结果到文件
-     * 
+     *
      * @param cleanedMdContent 整理后的Markdown内容
      * @param jsonResult 完整的JSON结果
      * @param fileName 原始文件名
