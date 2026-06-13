@@ -59,9 +59,8 @@ public class SysOperaLogAspect {
             Object obj =request.getSession().getAttribute("sysUser");
             if  (obj != null)
                 sysOperator = objectMapper.readValue(obj.toString(), SysOperator.class);
-        }catch (Exception e)
-        {
-
+        } catch (Exception e) {
+            log.warn("操作日志切面获取登录用户信息失败, 将以匿名用户记录日志", e);
         }
 
 
@@ -94,7 +93,7 @@ public class SysOperaLogAspect {
                             title = title.concat("--新增");
                     }
                 } catch (Exception e) {
-
+                    log.warn("操作日志切面解析请求体JSON失败, 跳过操作类型判断: {}", e.getMessage());
                 }
             }
 
@@ -106,11 +105,11 @@ public class SysOperaLogAspect {
                 .title(title).remoteAddr(ServletUtil.getClientIP(request))
                 .requestUri(URLUtil.getPath(request.getRequestURI())).method(request.getMethod())
                 .userAgent(request.getHeader("user-agent")).params(HttpUtil.toParams(request.getParameterMap()))
-                .clientId(Objects.nonNull(sysOperator)?sysOperator.getId().toString():null)
+                .clientId(Objects.nonNull(sysOperator) && Objects.nonNull(sysOperator.getId()) ? sysOperator.getId().toString() : null)
 //                .processId(obtainProcessId(sysLog, request))
                 .time(sw.getTotalTimeMillis())
                 .body(body)
-                .createUser(Objects.nonNull(sysOperator)?sysOperator.getId().toString():null)
+                .createUser(Objects.nonNull(sysOperator) && Objects.nonNull(sysOperator.getId()) ? sysOperator.getId().toString() : null)
                 .createUserName(Objects.nonNull(sysOperator)?sysOperator.getOperatorName():null)
                 .customerName(Objects.nonNull(sysOperator)?sysOperator.getDeptName():null)
                 .createTime(new Date())
@@ -123,7 +122,7 @@ public class SysOperaLogAspect {
         return obj;
         }
         catch (Exception e){
-            log.error("日志记录失败",e.getMessage());
+            log.error("日志记录失败", e);
 
         }
         return obj;

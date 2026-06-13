@@ -1,6 +1,7 @@
 package com.linkyoyo.reportaudit.service.impl;
 
 import com.linkyoyo.reportaudit.entity.CheckResult;
+import com.linkyoyo.reportaudit.exception.EntityNotFoundException;
 import com.linkyoyo.reportaudit.info.CheckResultInfo;
 import com.linkyoyo.reportaudit.info.PageInfo;
 import com.linkyoyo.reportaudit.query.CheckResultQuery;
@@ -45,12 +46,11 @@ public class CheckResultServiceImpl implements CheckResultService {
             return checkResult;
         } else {
             entityManager.clear();
-            CheckResult checkResult = checkResultRepository.findById(checkResultInfo.getId()).orElse(null);
-            if (checkResult != null) {
-                BeanUtils.copyProperties(checkResultInfo, checkResult);
-                checkResult = checkResultRepository.save(checkResult);
+            CheckResult checkResult = checkResultRepository.findById(checkResultInfo.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("检查结果", checkResultInfo.getId().toString()));
+            BeanUtils.copyProperties(checkResultInfo, checkResult);
+            checkResult = checkResultRepository.save(checkResult);
             // TODO: 保存明细数据
-            }
             return checkResult;
         }
     }
@@ -58,10 +58,10 @@ public class CheckResultServiceImpl implements CheckResultService {
     @Override
     public CheckResultInfo getCheckResultDetail(Integer id) {
         entityManager.clear();
-        CheckResult checkResult = checkResultRepository.findById(id).orElse(null);
+        CheckResult checkResult = checkResultRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("检查结果", id.toString()));
         CheckResultInfo checkResultInfo = new CheckResultInfo();
-        if (Objects.nonNull(checkResult))
-           BeanUtils.copyProperties(checkResult, checkResultInfo);
+        BeanUtils.copyProperties(checkResult, checkResultInfo);
         // TODO: 查询明细数据
         return checkResultInfo;
     }
