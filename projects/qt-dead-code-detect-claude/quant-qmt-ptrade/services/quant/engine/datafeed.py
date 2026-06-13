@@ -1,3 +1,12 @@
+import warnings
+warnings.warn(
+    "engine.datafeed is deprecated and will be removed in a future release. "
+    "Use core.datafeed or live.data_loader_fast instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+
 class DataFeed:
     def __init__(self, data):
         self.data = data.reset_index(drop=True)

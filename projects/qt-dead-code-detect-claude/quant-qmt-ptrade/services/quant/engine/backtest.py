@@ -1,3 +1,12 @@
+import warnings
+warnings.warn(
+    "engine.backtest is deprecated and will be removed in a future release. "
+    "Use replay_engine_v5.ReplayEngineV5 via unified_backtest.py instead.",
+    DeprecationWarning,
+    stacklevel=2,
+)
+
+
 class Backtest:
     def __init__(self, datafeed, strategy, broker, portfolio):
         self.datafeed = datafeed
