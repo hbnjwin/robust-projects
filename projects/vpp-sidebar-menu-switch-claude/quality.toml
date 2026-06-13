@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "keep-alive状态保持"
+description = "[Explicit] 是否用keep-alive包裹动态组件替代v-if，保持切换页面时表单状态不丢失。1: 仍用v-if切换页面状态全丢; 2: 用keep-alive但include配置错误导致部分页面未缓存; 3: keep-alive加component :is基本可用但max未设置可能缓存过多; 4: keep-alive含include白名单仅缓存需要保持状态的页面; 5: keep-alive加activated/deactivated钩子处理缓存页面的重新激活逻辑"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "App.vue用keep-alive加component :is替代v-if，通过viewMap Record映射菜单key到组件，切换时组件实例被缓存保持表单状态"
+
+[[criterion]]
+name = "侧边栏折叠样式修复"
+description = "[Explicit] 是否修复侧边栏收起时NaiveUI菜单图标和文字重叠的问题。1: 折叠后图标和文字仍重叠; 2: 文字隐藏但图标位置偏移或过渡动画缺失; 3: 折叠时文字正确隐藏图标居中但动画不流畅; 4: NMenu的collapsed属性绑定正确且CSS过渡平滑无闪烁; 5: 折叠动画加tooltip在折叠态显示菜单名称加展开过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NMenu绑定collapsed属性，配合n-layout-sider的collapse-mode=width确保折叠时宽度动画平滑，NaiveUI内部处理文字隐藏和图标居中"
+
+[[criterion]]
+name = "菜单高亮同步"
+description = "[Explicit] 是否修复点击菜单切换页面后当前菜单项的高亮状态不更新的问题。1: 高亮状态不随页面切换更新; 2: 高亮更新但有闪烁延迟; 3: NMenu的value属性绑定到当前页面key但双向绑定方向不对; 4: v-model:value绑定activeMenu ref且在on-update:value回调中同步更新; 5: 菜单高亮加面包屑联动加页面标题同步更新"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "NMenu通过v-model:value双向绑定currentMenu ref，on-update:value回调中同步更新currentMenu触发component :is切换，高亮与页面始终一致"
+
+[[criterion]]
+name = "动态组件类型安全"
+description = "[Implicit] 是否为viewMap和currentView提供TypeScript类型定义确保组件映射类型安全。1: viewMap使用any或Record<string, any>; 2: 有类型但组件类型不精确; 3: Record<string, Component>基本类型定义; 4: 精确的联合类型key加DefineComponent值类型; 5: 类型定义加shallowRef优化加动态导入lazy loading"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "viewMap使用Record<MenuKey, Component>定义，MenuKey为联合字面量类型，currentView通过computed从映射中取值类型安全"
+
+[[criterion]]
+name = "构建验证通过"
+description = "[Implicit] 是否确保所有修改后TypeScript类型检查和Vite构建均通过无错误。1: 存在未解决的类型错误或构建失败; 2: 类型检查通过但构建有警告; 3: 构建通过但有非关键警告未处理; 4: tsc --noEmit和vite build都通过无错误无警告; 5: 构建通过加生产模式bundle分析加性能基准"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "TypeScript类型检查和Vite构建均通过无错误，tsconfig.json配置正确包含了所有新增文件"
