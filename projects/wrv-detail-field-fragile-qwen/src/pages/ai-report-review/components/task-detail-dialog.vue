@@ -123,6 +123,7 @@
 
 <script setup>
 import { ref, computed, defineEmits, defineExpose } from 'vue'
+import { Tag } from 'tdesign-vue-next'
 
 const emit = defineEmits(['close'])
 
@@ -145,7 +146,7 @@ const checkItemColumns = [
 		cell: (h, { row }) => {
 			const theme = getCheckStatusTheme(row.status)
 			const text = getCheckStatusText(row.status)
-			return h('t-tag', { theme, size: 'small' }, text)
+			return h(Tag, { theme, size: 'small' }, () => text)
 		}
 	},
 	{
@@ -165,15 +166,41 @@ const checkResultSummary = computed(() => {
 	return checkResultList[0] // 使用第一个检查结果的统计信息
 })
 
+// 从任务详情对象中查找检查项数组
+const findCheckItemsArray = (detail) => {
+	if (!detail || typeof detail !== 'object') return []
+
+	// 1. 尝试已知字段名
+	const knownKeys = [
+		'tasksCheckItemsList',
+		'taskCheckItemsList',
+		'checkItems',
+		'checkItemsList',
+		'checkItemList',
+		'taskCheckResultItems'
+	]
+	for (const key of knownKeys) {
+		if (Array.isArray(detail[key]) && detail[key].length > 0) {
+			return detail[key]
+		}
+	}
+
+	// 2. 兜底：搜索对象属性中第一个包含对象元素的数组
+	for (const key of Object.keys(detail)) {
+		const val = detail[key]
+		if (Array.isArray(val) && val.length > 0 && typeof val[0] === 'object' && val[0] !== null) {
+			return val
+		}
+	}
+
+	return []
+}
+
 // 检查项目数据
 const checkItems = computed(() => {
-	// 使用正确的字段名：tasksCheckItemsList
-	const items = taskDetail.value?.tasksCheckItemsList ||
-				  taskDetail.value?.taskCheckItemsList ||
-				  taskDetail.value?.checkItems ||
-				  taskDetail.value?.checkItemsList || []
+	const items = findCheckItemsArray(taskDetail.value)
 
-	if (!items || items.length === 0) {
+	if (items.length === 0) {
 		return []
 	}
 
@@ -181,23 +208,28 @@ const checkItems = computed(() => {
 		id: item.id || item.taskId || index,
 		itemName: item.checkItemName || item.itemName || `检查项目 ${index + 1}`,
 		status: item.status || 'pending',
-		description: item.extractedContent || item.description || item.errorMessage || item.remark || `检查项ID: ${item.checkItemId || item.id}`
+		description: item.extractedContent
+			|| item.description
+			|| item.content
+			|| item.issueDetail
+			|| item.issueDescription
+			|| item.problemDescription
+			|| item.checkResult
+			|| item.errorMessage
+			|| item.remark
+			|| item.checkItemDesc
+			|| '暂无描述'
 	}))
 })
 
 
 // 显示弹窗
 const show = (detail) => {
-	console.log('详情数据完整结构:', detail)
-	console.log('detail的所有键:', Object.keys(detail || {}))
-	console.log('tasksCheckItemsList:', detail?.tasksCheckItemsList)
-	console.log('tasksCheckItemsList长度:', detail?.tasksCheckItemsList?.length)
-	console.log('tasksCheckItemsList内容:', detail?.tasksCheckItemsList)
+	// 规范化检查项列表到统一字段，确保模板和computed都能正确访问
+	const items = findCheckItemsArray(detail)
+	const normalized = { ...(detail || {}), tasksCheckItemsList: items }
 
-	taskDetail.value = detail
-	console.log('设置后的taskDetail.value:', taskDetail.value)
-	console.log('设置后的taskDetail.value.tasksCheckItemsList:', taskDetail.value?.tasksCheckItemsList)
-	console.log('checkItems计算结果:', checkItems.value)
+	taskDetail.value = normalized
 	visible.value = true
 }
 
