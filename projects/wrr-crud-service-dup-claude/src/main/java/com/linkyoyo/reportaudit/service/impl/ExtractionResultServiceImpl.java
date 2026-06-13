@@ -9,50 +9,40 @@ import com.linkyoyo.reportaudit.service.ExtractionResultService;
 import com.linkyoyo.reportaudit.support.CommonFunc;
 import com.linkyoyo.reportaudit.util.PageableUtil;
 
-
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Service;
 
-import javax.persistence.EntityManager;
 import java.util.Objects;
 
 @Service
-public class ExtractionResultServiceImpl implements ExtractionResultService {
-
-    @Autowired
-    private EntityManager entityManager;
+public class ExtractionResultServiceImpl extends AbstractCrudServiceImpl<ExtractionResult, ExtractionResultInfo, Integer>
+        implements ExtractionResultService {
 
     @Autowired
     private ExtractionResultRepository extractionResultRepository;
 
+    @Override
+    protected JpaRepository<ExtractionResult, Integer> getRepository() {
+        return extractionResultRepository;
+    }
 
+    @Override
+    protected ExtractionResult newEntity() {
+        return ExtractionResult.builder().build();
+    }
+
+    @Override
+    protected Integer getInfoId(ExtractionResultInfo info) {
+        return info.getId();
+    }
 
     @Override
     public PageInfo<ExtractionResult> getExtractionResultList(ExtractionResultQuery extractionResultQuery) {
         Pageable pageable = PageableUtil.build(extractionResultQuery);
         return PageableUtil.info(extractionResultRepository.findAll(CommonFunc.<ExtractionResult>getWhere(extractionResultQuery), pageable));
-    }
-
-    @Override
-    public ExtractionResult createOrUpdate(ExtractionResultInfo extractionResultInfo) {
-        if (Objects.isNull(extractionResultInfo.getId())) {
-            ExtractionResult extractionResult = ExtractionResult.builder().build();
-            BeanUtils.copyProperties(extractionResultInfo, extractionResult);
-            extractionResult = extractionResultRepository.save(extractionResult);
-            // TODO: 保存明细数据
-            return extractionResult;
-        } else {
-            entityManager.clear();
-            ExtractionResult extractionResult = extractionResultRepository.findById(extractionResultInfo.getId()).orElse(null);
-            if (extractionResult != null) {
-                BeanUtils.copyProperties(extractionResultInfo, extractionResult);
-                extractionResult = extractionResultRepository.save(extractionResult);
-            // TODO: 保存明细数据
-            }
-            return extractionResult;
-        }
     }
 
     @Override
