@@ -163,21 +163,13 @@ def load_datasets():
     df_full = df_full.sort_values(["ts_code", "trade_date"])
     df_full = df_full.dropna(subset=[LABEL_COL]).reset_index(drop=True)
 
-    feat_cols = [
-        c
-        for c in df_full.columns
-        if c not in ["ts_code", "trade_date", "label_10d", "label_3d", "label_5d"]
-    ]
+    feat_cols = [c for c in df_full.columns if c not in ["ts_code", "trade_date", "label_10d", "label_3d", "label_5d"]]
     if len(feat_cols) != D_FEAT:
         raise ValueError(f"Expected {D_FEAT} features, found {len(feat_cols)}")
 
     df_full["qlib_code"] = df_full["ts_code"].map(ts2qlib)
-    df_full["concept_idx"] = (
-        df_full["qlib_code"].map(stock_index).fillna(concept_unknown_idx).astype(np.int32)
-    )
-    df_full["industry_idx"] = (
-        df_full["qlib_code"].map(industry_map).map(industry_vocab).fillna(-1).astype(np.int32)
-    )
+    df_full["concept_idx"] = df_full["qlib_code"].map(stock_index).fillna(concept_unknown_idx).astype(np.int32)
+    df_full["industry_idx"] = df_full["qlib_code"].map(industry_map).map(industry_vocab).fillna(-1).astype(np.int32)
 
     concept_unknown_mask = df_full["concept_idx"] == concept_unknown_idx
     industry_unknown_mask = df_full["industry_idx"] < 0
@@ -311,9 +303,7 @@ def main():
 
     args = parse_args()
     USE_MMAP_CACHE = args.use_mmap_cache
-    model_out, log_file, ckpt_dir = build_output_paths(
-        MODEL_OUT, LOG_FILE, CKPT_DIR, USE_MMAP_CACHE, args.run_tag
-    )
+    model_out, log_file, ckpt_dir = build_output_paths(MODEL_OUT, LOG_FILE, CKPT_DIR, USE_MMAP_CACHE, args.run_tag)
 
     os.makedirs(ckpt_dir, exist_ok=True)
     runtime = create_runtime(USE_AMP)

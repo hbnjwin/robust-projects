@@ -8,6 +8,7 @@ services/gru_signal_generate.py — GRU 模型推理，生成每只股票的预�
     from services.gru_signal_generate import gru_predict
     scores = gru_predict()  # {ts_code: float}
 """
+
 from __future__ import annotations
 
 import sys
@@ -22,18 +23,19 @@ _QUANT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_QUANT_ROOT))
 
 GRU_MODEL_PATH = _QUANT_ROOT / "ml/model_store/v1/gru_model.pt"
-FACTORS_PATH   = _QUANT_ROOT / "data/factors_latest.parquet"
+FACTORS_PATH = _QUANT_ROOT / "data/factors_latest.parquet"
 
-_SKIP_COLS = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d",
-              "corr_ret_vol_10", "corr_ret_vol_20"}
+_SKIP_COLS = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d", "corr_ret_vol_10", "corr_ret_vol_20"}
 
 
 class _GRUModel(torch.nn.Module):
     def __init__(self, n_features, hidden_size=64, num_layers=2, dropout=0.1):
         super().__init__()
         self.gru = torch.nn.GRU(
-            input_size=n_features, hidden_size=hidden_size,
-            num_layers=num_layers, batch_first=True,
+            input_size=n_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
             dropout=dropout if num_layers > 1 else 0,
         )
         self.fc = torch.nn.Sequential(
@@ -71,18 +73,20 @@ def gru_predict(
 
     # ── 加载模型 ──────────────────────────────────────────────
     ckpt = torch.load(str(mpath), map_location="cpu")
-    n_features   = ckpt["n_features"]
-    hidden_size  = ckpt["hidden_size"]
-    num_layers   = ckpt["num_layers"]
-    dropout      = ckpt["dropout"]
-    seq_len      = ckpt["seq_len"]
+    n_features = ckpt["n_features"]
+    hidden_size = ckpt["hidden_size"]
+    num_layers = ckpt["num_layers"]
+    dropout = ckpt["dropout"]
+    seq_len = ckpt["seq_len"]
     feature_names = ckpt["feature_names"]
 
     model = _GRUModel(n_features, hidden_size, num_layers, dropout)
     model.load_state_dict(ckpt["model_state"])
     model.eval()
-    print(f"[GRU] 模型加载: valid_IC={ckpt.get('valid_ic', 'N/A'):.4f}  "
-          f"test_IC={ckpt.get('test_ic', 'N/A'):.4f}  seq_len={seq_len}")
+    print(
+        f"[GRU] 模型加载: valid_IC={ckpt.get('valid_ic', 'N/A'):.4f}  "
+        f"test_IC={ckpt.get('test_ic', 'N/A'):.4f}  seq_len={seq_len}"
+    )
 
     # ── 加载因子数据 ──────────────────────────────────────────
     df = pd.read_parquet(str(fpath))
@@ -125,7 +129,7 @@ def gru_predict(
     result: dict[str, float] = {}
     with torch.no_grad():
         for i in range(0, len(X), batch_size):
-            batch = torch.from_numpy(X[i:i + batch_size])
+            batch = torch.from_numpy(X[i : i + batch_size])
             preds = model(batch).numpy()
             for j, pred in enumerate(preds):
                 result[ts_codes[i + j]] = float(pred)

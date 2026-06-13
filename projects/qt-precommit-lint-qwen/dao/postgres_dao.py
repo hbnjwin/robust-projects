@@ -3,15 +3,10 @@ import pandas as pd
 
 from .base import BaseDAO
 
+
 class PostgresDAO(BaseDAO):
     def __init__(self, host, port, user, password, dbname):
-        self.conn = psycopg.connect(
-            host=host,
-            port=port,
-            user=user,
-            password=password,
-            dbname=dbname
-        )
+        self.conn = psycopg.connect(host=host, port=port, user=user, password=password, dbname=dbname)
 
     def get_daily_price(self, ts_code: str):
         query = """

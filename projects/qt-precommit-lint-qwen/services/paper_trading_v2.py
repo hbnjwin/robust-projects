@@ -13,6 +13,7 @@
 
 状态持久化到 JSON，进程重启后可恢复。
 """
+
 import json
 import os
 import sys
@@ -124,9 +125,9 @@ def run_paper_trading():
     today = datetime.now().date()
     today_str = str(today)
 
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
     print(f"  Paper Trading V2 — {today_str}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # 1. 加载或初始化状态
     state = load_state()
@@ -287,11 +288,13 @@ def run_paper_trading():
     state["accounts"]["Factor"] = serialize_account(factor_acc)
     state["total_equity"] = total_equity
     state["day_count"] += 1
-    state["equity_curve"].append({
-        "date": today_str,
-        "equity": round(total_equity, 2),
-        "drawdown": round(dd, 4),
-    })
+    state["equity_curve"].append(
+        {
+            "date": today_str,
+            "equity": round(total_equity, 2),
+            "drawdown": round(dd, 4),
+        }
+    )
 
     save_state(state)
 
@@ -336,7 +339,7 @@ def run_paper_trading():
 
     # 11. 输出摘要
     ret_pct = (total_equity / INITIAL_CAPITAL - 1) * 100
-    print(f"\n  {'─'*50}")
+    print(f"\n  {'─' * 50}")
     print(f"  Day {state['day_count']} Summary:")
     print(f"  Total Equity:  {total_equity:>12,.2f} ({ret_pct:+.2f}%)")
     print(f"  Max Drawdown:  {state['max_drawdown']:>12.2%}")
@@ -348,7 +351,7 @@ def run_paper_trading():
         print(f"  │ {name:<11} │ {acc.total_equity:>10,.0f} │ {len(acc.positions):>4} │ {len(acc.trade_log):>6} │")
     print(f"  └─────────────┴────────────┴──────┴────────┘")
     print(f"  Snapshot: {snap_path}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     return snapshot
 

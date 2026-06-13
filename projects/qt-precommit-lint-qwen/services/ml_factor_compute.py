@@ -4,6 +4,7 @@
 
 调度: 15:15, depends_on: ml_data_export
 """
+
 import sys
 import time
 from datetime import datetime, timedelta
@@ -31,7 +32,7 @@ def main():
     )
     pipe.close()
 
-    print(f"[ml_factor_compute] Done in {time.time()-t0:.1f}s, output: {path}")
+    print(f"[ml_factor_compute] Done in {time.time() - t0:.1f}s, output: {path}")
 
 
 if __name__ == "__main__":

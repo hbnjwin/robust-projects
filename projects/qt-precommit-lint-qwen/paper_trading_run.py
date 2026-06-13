@@ -14,6 +14,7 @@ paper_trading_run.py — Paper Trading 每日运行脚本
     # 不推送飞书:
     python paper_trading_run.py --no-notify
 """
+
 import sys
 import argparse
 import pandas as pd
@@ -28,10 +29,10 @@ from live.data_loader_fast import load_market_data_fast
 from services.realtime_quotes import get_realtime_quotes
 
 # ── 配置 ─────────────────────────────────────────────────────
-INITIAL_CAPITAL  = 1_000_000
-WARMUP_DAYS      = 90
-STATE_PATH       = "data/paper_state.json"
-FEISHU_NOTIFY    = True
+INITIAL_CAPITAL = 1_000_000
+WARMUP_DAYS = 90
+STATE_PATH = "data/paper_state.json"
+FEISHU_NOTIFY = True
 
 
 def get_today() -> str:
@@ -57,13 +58,13 @@ def get_today_prices(ts_codes: list) -> dict:
     raw = get_realtime_quotes(ts_codes)
     prices = {}
     for ts_code, q in raw.items():
-        price     = q.get("price", 0)
+        price = q.get("price", 0)
         pre_close = q.get("pre_close", 0)
-        volume    = q.get("volume", 0)
+        volume = q.get("volume", 0)
         if price > 0 and pre_close > 0:
             prices[ts_code] = {
-                "close":      price,
-                "volume":     volume * 100,
+                "close": price,
+                "volume": volume * 100,
                 "prev_close": pre_close,
             }
     print(f"[paper] 有效行情: {len(prices)} 只")
@@ -71,7 +72,7 @@ def get_today_prices(ts_codes: list) -> dict:
 
 
 def warmup_engine(engine: LiveEngine, today: str) -> None:
-    warmup_end   = (datetime.strptime(today, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
+    warmup_end = (datetime.strptime(today, "%Y-%m-%d") - timedelta(days=1)).strftime("%Y-%m-%d")
     warmup_start = (datetime.strptime(today, "%Y-%m-%d") - timedelta(days=WARMUP_DAYS + 30)).strftime("%Y-%m-%d")
     print(f"[paper] 预热: {warmup_start} ~ {warmup_end}")
     market_data = load_market_data_fast(warmup_start, warmup_end)
@@ -84,7 +85,7 @@ def warmup_engine(engine: LiveEngine, today: str) -> None:
 def format_signals(signals: dict) -> str:
     lines = []
     for strat, sigs in signals.items():
-        buys  = [s["ts_code"] for s in sigs if s["action"] == "buy"]
+        buys = [s["ts_code"] for s in sigs if s["action"] == "buy"]
         sells = [s["ts_code"] for s in sigs if s["action"] == "sell"]
         if buys:
             preview = ", ".join(buys[:5]) + ("..." if len(buys) > 5 else "")
@@ -101,9 +102,9 @@ def format_positions(pos: dict) -> str:
     lines = []
     for code, p in sorted(pos.items(), key=lambda x: -x[1]["market_value"])[:15]:
         avg_cost = p["avg_cost"]
-        shares   = p["shares"]
-        mkt_val  = p["market_value"]
-        pnl      = (mkt_val / (avg_cost * shares) - 1) * 100 if avg_cost > 0 and shares > 0 else 0
+        shares = p["shares"]
+        mkt_val = p["market_value"]
+        pnl = (mkt_val / (avg_cost * shares) - 1) * 100 if avg_cost > 0 and shares > 0 else 0
         lines.append(f"  {code}: {shares}股 成本{avg_cost:.2f} 市值{mkt_val:,.0f} {pnl:+.1f}%")
     if len(pos) > 15:
         lines.append(f"  ... 共 {len(pos)} 只")
@@ -118,10 +119,10 @@ def build_report(date: str, summary: dict, signals: dict, gw: PaperGateway) -> s
     report = f"""📊 Paper Trading 日报 {date}
 
 💰 账户状态
-  总权益:   {acc['balance']:>12,.0f}
-  可用现金: {acc['available']:>12,.0f}
+  总权益:   {acc["balance"]:>12,.0f}
+  可用现金: {acc["available"]:>12,.0f}
   持仓数:   {len(pos)}
-  最大回撤: {summary.get('max_drawdown', 0):.2%}
+  最大回撤: {summary.get("max_drawdown", 0):.2%}
 
 📈 今日信号 ({total_signals} 条)
 {format_signals(signals)}
@@ -137,12 +138,12 @@ def main():
     parser.add_argument("--no-notify", action="store_true")
     args = parser.parse_args()
 
-    today  = args.date or get_today()
+    today = args.date or get_today()
     notify = FEISHU_NOTIFY and not args.no_notify
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Paper Trading — {today}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # 1. 加载 ML 信号
     ml_signals = load_ml_signals()
@@ -189,6 +190,7 @@ def main():
     if notify:
         try:
             from control.notification_bridge import send_feishu_message
+
             send_feishu_message(report)
             print("\n[paper] 飞书通知已发送")
         except Exception as e:

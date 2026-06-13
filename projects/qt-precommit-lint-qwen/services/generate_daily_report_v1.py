@@ -14,18 +14,18 @@ if not files:
     exit()
 
 latest = files[-1]
-with open(os.path.join(SNAPSHOT_DIR, latest), 'r') as f:
+with open(os.path.join(SNAPSHOT_DIR, latest), "r") as f:
     data = json.load(f)
 
 report_date = datetime.now().strftime("%Y-%m-%d")
 report_path = os.path.join(REPORT_DIR, f"{report_date}.md")
 
-with open(report_path, 'w') as f:
+with open(report_path, "w") as f:
     f.write(f"# 每日风险报告 - {report_date}\n\n")
     f.write(f"生成时间: {data['timestamp']}\n\n")
     f.write("## 场景回测摘要\n\n")
 
-    for scenario, metrics in data['scenarios'].items():
+    for scenario, metrics in data["scenarios"].items():
         f.write(f"### {scenario}\n")
         f.write(f"- Final Equity: {metrics.get('final_equity', 'N/A')}\n")
         f.write(f"- Max Drawdown: {metrics.get('max_drawdown', 'N/A')}\n\n")

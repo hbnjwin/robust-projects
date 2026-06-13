@@ -2,9 +2,11 @@
 LowVol 止损参数网格搜索
 目标：找到在 2018 熊市不恶化、同时保持其他场景改善的参数组合
 """
+
 import sys
 import json
 import numpy as np
+
 sys.path.insert(0, "/home/tulin/quant")
 
 from live.data_loader import load_market_data
@@ -19,12 +21,7 @@ def run_scenario_with_params(start, end, stop_loss, cooldown, rebalance_interval
     if not market_data:
         return None
 
-    engine = ReplayEngineV3(
-        market_data=market_data,
-        start_date=start,
-        end_date=end,
-        initial_capital=1_000_000
-    )
+    engine = ReplayEngineV3(market_data=market_data, start_date=start, end_date=end, initial_capital=1_000_000)
 
     # 覆盖 LowVol 策略参数
     engine.lowvol.stop_loss_pct = stop_loss
@@ -87,8 +84,7 @@ for sl in STOP_LOSS_VALUES:
         row["score"] = round(row["avg_sharpe"] + worst_return / 100, 4)
 
         results.append(row)
-        print("  avg_spe={} worst_ret={} score={}".format(
-            row["avg_sharpe"], row["worst_return"], row["score"]))
+        print("  avg_spe={} worst_ret={} score={}".format(row["avg_sharpe"], row["worst_return"], row["score"]))
 
 # 按综合评分排序
 results.sort(key=lambda x: x["score"], reverse=True)
@@ -97,11 +93,15 @@ print("\n" + "=" * 80)
 print("TOP 5 参数组合")
 print("=" * 80)
 for i, r in enumerate(results[:5]):
-    print("\n#{}: stop_loss={} cooldown={} | score={} avg_sharpe={} worst_ret={}".format(
-        i + 1, r["stop_loss"], r["cooldown"], r["score"], r["avg_sharpe"], r["worst_return"]))
+    print(
+        "\n#{}: stop_loss={} cooldown={} | score={} avg_sharpe={} worst_ret={}".format(
+            i + 1, r["stop_loss"], r["cooldown"], r["score"], r["avg_sharpe"], r["worst_return"]
+        )
+    )
     for tag in SCENARIOS:
-        print("  {}: ret={} dd={} sharpe={}".format(
-            tag, r.get(tag + "_ret"), r.get(tag + "_dd"), r.get(tag + "_sharpe")))
+        print(
+            "  {}: ret={} dd={} sharpe={}".format(tag, r.get(tag + "_ret"), r.get(tag + "_dd"), r.get(tag + "_sharpe"))
+        )
 
 # 保存完整结果
 with open("docs/lowvol_param_grid_2026-03-15.json", "w") as f:

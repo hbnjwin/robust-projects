@@ -67,10 +67,7 @@ class AlphaManager:
             return {}
         items = sorted(scores.items(), key=lambda x: x[1])
         n = len(items)
-        return {
-            code: i / (n - 1) if n > 1 else 0.5
-            for i, (code, _) in enumerate(items)
-        }
+        return {code: i / (n - 1) if n > 1 else 0.5 for i, (code, _) in enumerate(items)}
 
     def _zscore_standardize(self, scores: Dict[str, float]) -> Dict[str, float]:
         """截面 Z-score 标准化"""

@@ -1,7 +1,7 @@
 import numpy as np
 
-class TrendStrategyV2:
 
+class TrendStrategyV2:
     def __init__(self, confirm_days=3, lookback=60, max_positions=15, momentum_lookback=20):
         self.confirm_days = confirm_days
         self.lookback = lookback
@@ -20,7 +20,7 @@ class TrendStrategyV2:
             self.price_history.setdefault(code, []).append(close)
             # 截断历史防止内存膨胀
             if len(self.price_history[code]) > self.lookback * 3:
-                self.price_history[code] = self.price_history[code][-self.lookback * 3:]
+                self.price_history[code] = self.price_history[code][-self.lookback * 3 :]
 
             prices = self.price_history[code]
             if len(prices) < self.lookback:
@@ -58,11 +58,13 @@ class TrendStrategyV2:
             if current_count >= self.max_positions:
                 break
             weight = 1.0 / self.max_positions
-            signals.append({
-                "action": "buy",
-                "ts_code": code,
-                "weight": weight  # 执行引擎用此计算金额
-            })
+            signals.append(
+                {
+                    "action": "buy",
+                    "ts_code": code,
+                    "weight": weight,  # 执行引擎用此计算金额
+                }
+            )
             self.in_position[code] = True
             current_count += 1
 

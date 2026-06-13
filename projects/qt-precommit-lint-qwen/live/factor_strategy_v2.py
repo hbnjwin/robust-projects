@@ -5,7 +5,6 @@
 
 
 class FactorStrategy:
-
     def __init__(self, top_n=8, rebalance_interval=10):
         self.top_n = top_n
         self.rebalance_interval = rebalance_interval

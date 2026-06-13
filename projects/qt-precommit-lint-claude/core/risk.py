@@ -15,16 +15,15 @@ Phase 2 新增能力:
 from __future__ import annotations
 
 import json
-import time
 import threading
-from dataclasses import dataclass, asdict
+import time
+from dataclasses import dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Callable
 
-from core.oms import OmsEngine, Order, OrderSide, OrderStatus
 from core.contract import contract_manager
-
+from core.oms import OmsEngine, Order, OrderSide, OrderStatus
 
 # ══════════════════════════════════════════════════════════════
 # 1. RiskGate — 下单前置风控

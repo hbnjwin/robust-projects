@@ -6,6 +6,7 @@ SignalBridge - 将 signal_generator_v1 输出的 JSON 信号转换为 vnpy Order
   卖出: {"action": "sell", "ts_code": "000001.SZ"}
   卖出(带原因): {"action": "sell", "ts_code": "000001.SZ", "reason": "adaptive_stop"}
 """
+
 from __future__ import annotations
 
 import json
@@ -136,13 +137,13 @@ class SignalBridge:
         current_positions: dict[str, float] | None = None,
     ) -> list[OrderRequest]:
         """
- ：加载指定日期信号并转换。
+        ：加载指定日期信号并转换。
 
-        Args:
-            signal_date: 'YYYY-MM-DD'
-            signal_dir: 信号文件目录
-            current_prices: 当前价格
-            current_positions: 当前持仓
+               Args:
+                   signal_date: 'YYYY-MM-DD'
+                   signal_dir: 信号文件目录
+                   current_prices: 当前价格
+                   current_positions: 当前持仓
         """
         signal_path = Path(signal_dir) / f"{signal_date}.json"
         signals = self.load_signals(signal_path)

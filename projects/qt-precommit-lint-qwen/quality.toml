@@ -1,0 +1,53 @@
+[[criterion]]
+name = "ruff linter配置"
+description = "[Explicit] 是否在pyproject.toml的[tool.ruff]中配置E、F、I规则集，line-length=120，target-version=py311。1: 未配置ruff；2: 配置了ruff但规则集不完整；3: E/F/I规则集完整但line-length或target-version有误；4: 完整配置E/F/I规则集、line-length=120、target-version=py311；5: 额外配置了per-file-ignores排除测试文件的特定规则。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "pyproject.toml中配置了ruff的E/F/I规则集和line-length=120，但target-version设置过程中有一次修正。"
+
+[[criterion]]
+name = "isort known-first-party配置"
+description = "[Explicit] 是否配置isort的known-first-party包含core、live、strategies、analytics、ml五个包。1: 未配置isort；2: 配置了但known-first-party不完整；3: 五个包都配置了但放错了TOML section；4: [tool.ruff.lint.isort]中正确配置known-first-party五个包；5: 额外配置了force-sort-within-sections。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "配置了isort的known-first-party但初始设置中遗漏了strategies包，后续补充完整。"
+
+[[criterion]]
+name = ".pre-commit-config.yaml编写"
+description = "[Explicit] 是否编写.pre-commit-config.yaml包含ruff-pre-commit和trailing-whitespace、end-of-file-fixer、check-yaml等基础hook。1: 未创建.pre-commit-config.yaml；2: 创建了但仅有ruff缺少基础hook；3: 包含ruff和部分基础hook但yaml格式有误；4: 完整包含ruff lint+format和trailing-whitespace、end-of-file-fixer、check-yaml三个基础hook；5: 额外包含check-added-large-files防止大文件误提交。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = ".pre-commit-config.yaml包含ruff-pre-commit（lint+format）、trailing-whitespace、end-of-file-fixer、check-yaml、check-added-large-files五个hook。"
+
+[[criterion]]
+name = "ruff自动修复执行"
+description = "[Explicit] 是否对core/目录运行ruff check --fix自动修复简单问题并记录修复数量。1: 未运行ruff fix；2: 运行了但未记录修复数量；3: 记录了数量但部分修复引入了新问题；4: 运行ruff check --fix修复了core/目录的lint问题并报告具体修复数量；5: 修复后再次运行ruff check确认零remaining violations。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "运行了ruff check --fix修复core/目录的问题，但修复后仍有残留的violations未在报告中说明。"
+
+[[criterion]]
+name = "Makefile lint命令"
+description = "[Explicit] 是否在Makefile中定义make lint和make format命令。1: 未修改Makefile；2: 仅添加了一个命令；3: 添加了lint和format但命令不正确；4: make lint调用ruff check、make format调用ruff format，命令正确；5: 额外提供make lint-fix一键修复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Makefile中添加了lint目标调用ruff check，但format目标的命令参数不够完整。"
+
+[[criterion]]
+name = "core文件实际修复"
+description = "[Implicit] 是否实际修复了core/目录中被ruff检出的代码问题（如未使用import、格式不规范）。1: 未修复任何文件；2: 仅修复了1个文件；3: 修复了多个文件但遗漏了部分问题；4: core/event.py和core/portfolio_optimizer.py等文件的lint问题被修复；5: 修复后core/目录全部文件通过ruff check。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复了core/event.py和core/portfolio_optimizer.py中的lint问题，但其他core/文件的问题未全部处理。"

@@ -6,6 +6,7 @@ ReplayEngineV4 - ML信号驱动回测引擎
 - 不再需要 AdaptiveConfig 的手工因子权重
 - 保留: RegimeDetectorV2, ExecutionEngine, MasterPortfolio, LowVolStrategy, TrendStrategy
 """
+
 from live.trend_strategy_v2 import TrendStrategyV2
 from live.lowvol_strategy_v2 import LowVolStrategy
 from live.strategy_account import StrategyAccount
@@ -141,7 +142,7 @@ class ReplayEngineV4:
             if (i + 1) % 200 == 0:
                 eq = self.master.total_equity
                 dd = self.master.max_drawdown
-                print(f"[V4] ({i+1}/{total}) equity={eq:,.0f} dd={dd:.2%}")
+                print(f"[V4] ({i + 1}/{total}) equity={eq:,.0f} dd={dd:.2%}")
 
         return self.master.equity_curve
 
@@ -159,6 +160,7 @@ class ReplayEngineV4:
             vols = [d.get("volume", 0) for d in prices.values()]
             if closes:
                 import numpy as np
+
                 self.regime_detector.update(np.mean(closes), sum(vols))
                 return self.regime_detector.detect()
 

@@ -18,6 +18,7 @@ ReplayEngineV5 — 事件驱动回测引擎
                               ↓
                     PortfolioManager → equity_curve
 """
+
 import sys
 import numpy as np
 from pathlib import Path
@@ -25,8 +26,11 @@ from pathlib import Path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from core.event import (
-    Event, EventEngine,
-    EVENT_BAR, EVENT_SIGNAL, EVENT_REGIME,
+    Event,
+    EventEngine,
+    EVENT_BAR,
+    EVENT_SIGNAL,
+    EVENT_REGIME,
 )
 from core.strategy import LegacyStrategyAdapter
 from live.execution_engine_v3 import ExecutionEngine
@@ -75,39 +79,42 @@ class ReplayEngineV5:
         # ── 账户 & 组合 ──────────────────────────────────
         self.master = MasterPortfolio(initial_capital)
 
-        trend_account  = StrategyAccount("Trend",  initial_capital * trend_ratio)
+        trend_account = StrategyAccount("Trend", initial_capital * trend_ratio)
         lowvol_account = StrategyAccount("LowVol", initial_capital * lowvol_ratio)
         factor_account = StrategyAccount("Factor", initial_capital * factor_ratio)
-        cash_account   = StrategyAccount("Cash",   initial_capital * cash_ratio)
+        cash_account = StrategyAccount("Cash", initial_capital * cash_ratio)
 
-        self.master.add_strategy("Trend",  trend_account)
+        self.master.add_strategy("Trend", trend_account)
         self.master.add_strategy("LowVol", lowvol_account)
         self.master.add_strategy("Factor", factor_account)
-        self.master.add_strategy("Cash",   cash_account)
+        self.master.add_strategy("Cash", cash_account)
 
         # ── 执行引擎（v3，接入合约配置）─────────────────
         self._exec_engines = {
-            "Trend":  ExecutionEngine(trend_account),
+            "Trend": ExecutionEngine(trend_account),
             "LowVol": ExecutionEngine(lowvol_account),
             "Factor": ExecutionEngine(factor_account),
         }
 
         # ── 策略（通过 LegacyStrategyAdapter 统一接口）──
         self._strategies = {
-            "Trend":  LegacyStrategyAdapter("Trend",  TrendStrategyV2()),
+            "Trend": LegacyStrategyAdapter("Trend", TrendStrategyV2()),
             "LowVol": LegacyStrategyAdapter("LowVol", LowVolStrategy()),
-            "Factor": LegacyStrategyAdapter("Factor", FactorStrategy(
-                factor_scores=self.ml_signals,
-                top_n=factor_top_n,
-                rebalance_days=factor_rebalance_days,
-            )),
+            "Factor": LegacyStrategyAdapter(
+                "Factor",
+                FactorStrategy(
+                    factor_scores=self.ml_signals,
+                    top_n=factor_top_n,
+                    rebalance_days=factor_rebalance_days,
+                ),
+            ),
         }
 
         # ── Regime 检测 ──────────────────────────────────
         self._regime_detector = RegimeDetectorV2()
 
         # ── 注册事件处理器 ────────────────────────────────
-        self._event_engine.register(EVENT_BAR,    self._on_bar)
+        self._event_engine.register(EVENT_BAR, self._on_bar)
         self._event_engine.register(EVENT_REGIME, self._on_regime)
         self._event_engine.register(EVENT_SIGNAL, self._on_signal)
 
@@ -119,7 +126,7 @@ class ReplayEngineV5:
         """
         dates = sorted(self.market_data.keys())
         warmup_dates = [d for d in dates if d < self.start_date]
-        sim_dates    = [d for d in dates if self.start_date <= d <= self.end_date]
+        sim_dates = [d for d in dates if self.start_date <= d <= self.end_date]
         total = len(sim_dates)
 
         # 预热期：更新策略内部状态，不产生信号
@@ -142,13 +149,13 @@ class ReplayEngineV5:
             if (i + 1) % 200 == 0:
                 eq = self.master.total_equity
                 dd = self.master.max_drawdown
-                print(f"[V5] ({i+1}/{total}) equity={eq:,.0f} dd={dd:.2%}")
+                print(f"[V5] ({i + 1}/{total}) equity={eq:,.0f} dd={dd:.2%}")
 
         return self.master.equity_curve
 
     # ── 事件处理器 ────────────────────────────────────────────
     def _on_bar(self, event: Event) -> None:
-        date   = event.data["date"]
+        date = event.data["date"]
         prices = event.data["prices"]
 
         # 1. Regime 检测 → 推送 EVENT_REGIME
@@ -166,16 +173,20 @@ class ReplayEngineV5:
             # Crisis 模式：强制清仓
             if regime == "CRISIS":
                 account = self.master.strategy_accounts[name]
-                signals = [{"action": "sell", "ts_code": c}
-                           for c in list(account.positions.keys())]
+                signals = [{"action": "sell", "ts_code": c} for c in list(account.positions.keys())]
 
             if signals:
-                self._event_engine.put(Event(EVENT_SIGNAL, {
-                    "strategy": name,
-                    "signals":  signals,
-                    "date":     date,
-                    "prices":   prices,
-                }))
+                self._event_engine.put(
+                    Event(
+                        EVENT_SIGNAL,
+                        {
+                            "strategy": name,
+                            "signals": signals,
+                            "date": date,
+                            "prices": prices,
+                        },
+                    )
+                )
 
         self._drain_events()
 
@@ -209,15 +220,15 @@ class ReplayEngineV5:
     def _on_regime(self, event: Event) -> None:
         """Regime 变更事件处理（当前仅记录，实盘可在此触发告警）"""
         regime = event.data["regime"]
-        date   = event.data["date"]
+        date = event.data["date"]
         # 预留：实盘时可在此推送飞书通知
         # print(f"[V5] Regime changed → {regime} @ {date}")
 
     def _on_signal(self, event: Event) -> None:
         """信号事件：将信号挂入对应执行引擎的队列"""
-        name    = event.data["strategy"]
+        name = event.data["strategy"]
         signals = event.data["signals"]
-        eng     = self._exec_engines.get(name)
+        eng = self._exec_engines.get(name)
         if eng:
             eng.queue_orders(signals)
 
@@ -247,7 +258,7 @@ class ReplayEngineV5:
         """Regime 检测（全市场均价代理）"""
         if prices:
             closes = [d["close"] for d in prices.values() if d.get("close", 0) > 0]
-            vols   = [d.get("volume", 0) for d in prices.values()]
+            vols = [d.get("volume", 0) for d in prices.values()]
             if closes:
                 self._regime_detector.update(np.mean(closes), sum(vols))
                 return self._regime_detector.detect()

@@ -2,16 +2,19 @@
 Phase 3 集成测试
 验证数据层抽象: BaseDataFeed / MemoryDataFeed / DuckDBDataFeed / create_datafeed
 """
+
 import sys
 import random
 import numpy as np
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
 def make_market_data(n_days=30, n_stocks=5, start="2024-01-01"):
     """构造假行情数据"""
     from datetime import datetime, timedelta
+
     data = {}
     base = {f"{i:06d}.SZ": 10.0 + i for i in range(n_stocks)}
     dt = datetime.strptime(start, "%Y-%m-%d")
@@ -32,6 +35,7 @@ def test_base_interface():
     print("\n[T1] BaseDataFeed 接口约定")
     from core.datafeed import BaseDataFeed
     import inspect
+
     # 确认抽象方法存在
     assert "load_bar_data" in [m for m in dir(BaseDataFeed)]
     assert "iter_bar_data" in [m for m in dir(BaseDataFeed)]
@@ -133,7 +137,7 @@ def test_datafeed_with_rene():
     # 通过 DataFeed 加载数据，传入 ReplayEngineV5
     all_dates = sorted(raw.keys())
     start = all_dates[15]
-    end   = all_dates[-1]
+    end = all_dates[-1]
     market_data = feed.load_bar_data(all_dates[0], end)
 
     engine = ReplayEngineV5(
@@ -155,11 +159,25 @@ def test_df_to_dict_edge_cases():
     import pandas as pd
 
     # prev_close 为 0 或 NaN 应被过滤
-    df = pd.DataFrame([
-        {"trade_date": "2024-01-02", "ts_code": "000001.SZ", "close": 10.0, "volume": 1e6, "prev_close": 9.5},
-        {"trade_date": "2024-01-02", "ts_code": "000002.SZ", "close": 20.0, "volume": 1e6, "prev_close": 0.0},   # 过滤
-        {"trade_date": "2024-01-02", "ts_code": "000003.SZ", "close": 15.0, "volume": 1e6, "prev_close": None},  # 过滤
-    ])
+    df = pd.DataFrame(
+        [
+            {"trade_date": "2024-01-02", "ts_code": "000001.SZ", "close": 10.0, "volume": 1e6, "prev_close": 9.5},
+            {
+                "trade_date": "2024-01-02",
+                "ts_code": "000002.SZ",
+                "close": 20.0,
+                "volume": 1e6,
+                "prev_close": 0.0,
+            },  # 过滤
+            {
+                "trade_date": "2024-01-02",
+                "ts_code": "000003.SZ",
+                "close": 15.0,
+                "volume": 1e6,
+                "prev_close": None,
+            },  # 过滤
+        ]
+    )
     result = MemoryDataFeed._df_to_dict(df)
     assert "000001.SZ" in result["2024-01-02"]
     assert "000002.SZ" not in result["2024-01-02"]
@@ -177,11 +195,12 @@ if __name__ == "__main__":
         test_create_datafeed_factory()
         test_datafeed_with_rene()
         test_df_to_dict_edge_cases()
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("  Phase 3 ALL TESTS PASSED ✓")
-        print("="*50)
+        print("=" * 50)
     except Exception as e:
         import traceback
+
         print(f"\n[FAIL] {e}")
         traceback.print_exc()
         sys.exit(1)

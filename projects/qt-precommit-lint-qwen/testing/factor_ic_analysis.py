@@ -2,6 +2,7 @@
 因子 IC 分析 - 数据驱动确定最优权重
 用 2018-2023 历史数据，对 InlineFactorGenerator 的 8 个因子分别计算 IC 序列
 """
+
 import sys
 import json
 import numpy as np
@@ -51,10 +52,7 @@ for i, date in enumerate(dates):
 print(f"因子历史: {len(factor_history)} 天, 收益历史: {len(return_history)} 天")
 
 # 对每个因子计算 IC 序列
-factor_names = [
-    "MOM_20", "MOM_60", "VOL_20", "REVERSAL_5",
-    "MA_DEVIATION", "VOLUME_RATIO", "MOM_QUALITY", "VOL_CHANGE"
-]
+factor_names = ["MOM_20", "MOM_60", "VOL_20", "REVERSAL_5", "MA_DEVIATION", "VOLUME_RATIO", "MOM_QUALITY", "VOL_CHANGE"]
 
 results = {}
 for fname in factor_names:
@@ -74,7 +72,7 @@ for fname in factor_names:
             "ic_std": round(float(np.std(ics)), 6),
             "ir": round(float(np.mean(ics) / np.std(ics)), 4) if np.std(ics) > 0 else 0,
             "ic_positive_ratio": round(float(np.sum(ics > 0) / len(ics)), 4),
-            "n_periods": len(ics)
+            "n_periods": len(ics),
         }
 
 # 输出结果
@@ -82,8 +80,10 @@ print("\n" + "=" * 70)
 print("因子 IC 分析结果（2018-2023）：")
 print("=" * 70)
 for fname, r in sorted(results.items(), key=lambda x: abs(x[1]["ic_mean"]), reverse=True):
-    print(f"  {fname:16s}: IC={r['ic_mean']:+.6f}  IR={r['ir']:+.4f}  "
-          f"IC>0={r['ic_positive_ratio']:.2%}  std={r['ic_std']:.6f}  n={r['n_periods']}")
+    print(
+        f"  {fname:16s}: IC={r['ic_mean']:+.6f}  IR={r['ir']:+.4f}  "
+        f"IC>0={r['ic_positive_ratio']:.2%}  std={r['ic_std']:.6f}  n={r['n_periods']}"
+    )
 
 # 计算 IC 加权最优权重
 total_abs_ic = sum(abs(r["ic_mean"]) for r in results.values())

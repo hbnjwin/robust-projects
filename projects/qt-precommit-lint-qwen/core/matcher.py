@@ -11,6 +11,7 @@ core/matcher.py — 回测撮合引擎
   - 撮合逻辑从 ExecutionEngineV3 剥离，职责单一
   - OmsEngine 负责状态，Matcher 负责撮合，Account 负责资金
 """
+
 from __future__ import annotations
 
 import sys
@@ -18,8 +19,8 @@ from pathlib import Path
 
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
-from core.oms import OmsEngine, OrderSide, OrderStatus
 from core.contract import contract_manager
+from core.oms import OmsEngine, OrderSide
 from live.strategy_account import StrategyAccount
 
 
@@ -58,15 +59,15 @@ class DailyMatcher:
                 continue
 
             data = prices[ts_code]
-            price      = data["close"]
-            volume     = data["volume"]
+            price = data["close"]
+            volume = data["volume"]
             prev_close = data["prev_close"]
 
-            cfg         = contract_manager.get(ts_code)
+            cfg = contract_manager.get(ts_code)
             limit_range = contract_manager.limit_range(ts_code)
-            limit_up    = prev_close * (1 + limit_range)
-            limit_down  = prev_close * (1 - limit_range)
-            lot_size    = cfg.size
+            limit_up = prev_close * (1 + limit_range)
+            limit_down = prev_close * (1 - limit_range)
+            lot_size = cfg.size
 
             account = accounts.get(order.strategy)
             if account is None:
@@ -104,7 +105,7 @@ class DailyMatcher:
         # 资金检查
         fee_rate = cfg.long_rate
         cost = shares * exec_price
-        fee  = cost * fee_rate
+        fee = cost * fee_rate
         if cost + fee > account.cash:
             # 按可用资金缩减
             shares = int(account.cash / (exec_price * (1 + fee_rate)))
@@ -113,15 +114,19 @@ class DailyMatcher:
                 self.oms.reject_order(order.order_id, reason="资金不足")
                 return
             cost = shares * exec_price
-            fee  = cost * fee_rate
+            fee = cost * fee_rate
 
         # 成交
         success = account.buy(order.ts_code, exec_price, shares, date=date)
         if success:
             account.cash -= fee
             account.log_trade(
-                date=date, code=order.ts_code, action="buy",
-                price=exec_price, shares=shares, fee=fee,
+                date=date,
+                code=order.ts_code,
+                action="buy",
+                price=exec_price,
+                shares=shares,
+                fee=fee,
                 reason=order.raw_signal.get("reason", "signal"),
             )
             self.oms.fill_order(order.order_id, exec_price, shares, fee, trade_time=date)
@@ -157,17 +162,21 @@ class DailyMatcher:
             return
 
         exec_price = price * (1 - self.slippage)
-        cfg      = contract_manager.get(order.ts_code)
+        cfg = contract_manager.get(order.ts_code)
         fee_rate = cfg.short_rate
-        revenue  = shares * exec_price
-        fee      = revenue * fee_rate
+        revenue = shares * exec_price
+        fee = revenue * fee_rate
 
         success = account.sell(order.ts_code, exec_price, shares)
         if success:
             account.cash -= fee
             account.log_trade(
-                date=date, code=order.ts_code, action="sell",
-                price=exec_price, shares=shares, fee=fee,
+                date=date,
+                code=order.ts_code,
+                action="sell",
+                price=exec_price,
+                shares=shares,
+                fee=fee,
                 reason=order.raw_signal.get("reason", "signal"),
             )
             self.oms.fill_order(order.order_id, exec_price, shares, fee, trade_time=date)

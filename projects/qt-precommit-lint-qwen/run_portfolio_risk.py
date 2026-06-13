@@ -10,7 +10,7 @@ from strategies.ma_trend_risk import MATrendRiskStrategy
 from analytics.metrics import max_drawdown, annual_return
 
 DB_PATH = "data/market.db"
-CODES = ['603019.SH','000977.SZ','002230.SZ','688256.SH']
+CODES = ["603019.SH", "000977.SZ", "002230.SZ", "688256.SH"]
 
 
 def load_data(ts_code):
@@ -74,9 +74,9 @@ def main():
     controlled_equity = apply_portfolio_stop(portfolio_equity, stop_dd=0.2)
 
     print("=== Portfolio With 20% DD Stop ===")
-    print("Final Equity:", round(controlled_equity[-1],2))
-    print("Annual Return:", round(annual_return(controlled_equity),4))
-    print("Max Drawdown:", round(max_drawdown(controlled_equity),4))
+    print("Final Equity:", round(controlled_equity[-1], 2))
+    print("Annual Return:", round(annual_return(controlled_equity), 4))
+    print("Max Drawdown:", round(max_drawdown(controlled_equity), 4))
 
 
 if __name__ == "__main__":

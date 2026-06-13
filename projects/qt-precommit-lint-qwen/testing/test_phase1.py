@@ -6,6 +6,7 @@ Phase 1 集成测试
 3. ExecutionEngineV3 费率/涨跌幅正确
 4. ReplayEngineV5 run() 结果与 V4 数值接近（允许微小浮点差异）
 """
+
 import sys
 import random
 import numpy as np
@@ -24,8 +25,7 @@ def test_contract_manager():
     assert cfg.size == 100
     assert cfg.long_rate == 0.0003
     assert cfg.short_rate == 0.0013
-    print(f"  000001.SZ default: pricetick={cfg.pricetick} size={cfg.size} "
-          f"long={cfg.long_rate} short={cfg.short_rate}")
+    print(f"  000001.SZ default: pricetick={cfg.pricetick} size={cfg.size} long={cfg.long_rate} short={cfg.short_rate}")
 
     # 科创板涨跌幅 20%
     assert contract_manager.limit_range("688001.SH") == 0.20
@@ -49,16 +49,16 @@ def test_legacy_adapter():
 
     # 构造假行情
     def make_prices(n=5):
-        return {f"{i:06d}.SZ": {"close": 10.0 + i * 0.1,
-                                 "volume": 1_000_000,
-                                 "prev_close": 10.0 + i * 0.1}
-                for i in range(n)}
+        return {
+            f"{i:06d}.SZ": {"close": 10.0 + i * 0.1, "volume": 1_000_000, "prev_close": 10.0 + i * 0.1}
+            for i in range(n)
+        }
 
     # TrendStrategy
     trend = LegacyStrategyAdapter("Trend", TrendStrategyV2())
     trend.initialize()
     for day in range(70):
-        date = f"2024-01-{day+1:02d}" if day < 31 else f"2024-02-{day-30:02d}"
+        date = f"2024-01-{day + 1:02d}" if day < 31 else f"2024-02-{day - 30:02d}"
         sigs = trend.on_bars(date, make_prices(10))
     print(f"  TrendStrategy signals after warmup: {len(sigs)} ✓")
 
@@ -113,6 +113,7 @@ def test_execution_engine_v3():
 
     # 费率分离验证（short_rate > long_rate）
     from core.contract import contract_manager
+
     cfg = contract_manager.get("000001.SZ")
     assert cfg.short_rate > cfg.long_rate
     print(f"  费率分离: long={cfg.long_rate} short={cfg.short_rate} ✓")
@@ -130,7 +131,7 @@ def test_replay_engine_v5_smoke():
     market_data = {}
     base_prices = {f"{i:06d}.SZ": 10.0 + i for i in range(5)}
 
-    all_dates = [f"2024-0{1 if d < 31 else 2}-{(d % 30)+1:02d}" for d in range(60)]
+    all_dates = [f"2024-0{1 if d < 31 else 2}-{(d % 30) + 1:02d}" for d in range(60)]
     for date in all_dates:
         day_prices = {}
         for code, base in base_prices.items():
@@ -145,7 +146,7 @@ def test_replay_engine_v5_smoke():
         market_data[date] = day_prices
 
     start = all_dates[20]
-    end   = all_dates[-1]
+    end = all_dates[-1]
 
     engine = ReplayEngineV5(
         market_data=market_data,
@@ -158,9 +159,7 @@ def test_replay_engine_v5_smoke():
 
     assert len(curve) > 0, "equity_curve 为空"
     assert all("equity" in r and "date" in r for r in curve)
-    print(f"  equity_curve: {len(curve)} days, "
-          f"final={curve[-1]['equity']:,.0f}, "
-          f"dd={curve[-1]['drawdown']:.2%}")
+    print(f"  equity_curve: {len(curve)} days, final={curve[-1]['equity']:,.0f}, dd={curve[-1]['drawdown']:.2%}")
     print("[T4] PASS")
 
 
@@ -170,11 +169,12 @@ if __name__ == "__main__":
         test_legacy_adapter()
         test_execution_engine_v3()
         test_replay_engine_v5_smoke()
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("  ALL TESTS PASSED ✓")
-        print("="*50)
+        print("=" * 50)
     except Exception as e:
         import traceback
+
         print(f"\n[FAIL] {e}")
         traceback.print_exc()
         sys.exit(1)

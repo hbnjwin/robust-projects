@@ -1,6 +1,7 @@
 """
 因子分析器：IC/IR 分析、因子合成
 """
+
 import numpy as np
 
 

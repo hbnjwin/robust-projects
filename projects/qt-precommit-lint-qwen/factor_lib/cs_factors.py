@@ -4,6 +4,7 @@ factor_lib/cs_factors.py — 截面因子函数库
 基于 pandas，对每个截面日期做跨股票操作。
 所有函数接受 pd.Series（单日截面，index=ts_code），返回 pd.Series。
 """
+
 from __future__ import annotations
 
 import numpy as np
@@ -17,7 +18,7 @@ def cs_rank(s: pd.Series) -> pd.Series:
 
 def cs_zscore(s: pd.Series) -> pd.Series:
     """截面 Z-Score 标准化"""
-    mu  = s.mean()
+    mu = s.mean()
     std = s.std()
     return (s - mu) / std if std > 0 else pd.Series(0.0, index=s.index)
 

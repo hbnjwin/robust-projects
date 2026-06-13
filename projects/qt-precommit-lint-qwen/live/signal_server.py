@@ -29,15 +29,9 @@ def load_signal():
 @app.get("/signal")
 def get_signal():
     signal = load_signal()
-    return {
-        "timestamp": datetime.now().isoformat(),
-        "signal": signal
-    }
+    return {"timestamp": datetime.now().isoformat(), "signal": signal}
 
 
 @app.get("/status")
 def status():
-    return {
-        "status": "running",
-        "timestamp": datetime.now().isoformat()
-    }
+    return {"status": "running", "timestamp": datetime.now().isoformat()}

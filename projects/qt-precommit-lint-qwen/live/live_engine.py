@@ -12,6 +12,7 @@ live/live_engine.py — 实盘主引擎
   engine = LiveEngine(gateway=PaperGateway())   # 模拟盘
   engine = LiveEngine(gateway=QmtGateway())     # 招商 QMT（待接入）
 """
+
 from __future__ import annotations
 
 import sys
@@ -53,14 +54,14 @@ class LiveEngine:
         gateway: BaseGateway,
         initial_capital: float = 1_000_000,
         ml_signals: dict | None = None,
-        trend_ratio:  float = 0.35,
+        trend_ratio: float = 0.35,
         lowvol_ratio: float = 0.20,
         factor_ratio: float = 0.25,
-        cash_ratio:   float = 0.20,
+        cash_ratio: float = 0.20,
         factor_top_n: int = 15,
         factor_rebalance_days: int = 5,
-        use_optimizer: bool = False,       # 是否启用组合优化器替换等权
-        optimizer_method: str = "rp",      # inv/gmv/rp/mvo
+        use_optimizer: bool = False,  # 是否启用组合优化器替换等权
+        optimizer_method: str = "rp",  # inv/gmv/rp/mvo
     ):
         self.gateway = gateway
         self.initial_capital = initial_capital
@@ -76,41 +77,44 @@ class LiveEngine:
         # ── 账户 & 组合 ───────────────────────────────────────
         self.master = MasterPortfolio(initial_capital)
 
-        trend_account  = StrategyAccount("Trend",  initial_capital * trend_ratio)
+        trend_account = StrategyAccount("Trend", initial_capital * trend_ratio)
         lowvol_account = StrategyAccount("LowVol", initial_capital * lowvol_ratio)
         factor_account = StrategyAccount("Factor", initial_capital * factor_ratio)
-        cash_account   = StrategyAccount("Cash",   initial_capital * cash_ratio)
+        cash_account = StrategyAccount("Cash", initial_capital * cash_ratio)
 
-        self.master.add_strategy("Trend",  trend_account)
+        self.master.add_strategy("Trend", trend_account)
         self.master.add_strategy("LowVol", lowvol_account)
         self.master.add_strategy("Factor", factor_account)
-        self.master.add_strategy("Cash",   cash_account)
+        self.master.add_strategy("Cash", cash_account)
 
         # ── OMS ───────────────────────────────────────────────
         self._oms = OmsEngine(event_engine=self._event_engine)
 
         # ── 策略 ──────────────────────────────────────────────
         self._strategies = {
-            "Trend":  LegacyStrategyAdapter("Trend",  TrendStrategyV2()),
+            "Trend": LegacyStrategyAdapter("Trend", TrendStrategyV2()),
             "LowVol": LegacyStrategyAdapter("LowVol", LowVolStrategy()),
-            "Factor": LegacyStrategyAdapter("Factor", FactorStrategy(
-                factor_scores=self.ml_signals,
-                top_n=factor_top_n,
-                rebalance_days=factor_rebalance_days,
-            )),
-        }   # ── Regime 检测 ───────────────────────────────────────
+            "Factor": LegacyStrategyAdapter(
+                "Factor",
+                FactorStrategy(
+                    factor_scores=self.ml_signals,
+                    top_n=factor_top_n,
+                    rebalance_days=factor_rebalance_days,
+                ),
+            ),
+        }  # ── Regime 检测 ───────────────────────────────────────
         self._regime_detector = RegimeDetectorV2()
 
         # ── 注册事件处理器 ─────────────────────────────────────
-        self._event_engine.register(EVENT_BAR,    self._on_bar)
+        self._event_engine.register(EVENT_BAR, self._on_bar)
         self._event_engine.register(EVENT_SIGNAL, self._on_signal)
         self._event_engine.register(EVENT_REGIME, self._on_regime)
-        self._event_engine.register(EVENT_ORDER,  self._on_order_event)
-        self._event_engine.register(EVENT_TRADE,  self._on_trade_event)
+        self._event_engine.register(EVENT_ORDER, self._on_order_event)
+        self._event_engine.register(EVENT_TRADE, self._on_trade_event)
 
         # ── Gateway 回调注入 ───────────────────────────────────
-        self.gateway.on_order   = self._on_gateway_order
-        self.gateway.on_trade   = self._on_gateway_trade
+        self.gateway.on_order = self._on_gateway_order
+        self.gateway.on_trade = self._on_gateway_trade
         self.gateway.on_account = self._on_gateway_account
 
         self._started = False
@@ -191,10 +195,10 @@ class LiveEngine:
         print(f"[LiveEngine] [{date}] equity={eq:,.0f} dd={dd:.2%}")
 
         return {
-            "date":         date,
+            "date": date,
             "total_equity": round(eq, 2),
             "max_drawdown": round(dd, 4),
-            "positions":    sum(len(a.positions) for a in self.master.strategy_accounts.values()),
+            "positions": sum(len(a.positions) for a in self.master.strategy_accounts.values()),
         }
 
     def get_signals_for_today(self, date: str, prices: dict) -> dict[str, list]:
@@ -209,15 +213,14 @@ class LiveEngine:
             signals = strat.on_bars(date, prices)
             if regime == "CRISIS":
                 account = self.master.strategy_accounts[name]
-                signals = [{"action": "sell", "ts_code": c}
-                           for c in list(account.positions.keys())]
+                signals = [{"action": "sell", "ts_code": c} for c in list(account.positions.keys())]
             result[name] = signals
         return result
 
     # ── 事件处理器 ────────────────────────────────────────────
 
     def _on_bar(self, event: Event) -> None:
-        date   = event.data["date"]
+        date = event.data["date"]
         prices = event.data["prices"]
 
         regime = self._detect_regime(date, prices)
@@ -232,31 +235,35 @@ class LiveEngine:
 
             if regime == "CRISIS":
                 account = self.master.strategy_accounts[name]
-                signals = [{"action": "sell", "ts_code": c}
-                           for c in list(account.positions.keys())]
+                signals = [{"action": "sell", "ts_code": c} for c in list(account.positions.keys())]
 
             for sig in signals:
-                self._event_engine.put(Event(EVENT_SIGNAL, {
-                    "strategy": name,
-                    "signal":   sig,
-                    "date":     date,
-                    "prices":   prices,
-                }))
+                self._event_engine.put(
+                    Event(
+                        EVENT_SIGNAL,
+                        {
+                            "strategy": name,
+                            "signal": sig,
+                            "date": date,
+                            "prices": prices,
+                        },
+                    )
+                )
 
         self._drain_events()
 
     def _on_signal(self, event: Event) -> None:
         """信号 → OMS 下单 → Gateway"""
         strategy = event.data["strategy"]
-        sig      = event.data["signal"]
-        date     = event.data["date"]
-        prices   = event.data["prices"]
+        sig = event.data["signal"]
+        date = event.data["date"]
+        prices = event.data["prices"]
 
         ts_code = sig["ts_code"]
         if ts_code not in prices:
             return
 
-        price  = prices[ts_code]["close"]
+        price = prices[ts_code]["close"]
         action = sig["action"]
 
         account = self.master.strategy_accounts.get(strategy)
@@ -282,9 +289,12 @@ class LiveEngine:
                 return
 
             order = self._oms.submit_order(
-                strategy=strategy, ts_code=ts_code,
-                side=OrderSide.BUY, price=price,
-                volume=shares, date=date,
+                strategy=strategy,
+                ts_code=ts_code,
+                side=OrderSide.BUY,
+                price=price,
+                volume=shares,
+                date=date,
                 raw_signal=sig,
             )
             self.gateway.send_order(order)
@@ -297,9 +307,12 @@ class LiveEngine:
                 return
 
             order = self._oms.submit_order(
-                strategy=strategy, ts_code=ts_code,
-                side=OrderSide.SELL, price=price,
-                volume=shares, date=date,
+                strategy=strategy,
+                ts_code=ts_code,
+                side=OrderSide.SELL,
+                price=price,
+                volume=shares,
+                date=date,
                 raw_signal=sig,
             )
             self.gateway.send_order(order)
@@ -334,7 +347,7 @@ class LiveEngine:
         ret_data = {}
         for c in valid:
             prices_arr = self._price_history[c][-min_len:]
-            rets = [prices_arr[i] / prices_arr[i-1] - 1 for i in range(1, len(prices_arr))]
+            rets = [prices_arr[i] / prices_arr[i - 1] - 1 for i in range(1, len(prices_arr))]
             ret_data[c] = rets
         ret_df = pd.DataFrame(ret_data)
 
@@ -354,7 +367,7 @@ class LiveEngine:
 
     def _on_regime(self, event: Event) -> None:
         regime = event.data["regime"]
-        date   = event.data["date"]
+        date = event.data["date"]
         print(f"[LiveEngine] Regime 切换 → {regime} @ {date}")
 
     def _on_order_event(self, event: Event) -> None:
@@ -391,7 +404,7 @@ class LiveEngine:
     def _detect_regime(self, date: str, prices: dict) -> str:
         if prices:
             closes = [d["close"] for d in prices.values() if d.get("close", 0) > 0]
-            vols   = [d.get("volume", 0) for d in prices.values()]
+            vols = [d.get("volume", 0) for d in prices.values()]
             if closes:
                 self._regime_detector.update(np.mean(closes), sum(vols))
                 return self._regime_detector.detect()

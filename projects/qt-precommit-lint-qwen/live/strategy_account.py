@@ -1,5 +1,4 @@
 class StrategyAccount:
-
     def __init__(self, name, initial_capital):
         self.name = name
         self.initial_capital = initial_capital
@@ -45,15 +44,17 @@ class StrategyAccount:
         return True
 
     def log_trade(self, date, code, action, price, shares, fee, reason=""):
-        self.trade_log.append({
-            "date": date,
-            "code": code,
-            "action": action,
-            "price": price,
-            "shares": shares,
-            "fee": fee,
-            "reason": reason
-        })
+        self.trade_log.append(
+            {
+                "date": date,
+                "code": code,
+                "action": action,
+                "price": price,
+                "shares": shares,
+                "fee": fee,
+                "reason": reason,
+            }
+        )
 
     def mark_to_market(self, prices):
         total = self.cash
@@ -74,8 +75,4 @@ class StrategyAccount:
         return drawdown
 
     def record(self, date):
-        self.equity_curve.append({
-            "date": date,
-            "equity": self.total_equity,
-            "drawdown": self.max_drawdown
-        })
+        self.equity_curve.append({"date": date, "equity": self.total_equity, "drawdown": self.max_drawdown})

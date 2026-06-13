@@ -1,5 +1,6 @@
 import numpy as np
 
+
 def max_drawdown(equity):
     peak = equity[0]
     max_dd = 0

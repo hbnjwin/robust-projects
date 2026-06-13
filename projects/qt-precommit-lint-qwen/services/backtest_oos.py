@@ -4,6 +4,7 @@ services/backtest_oos.py — 样本外回测（Out-of-Sample）
 用 GRU 模型（训练截止 2024-06）对 2025-07 ~ 2026-03 做纯样本外回测。
 同时跑 Qlib-style 和 Replay V5，公平对比。
 """
+
 from __future__ import annotations
 
 import json
@@ -33,8 +34,10 @@ class _GRUModel(torch.nn.Module):
     def __init__(self, n_features, hidden_size=64, num_layers=2, dropout=0.1):
         super().__init__()
         self.gru = torch.nn.GRU(
-            input_size=n_features, hidden_size=hidden_size,
-            num_layers=num_layers, batch_first=True,
+            input_size=n_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
             dropout=dropout if num_layers > 1 else 0,
         )
         self.fc = torch.nn.Sequential(
@@ -79,10 +82,12 @@ def generate_gru_signals(start: str, end: str) -> dict[str, dict[str, float]]:
         if not df.empty:
             all_df.append(df)
             print(f"[OOS] {year}: {len(df)} 行")
-        del df; gc.collect()
+        del df
+        gc.collect()
 
     df = pd.concat(all_df, ignore_index=True)
-    del all_df; gc.collect()
+    del all_df
+    gc.collect()
     df["trade_date"] = pd.to_datetime(df["trade_date"])
     df = df.sort_values(["ts_code", "trade_date"])
 
@@ -106,19 +111,22 @@ def generate_gru_signals(start: str, end: str) -> dict[str, dict[str, float]]:
             date_str = str(dt)[:10]
             if date_str > end:
                 break
-            window = feats[i - seq_len:i]
+            window = feats[i - seq_len : i]
             window = np.clip(np.nan_to_num(window, nan=0.0, posinf=3.0, neginf=-3.0), -3, 3)
             all_windows.append((date_str, ts_code, window))
 
     print(f"[OOS] 窗口总数: {len(all_windows):,}", flush=True)
-    del df; gc.collect()
+    del df
+    gc.collect()
 
     # 按日期分组批量推理
     from collections import defaultdict
+
     by_date = defaultdict(list)
     for date_str, ts_code, window in all_windows:
         by_date[date_str].append((ts_code, window))
-    del all_windows; gc.collect()
+    del all_windows
+    gc.collect()
 
     signals = {}
     sorted_dates = sorted(by_date.keys())
@@ -132,14 +140,14 @@ def generate_gru_signals(start: str, end: str) -> dict[str, dict[str, float]]:
         preds_list = []
         with torch.no_grad():
             for j in range(0, len(X), batch_size):
-                batch = torch.from_numpy(X[j:j + batch_size])
+                batch = torch.from_numpy(X[j : j + batch_size])
                 preds_list.append(model(batch).numpy())
 
         preds = np.concatenate(preds_list)
         signals[date_str] = {code: float(pred) for code, pred in zip(codes, preds)}
 
         if (i + 1) % 20 == 0:
-            print(f"[OOS] {i+1}/{len(sorted_dates)} 天, {date_str}, {len(codes)} 只股票", flush=True)
+            print(f"[OOS] {i + 1}/{len(sorted_dates)} 天, {date_str}, {len(codes)} 只股票", flush=True)
 
     print(f"[OOS] 生成 {len(signals)} 天信号")
     return signals
@@ -157,12 +165,12 @@ def run_oos(
     # 1. 生成纯 GRU 样本外信号
     t0 = time.time()
     signals = generate_gru_signals(start, end)
-    print(f"  信号生成: {time.time()-t0:.1f}s")
+    print(f"  信号生成: {time.time() - t0:.1f}s")
 
     # 2. 加载行情
     t1 = time.time()
     market_data = load_market_data_fast(start, end)
-    print(f"  行情: {len(market_data)} 天 ({time.time()-t1:.1f}s)")
+    print(f"  行情: {len(market_data)} 天 ({time.time() - t1:.1f}s)")
 
     # 3. Qlib-style 回测（纯 GRU 信号）
     print("\n── Qlib-style (GRU OOS) ──")
@@ -174,7 +182,7 @@ def run_oos(
         rebalance_days=rebalance_days,
     )
     qlib_result = qlib_bt.run()
-    print(f"  耗时: {time.time()-t2:.1f}s")
+    print(f"  耗时: {time.time() - t2:.1f}s")
     print(f"  指标: {json.dumps(qlib_result['metrics'], indent=2)}")
 
     # 4. Replay V5 回测（纯 Factor 模式，GRU 信号）
@@ -193,11 +201,11 @@ def run_oos(
         factor_rebalance_days=rebalance_days,
     )
     v5_curve = v5_engine.run()
-    print(f"  耗时: {time.time()-t3:.1f}s")
+    print(f"  耗时: {time.time() - t3:.1f}s")
 
     # V5 指标
     v5_eq = [c["equity"] for c in v5_curve]
-    v5_ret = [(v5_eq[i] - v5_eq[i-1]) / v5_eq[i-1] for i in range(1, len(v5_eq))]
+    v5_ret = [(v5_eq[i] - v5_eq[i - 1]) / v5_eq[i - 1] for i in range(1, len(v5_eq))]
     v5_r = np.array(v5_ret)
     n = len(v5_r)
     v5_total = v5_eq[-1] / v5_eq[0] - 1 if v5_eq else 0
@@ -235,7 +243,7 @@ def run_oos(
         q = qlib_result["metrics"].get(key, 0)
         v = v5_metrics.get(key, 0)
         comparison["diff"][key] = round(q - v, 4)
-        print(f"  {key:15s}  qlib={q:+.4f}  v5={v:+.4f}  diff={q-v:+.4f}")
+        print(f"  {key:15s}  qlib={q:+.4f}  v5={v:+.4f}  diff={q - v:+.4f}")
 
     out_path = os.path.join(OUTPUT_DIR, f"oos_{start}_{end}.json")
     with open(out_path, "w") as f:

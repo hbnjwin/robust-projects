@@ -12,6 +12,7 @@
     python services/intraday_monitor.py              # 单次快照
     python services/intraday_monitor.py --daemon      # 盘中持续监控
 """
+
 import json
 import os
 import sys
@@ -31,7 +32,7 @@ INITIAL_CAPITAL = 1_000_000
 REFRESH_INTERVAL = 30  # 秒
 
 # 预警阈值
-ALERT_DRAWDOWN = 0.05      # 组合回撤 >5% 预警
+ALERT_DRAWDOWN = 0.05  # 组合回撤 >5% 预警
 ALERT_SINGLE_LOSS = -0.08  # 单只亏损 >8% 预警
 
 os.makedirs(SNAPSHOT_DIR, exist_ok=True)
@@ -51,12 +52,14 @@ def collect_all_positions(state):
     positions = []
     for strat_name, acc in state.get("accounts", {}).items():
         for ts_code, pos in acc.get("positions", {}).items():
-            positions.append({
-                "strategy": strat_name,
-                "ts_code": ts_code,
-                "shares": pos.get("shares", 0),
-                "avg_cost": pos.get("avg_cost", 0),
-            })
+            positions.append(
+                {
+                    "strategy": strat_name,
+                    "ts_code": ts_code,
+                    "shares": pos.get("shares", 0),
+                    "avg_cost": pos.get("avg_cost", 0),
+                }
+            )
     return positions
 
 
@@ -105,7 +108,7 @@ def compute_snapshot(positions, quotes, state):
 
         # 单只预警
         if pnl / 100 < ALERT_SINGLE_LOSS:
-            alerts.append(f"⚠ {code}({q.get('name','')}) 亏损 {pnl:.1f}%")
+            alerts.append(f"⚠ {code}({q.get('name', '')}) 亏损 {pnl:.1f}%")
 
     # 加上各策略现金
     for strat_name, acc in state.get("accounts", {}).items():
@@ -161,16 +164,20 @@ def format_snapshot(snap):
     lines.append("")
 
     for name, s in snap["strategies"].items():
-        lines.append(f"  {name:8s} 权益={s['equity']:>10,.0f} ({s['return_pct']:+.2f}%) 持仓={s['positions']}只 现金={s['cash']:,.0f}")
+        lines.append(
+            f"  {name:8s} 权益={s['equity']:>10,.0f} ({s['return_pct']:+.2f}%) 持仓={s['positions']}只 现金={s['cash']:,.0f}"
+        )
 
     # Top 持仓
     holdings = sorted(snap["holdings"], key=lambda x: abs(x["mkt_value"]), reverse=True)
     if holdings:
         lines.append(f"\nTop 持仓 ({len(holdings)}只):")
         for h in holdings[:10]:
-            lines.append(f"  {h['ts_code']} {h['name']:6s} {h['strategy']:6s} "
-                        f"现价={h['price']:>8.2f} 今日={h['change_pct']:>+5.2f}% "
-                        f"盈亏={h['pnl_pct']:>+6.2f}% 市值={h['mkt_value']:>10,.0f}")
+            lines.append(
+                f"  {h['ts_code']} {h['name']:6s} {h['strategy']:6s} "
+                f"现价={h['price']:>8.2f} 今日={h['change_pct']:>+5.2f}% "
+                f"盈亏={h['pnl_pct']:>+6.2f}% 市值={h['mkt_value']:>10,.0f}"
+            )
 
     if snap["alerts"]:
         lines.append(f"\n预警:")

@@ -5,6 +5,7 @@
 
 调度: 每月1日 23:00
 """
+
 import sys
 import os
 import json
@@ -44,14 +45,14 @@ def main():
         output_path=FACTORS_PATH,
     )
     pipe.close()
-    print(f"  Done in {time.time()-t0:.1f}s")
+    print(f"  Done in {time.time() - t0:.1f}s")
 
     # 2. 生成 Regime 标签
     print("\n[Step 2] Generate regime labels...")
     t1 = time.time()
     regime_df = generate_regime_labels("2018-01-01", today)
     regime_df.to_parquet(REGIME_PATH)
-    print(f"  Done in {time.time()-t1:.1f}s")
+    print(f"  Done in {time.time() - t1:.1f}s")
 
     # 3. 构建数据集（滚动窗口：最近5年训练，最近1年验证，最近3月测试）
     print("\n[Step 3] Build dataset...")
@@ -85,7 +86,7 @@ def main():
         },
     )
     trainer.train_all(min_samples=5000)
-    print(f"  Training done in {time.time()-t2:.1f}s")
+    print(f"  Training done in {time.time() - t2:.1f}s")
 
     # 5. 评估新模型
     print("\n[Step 5] Evaluate new model...")
@@ -99,6 +100,7 @@ def main():
 
     if os.path.exists(os.path.join(old_model_dir, "global.pkl")):
         from ml.models import BaseModel
+
         old_model = BaseModel.load(os.path.join(old_model_dir, "global.pkl"))
         old_ic_df = calc_daily_ic(ds, old_model, segment="test")
         old_summary = ic_summary(old_ic_df)
@@ -132,6 +134,7 @@ def main():
     print("\n[Step 8] Regenerate ML signals...")
     t3 = time.time()
     from signals.signal_generator import MLSignalGenerator
+
     gen = MLSignalGenerator(
         model_dir=old_model_dir if should_replace else new_dir,
         factors_path=FACTORS_PATH,
@@ -144,7 +147,7 @@ def main():
         for ts_code, score in signals.items():
             records.append({"trade_date": date_str, "ts_code": ts_code, "score": score})
     pd.DataFrame(records).to_parquet("data/ml_signals.parquet", compression="zstd")
-    print(f"  Signals regenerated: {len(all_signals)} days ({time.time()-t3:.1f}s)")
+    print(f"  Signals regenerated: {len(all_signals)} days ({time.time() - t3:.1f}s)")
 
     print(f"\n[ml_model_retrain] Done. Version: {version}, deployed: {should_replace}")
 

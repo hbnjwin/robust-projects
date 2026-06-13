@@ -7,6 +7,7 @@ ICIR = IC 均值 / IC 标准差（越高越稳定）
   python services/calc_ic.py
   python services/calc_ic.py --forward-days 1 5 10 20
 """
+
 import sys
 import json
 import argparse
@@ -36,22 +37,28 @@ def load_forward_returns(signal_date: str, forward_days: list[int], conn) -> pd.
     """从 daily_price 加载信号日期后 N 日的收益率"""
     # 获取信号日期之后的交易日
     cur = conn.cursor()
-    cur.execute("""
+    cur.execute(
+        """
         SELECT DISTINCT trade_date FROM daily_price
         WHERE trade_date > %s
         ORDER BY trade_date
         LIMIT %s
-    """, (signal_date, max(forward_days) + 5))
+    """,
+        (signal_date, max(forward_days) + 5),
+    )
     future_dates = [str(r[0]) for r in cur.fetchall()]
 
     if not future_dates:
         return pd.DataFrame()
 
     # 获取信号日当天收盘价
-    cur.execute("""
+    cur.execute(
+        """
         SELECT ts_code, close FROM daily_price
         WHERE trade_date = %s AND close > 0
-    """, (signal_date,))
+    """,
+        (signal_date,),
+    )
     base_prices = {r[0]: float(r[1]) for r in cur.fetchall()}
 
     if not base_prices:
@@ -65,16 +72,18 @@ def load_forward_returns(signal_date: str, forward_days: list[int], conn) -> pd.
             continue
 
         target_date = future_dates[n - 1]
-        cur.execute("""
+        cur.execute(
+            """
             SELECT ts_code, close FROM daily_price
             WHERE trade_date = %s AND close > 0
-        """, (target_date,))
+        """,
+            (target_date,),
+        )
         future_prices = {r[0]: float(r[1]) for r in cur.fetchall()}
 
         col = f"ret_{n}d"
         results[col] = [
-            (future_prices.get(code, np.nan) / base_prices[code] - 1)
-            if code in future_prices else np.nan
+            (future_prices.get(code, np.nan) / base_prices[code] - 1) if code in future_prices else np.nan
             for code in results["ts_code"]
         ]
         print(f"  forward_{n}d: target_date={target_date}, {len(future_prices)} stocks")
@@ -133,9 +142,9 @@ def run(forward_days: list[int] = None):
 
     all_results = []
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"IC 分析报告 — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     for sig_file in signal_files:
         signal_date = sig_file.stem
@@ -163,11 +172,13 @@ def run(forward_days: list[int] = None):
             continue
 
         print(f"\n  {'N日':>6} {'IC':>8} {'Top20%':>10} {'Bot20%':>10} {'Spread':>10} {'样本数':>8}")
-        print(f"  {'-'*56}")
+        print(f"  {'-' * 56}")
         for n, r in ic_results.items():
-            ic_val = r['ic']
+            ic_val = r["ic"]
             flag = "✅" if abs(ic_val) >= 0.05 else ("⚠️ " if abs(ic_val) >= 0.02 else "❌")
-            print(f"  {n:>4}d  {ic_val:>8.4f} {r['top20_ret']:>9.3f}% {r['bottom20_ret']:>9.3f}% {r['spread']:>9.3f}% {r['n_stocks']:>8}  {flag}")
+            print(
+                f"  {n:>4}d  {ic_val:>8.4f} {r['top20_ret']:>9.3f}% {r['bottom20_ret']:>9.3f}% {r['spread']:>9.3f}% {r['n_stocks']:>8}  {flag}"
+            )
 
         all_results.append({"date": signal_date, "ic": ic_results})
 
@@ -175,9 +186,9 @@ def run(forward_days: list[int] = None):
 
     # 汇总 ICIR（如果有多个信号日期）
     if len(all_results) >= 2:
-        print(f"\n{'='*60}")
+        print(f"\n{'=' * 60}")
         print(f"ICIR 汇总（{len(all_results)} 个信号日期）")
-        print(f"{'='*60}")
+        print(f"{'=' * 60}")
         for n in forward_days:
             ics = [r["ic"].get(n, {}).get("ic") for r in all_results if n in r["ic"]]
             ics = [x for x in ics if x is not None]
@@ -185,12 +196,12 @@ def run(forward_days: list[int] = None):
                 icir = np.mean(ics) / (np.std(ics) + 1e-8)
                 print(f"  {n}d: IC均值={np.mean(ics):.4f}  ICIR={icir:.2f}  ({len(ics)} 样本)")
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print("判断标准:")
     print("  ✅ |IC| >= 0.05 且 ICIR >= 0.5 → 模型有效")
     print("  ⚠️  |IC| 0.02~0.05 → 弱信号，可用但需谨慎")
     print("  ❌ |IC| < 0.02 → 模型基本无效，需重训")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
     return all_results
 

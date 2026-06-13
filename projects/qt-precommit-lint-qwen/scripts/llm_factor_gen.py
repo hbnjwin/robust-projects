@@ -2,6 +2,7 @@
 llm_factor_gen.py - LLM 因子生成器（本地 venv 版，无需 Docker）
 基于 factors_latest.parquet 的已有特征列，用 LLM 生成组合因子
 """
+
 import os, sys, json, traceback, subprocess, tempfile
 from datetime import datetime
 from pathlib import Path
@@ -11,14 +12,14 @@ import numpy as np
 from openai import OpenAI
 
 # ── 配置 ──────────────────────────────────────────────────────────────
-PYTHON_BIN  = "/home/tulin/quant/.venv/bin/python"
-DATA_PATH   = "/home/tulin/quant/data/factors_latest.parquet"
-OUTPUT_DIR  = Path("/home/tulin/quant/data/llm_factors")
+PYTHON_BIN = "/home/tulin/quant/.venv/bin/python"
+DATA_PATH = "/home/tulin/quant/data/factors_latest.parquet"
+OUTPUT_DIR = Path("/home/tulin/quant/data/llm_factors")
 IC_THRESHOLD = 0.03
-N_FACTORS   = 5
+N_FACTORS = 5
 
-API_KEY    = os.environ.get("OPENAI_API_KEY", "")
-API_BASE   = os.environ.get("OPENAI_API_BASE", "https://unifiedapi.cloud/v1")
+API_KEY = os.environ.get("OPENAI_API_KEY", "")
+API_BASE = os.environ.get("OPENAI_API_BASE", "https://unifiedapi.cloud/v1")
 CHAT_MODEL = os.environ.get("CHAT_MODEL", "claude-sonnet-4-6")
 
 OUTPUT_DIR.mkdir(parents=True, exist_ok=True)
@@ -99,8 +100,7 @@ result.to_json(sys.argv[2])
 
     try:
         r = subprocess.run(
-            [PYTHON_BIN, tmp_script.name, tmp_data.name, tmp_out.name],
-            capture_output=True, text=True, timeout=60
+            [PYTHON_BIN, tmp_script.name, tmp_data.name, tmp_out.name], capture_output=True, text=True, timeout=60
         )
         if r.returncode != 0:
             print(f"  执行错误: {r.stderr[-400:]}")
@@ -140,7 +140,7 @@ def main():
 
     results = []
     for i, idea in enumerate(FACTOR_IDEAS[:N_FACTORS]):
-        print(f"\n[{i+1}/{N_FACTORS}] ..")
+        print(f"\n[{i + 1}/{N_FACTORS}] ..")
         try:
             code = generate_factor_code(idea)
             print(f"  代码生成 ({len(code)} chars)")
@@ -158,7 +158,7 @@ def main():
             results.append({"idea": idea, "ic": ic, "abs_ic": abs_ic, "kept": kept, "code": code})
 
             if kept:
-                name = f"llm_factor_{i+1:02d}_{ts}"
+                name = f"llm_factor_{i + 1:02d}_{ts}"
                 factor.to_parquet(OUTPUT_DIR / f"{name}.parquet")
                 with open(OUTPUT_DIR / f"{name}.py", "w") as fw:
                     fw.write(f"# 思路: {idea}\n# IC={ic:.4f}\n\n{code}\n")

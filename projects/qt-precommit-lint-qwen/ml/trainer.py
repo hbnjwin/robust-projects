@@ -6,6 +6,7 @@ Regime 感知训练器
 - VNPy: 全量数据训练一个模型
 - 我们: 不同市场环境训练不同模型，因子有效性随 Regime 变化
 """
+
 import sys
 from pathlib import Path
 
@@ -59,9 +60,7 @@ class RegimeAwareTrainer:
         regime_labels["trade_date"] = pd.to_datetime(regime_labels["trade_date"])
         self.regime_map: dict[str, set] = {}
         for regime in self.REGIMES:
-            dates = set(regime_labels.loc[
-                regime_labels["regime"] == regime, "trade_date"
-            ])
+            dates = set(regime_labels.loc[regime_labels["regime"] == regime, "trade_date"])
             self.regime_map[regime] = dates
 
         # 模型存储
@@ -95,9 +94,9 @@ class RegimeAwareTrainer:
         results = {}
 
         # 1. 全量模型 (fallback)
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Training GLOBAL model (all data)")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
         self.global_model = self._create_model()
         self.global_metrics = self.global_model.fit(self.dataset)
         results["GLOBAL"] = self.global_metrics
@@ -116,9 +115,9 @@ class RegimeAwareTrainer:
                 print(f"\n[SKIP] {regime}: only {train_count} train samples (min={min_samples})")
                 continue
 
-            print(f"\n{'='*50}")
+            print(f"\n{'=' * 50}")
             print(f"Training {regime} model ({train_count:,} train samples, {len(dates)} days)")
-            print(f"{'='*50}")
+            print(f"{'=' * 50}")
 
             model = self._create_model()
             metrics = model.fit(regime_ds)
@@ -126,9 +125,9 @@ class RegimeAwareTrainer:
             self.metrics[regime] = metrics
             results[regime] = metrics
 
-        print(f"\n{'='*50}")
+        print(f"\n{'=' * 50}")
         print(f"Training complete: GLOBAL + {list(self.models.keys())}")
-        print(f"{'='*50}")
+        print(f"{'=' * 50}")
 
         return results
 
@@ -154,6 +153,7 @@ class RegimeAwareTrainer:
 
         # 保存元信息
         import json
+
         meta = {
             "model_type": self.model_type,
             "model_kwargs": self.model_kwargs,
@@ -223,6 +223,7 @@ def generate_regime_labels(
     import duckdb
     import sys
     from pathlib import Path
+
     sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
     from config import PG_CONFIG
     from live.regime_detector_v2 import RegimeDetectorV2
@@ -230,9 +231,9 @@ def generate_regime_labels(
     # 用 DuckDB 从 PG 计算每日全市场均价和总成交量
     con = duckdb.connect()
     con.execute("INSTALL postgres; LOAD postgres;")
-    host = PG_CONFIG['host']
-    if host == 'localhost':
-        host = '127.0.0.1'
+    host = PG_CONFIG["host"]
+    if host == "localhost":
+        host = "127.0.0.1"
     pg_str = (
         f"dbname={PG_CONFIG['dbname']} "
         f"user={PG_CONFIG['user']} "
@@ -272,6 +273,6 @@ def generate_regime_labels(
     counts = df["regime"].value_counts()
     print(f"[regime] labels generated: {len(df)} days")
     for r in ["BULL", "CRISIS", "NEUTRAL"]:
-        print(f"  {r}: {counts.get(r, 0)} days ({counts.get(r, 0)/len(df)*100:.1f}%)")
+        print(f"  {r}: {counts.get(r, 0)} days ({counts.get(r, 0) / len(df) * 100:.1f}%)")
 
     return df

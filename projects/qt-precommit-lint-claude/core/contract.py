@@ -11,8 +11,8 @@
   min_volume  最小下单量（手）
 """
 import json
+from dataclasses import dataclass
 from pathlib import Path
-from dataclasses import dataclass, field
 
 _DEFAULT_CONFIG_PATH = Path(__file__).resolve().parent.parent / "config" / "contract_settings.json"
 

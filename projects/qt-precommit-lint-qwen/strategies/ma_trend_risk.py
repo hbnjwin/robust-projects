@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class MATrendRiskStrategy:
     def __init__(self, short=10, long=30, trend=200, stop_loss=0.08, position_ratio=0.3):
         self.short = short

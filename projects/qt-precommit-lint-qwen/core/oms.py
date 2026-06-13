@@ -14,6 +14,7 @@ A 股简化设计（相比 vnpy OmsEngine）:
   - 回测模式: 日线收盘价撮合，当日提交当日成交或拒单
   - 实盘模式: 预留 gateway 回调接口
 """
+
 from __future__ import annotations
 
 import uuid
@@ -25,19 +26,19 @@ from typing import Callable
 
 # ── 订单状态枚举 ─────────────────────────────────────────────
 class OrderStatus(Enum):
-    SUBMITTING  = "提交中"
-    NOTTRADED   = "未成交"
-    PARTTRADED  = "部分成交"
-    ALLTRADED   = "全部成交"
-    CANCELLED   = "已撤销"
-    REJECTED    = "拒单"
+    SUBMITTING = "提交中"
+    NOTTRADED = "未成交"
+    PARTTRADED = "部分成交"
+    ALLTRADED = "全部成交"
+    CANCELLED = "已撤销"
+    REJECTED = "拒单"
 
 
 ACTIVE_STATUSES = {OrderStatus.SUBMITTING, OrderStatus.NOTTRADED, OrderStatus.PARTTRADED}
 
 
 class OrderSide(Enum):
-    BUY  = "买入"
+    BUY = "买入"
     SELL = "卖出"
 
 
@@ -45,19 +46,20 @@ class OrderSide(Enum):
 @dataclass
 class Order:
     """订单对象"""
-    order_id:    str
-    strategy:    str
-    ts_code:     str
-    side:        OrderSide
-    price:       float
-    volume:      int           # 委托股数
-    traded:      int = 0       # 已成交股数
-    status:      OrderStatus = OrderStatus.SUBMITTING
+
+    order_id: str
+    strategy: str
+    ts_code: str
+    side: OrderSide
+    price: float
+    volume: int  # 委托股数
+    traded: int = 0  # 已成交股数
+    status: OrderStatus = OrderStatus.SUBMITTING
     create_time: str = ""
     update_time: str = ""
     reject_reason: str = ""
     # 原始信号（透传，方便调试）
-    raw_signal:  dict = field(default_factory=dict)
+    raw_signal: dict = field(default_factory=dict)
 
     @property
     def is_active(self) -> bool:
@@ -69,16 +71,16 @@ class Order:
 
     def to_dict(self) -> dict:
         return {
-            "order_id":     self.order_id,
-            "strategy":     self.strategy,
-            "ts_code":      self.ts_code,
-            "side":         self.side.value,
-            "price":        self.price,
-            "volume":       self.volume,
-            "traded":       self.traded,
-            "status":       self.status.value,
-            "create_time":  self.create_time,
-            "update_time":  self.update_time,
+            "order_id": self.order_id,
+            "strategy": self.strategy,
+            "ts_code": self.ts_code,
+            "side": self.side.value,
+            "price": self.price,
+            "volume": self.volume,
+            "traded": self.traded,
+            "status": self.status.value,
+            "create_time": self.create_time,
+            "update_time": self.update_time,
             "reject_reason": self.reject_reason,
         }
 
@@ -86,26 +88,27 @@ class Order:
 @dataclass
 class Trade:
     """成交回报"""
-    trade_id:   str
-    order_id:   str
-    strategy:   str
-    ts_code:    str
-    side:       OrderSide
-    price:      float
-    volume:     int
-    fee:        float
+
+    trade_id: str
+    order_id: str
+    strategy: str
+    ts_code: str
+    side: OrderSide
+    price: float
+    volume: int
+    fee: float
     trade_time: str
 
     def to_dict(self) -> dict:
         return {
-            "trade_id":   self.trade_id,
-            "order_id":   self.order_id,
-            "strategy":   self.strategy,
-            "ts_code":    self.ts_code,
-            "side":       self.side.value,
-            "price":      self.price,
-            "volume":     self.volume,
-            "fee":        self.fee,
+            "trade_id": self.trade_id,
+            "order_id": self.order_id,
+            "strategy": self.strategy,
+            "ts_code": self.ts_code,
+            "side": self.side.value,
+            "price": self.price,
+            "volume": self.volume,
+            "fee": self.fee,
             "trade_time": self.trade_time,
         }
 
@@ -129,15 +132,15 @@ class OmsEngine:
         self._seq: int = 0
 
         # 全量订单表
-        self._orders:  dict[str, Order] = {}
+        self._orders: dict[str, Order] = {}
         # 活跃订单（未完结）
-        self._active:  dict[str, Order] = {}
+        self._active: dict[str, Order] = {}
         # 成交记录
-        self._trades:  dict[str, Trade] = {}
+        self._trades: dict[str, Trade] = {}
 
         # 外部回调（可选）
         self.on_order_update: Callable[[Order], None] | None = None
-        self.on_trade:        Callable[[Trade], None] | None = None
+        self.on_trade: Callable[[Trade], None] | None = None
 
     # ── 订单提交 ─────────────────────────────────────────────
     def submit_order(
@@ -204,10 +207,7 @@ class OmsEngine:
         strategy=None 撤全部，否则只撤指定策略的订单
         返回撤单数量
         """
-        targets = [
-            oid for oid, o in list(self._active.items())
-            if strategy is None or o.strategy == strategy
-        ]
+        targets = [oid for oid, o in list(self._active.items()) if strategy is None or o.strategy == strategy]
         for oid in targets:
             self.cancel_order(oid, reason="批量撤单")
         return len(targets)
@@ -308,12 +308,14 @@ class OmsEngine:
         if self.on_order_update:
             self.on_order_update(order)
         if self._event_engine:
-            from core.event import Event, EVENT_ORDER
+            from core.event import EVENT_ORDER, Event
+
             self._event_engine.put(Event(EVENT_ORDER, order.to_dict()))
 
     def _notify_trade(self, trade: Trade) -> None:
         if self.on_trade:
             self.on_trade(trade)
         if self._event_engine:
-            from core.event import Event, EVENT_TRADE
+            from core.event import EVENT_TRADE, Event
+
             self._event_engine.put(Event(EVENT_TRADE, trade.to_dict()))

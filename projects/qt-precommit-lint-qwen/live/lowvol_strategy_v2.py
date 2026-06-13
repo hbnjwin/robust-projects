@@ -3,10 +3,9 @@ import numpy as np
 
 
 class LowVolStrategy:
-
-    def __init__(self, lookback=20, top_n=5,
-                 base_stop_loss=0.12, strategy_dd_limit=0.20,
-                 base_cooldown=5, rebalance_interval=5):
+    def __init__(
+        self, lookback=20, top_n=5, base_stop_loss=0.12, strategy_dd_limit=0.20, base_cooldown=5, rebalance_interval=5
+    ):
         self.lookback = lookback
         self.top_n = top_n
         self.history = {}
@@ -17,11 +16,11 @@ class LowVolStrategy:
         self.strategy_dd_limit = strategy_dd_limit  # 默认 0.20，CRISIS 下会被 AdaptiveConfig 覆盖
         self.base_cooldown = base_cooldown
         self.buy_prices = {}
-        self.buy_dates = {}          # 记录买入日期（用于持仓天数衰减）
-        self.holding_days = {}       # 持仓天数计数器
+        self.buy_dates = {}  # 记录买入日期（用于持仓天数衰减）
+        self.holding_days = {}  # 持仓天数计数器
         self.peak_equity = 0.0
         self.cooldown_remaining = 0
-        self.day_count = 0           # 全局交易日计数
+        self.day_count = 0  # 全局交易日计数
 
         # 调仓频率控制
         self.rebalance_interval = rebalance_interval
@@ -61,7 +60,11 @@ class LowVolStrategy:
         vol_mult = 1.0
         if len(self.market_returns) >= 20:
             short_vol = np.std(self.market_returns[-10:])
-            long_vol = np.std(self.market_returns[-self.vol_history_len:]) if len(self.market_returns) >= self.vol_history_len else np.std(self.market_returns)
+            long_vol = (
+                np.std(self.market_returns[-self.vol_history_len :])
+                if len(self.market_returns) >= self.vol_history_len
+                else np.std(self.market_returns)
+            )
             if long_vol > 0:
                 vol_ratio = short_vol / long_vol
                 vol_mult = max(0.7, min(vol_ratio, 2.0))
@@ -70,10 +73,10 @@ class LowVolStrategy:
         trend_mult = 1.0
         if len(self.market_returns) >= 10:
             recent_avg = np.mean(self.market_returns[-10:])
-            if recent_avg < -0.002:       # 日均跌 0.2% 以上
-                trend_mult = 0.7          # 收紧 30%
-            elif recent_avg < -0.001:     # 日均跌 0.1% 以上
-                trend_mult = 0.85         # 收紧 15%
+            if recent_avg < -0.002:  # 日均跌 0.2% 以上
+                trend_mult = 0.7  # 收紧 30%
+            elif recent_avg < -0.001:  # 日均跌 0.1% 以上
+                trend_mult = 0.85  # 收紧 15%
 
         base_sl = self.base_stop_loss * regime_mult * vol_mult * trend_mult
 
@@ -118,7 +121,7 @@ class LowVolStrategy:
             avg_ret = np.mean(daily_returns)
             self.market_returns.append(avg_ret)
             if len(self.market_returns) > self.vol_history_len * 2:
-                self.market_returns = self.market_returns[-self.vol_history_len * 2:]
+                self.market_returns = self.market_returns[-self.vol_history_len * 2 :]
 
     def generate(self, date, price_dict):
 
@@ -128,7 +131,7 @@ class LowVolStrategy:
         for code, data in price_dict.items():
             self.history.setdefault(code, []).append(data["close"])
             if len(self.history[code]) > self.lookback * 3:
-                self.history[code] = self.history[code][-self.lookback * 3:]
+                self.history[code] = self.history[code][-self.lookback * 3 :]
 
         # 更新市场收益率（用于波动率自适应）
         self._update_market_returns(price_dict)
@@ -188,7 +191,7 @@ class LowVolStrategy:
         vol_list = []
         for code, prices in self.history.items():
             if len(prices) >= self.lookback:
-                series = pd.Series(prices[-self.lookback:])
+                series = pd.Series(prices[-self.lookback :])
                 returns = series.pct_change().dropna()
                 if len(returns) > 0:
                     vol = returns.std()
@@ -198,7 +201,7 @@ class LowVolStrategy:
             return orders
 
         vol_list.sort(key=lambda x: x[1])
-        new_selected = set(code for code, _ in vol_list[:self.top_n])
+        new_selected = set(code for code, _ in vol_list[: self.top_n])
 
         if self.days_since_rebalance < self.rebalance_interval:
             return orders
