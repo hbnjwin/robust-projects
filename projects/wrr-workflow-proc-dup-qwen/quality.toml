@@ -1,0 +1,53 @@
+[[criterion]]
+name = "重复方法识别"
+description = "[Explicit] 是否完整识别三个处理器（WorkflowProcessor、EnhancedWorkflowProcessor、LLMWorkflowProcessor）中的重复方法。1: 未分析重复情况；2: 只识别出1-2个重复方法；3: 识别出parseSelectedItems等数据查询方法但遗漏SSE事件解析或请求体构建的重复；4: 识别出数据查询、SSE事件解析、请求体构建三类重复；5: 完整识别所有重复方法（parseSelectedItems、getExtractionRules、getCheckItems、handleWorkflowEvent、processStreamResponse、buildExtractionRequestBody、buildCheckRequestBody等）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了WorkflowHelperService（约270行），提取了parseSelectedItems、getExtractionRules、getCheckItems、parseWorkflowEvent等7个公共方法，覆盖了数据查询类的重复，但对SSE事件解析（processStreamResponse）和请求体构建（buildExtractionRequestBody、buildCheckRequestBody）的重复识别和提取不够完整。"
+
+[[criterion]]
+name = "共享服务设计"
+description = "[Explicit] 是否将重复代码提取为合理的共享服务或工具类，而非简单复制到第四个类。1: 未提取共享代码；2: 提取了共享类但方法签名不合理导致调用方需要额外适配；3: 提取了共享类但职责划分不当（单个类承担过多职责）；4: 提取了职责清晰的共享类，方法签名合理；5: 按职责分成多个共享类（如查询辅助与SSE处理分离），且使用Spring依赖注入集成。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了单个WorkflowHelperService作为Spring @Service组件，方法签名合理（采用了LLMWorkflowProcessor中最健壮的版本），但所有共享方法集中在一个类中，未按职责进一步拆分。"
+
+[[criterion]]
+name = "三处理器调用更新"
+description = "[Explicit] 是否正确修改三个处理器类使其调用共享服务而非保留各自的重复实现。1: 未修改任何处理器；2: 只修改了1个处理器；3: 修改了2个处理器；4: 修改了全部3个处理器但部分方法未替换；5: 三个处理器的所有重复方法都已替换为共享服务调用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改了全部三个处理器（WorkflowProcessor、EnhancedWorkflowProcessor、LLMWorkflowProcessor），将数据查询方法替换为WorkflowHelperService调用，但SSE解析和请求体构建方法的替换可能不完整。"
+
+[[criterion]]
+name = "最优实现版本选择"
+description = "[Implicit] 在三个处理器的同名方法存在细微差异时，是否选择了最健壮或最完整的版本作为共享实现。1: 随机选择了某个版本；2: 选择了最简单的版本但丢失了其他版本的改进；3: 选择了较完整的版本但未说明选择理由；4: 选择了最健壮版本并说明了选择依据；5: 对比了三个版本的差异，选择最健壮版本并合并了各版本的优点。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "采用了LLMWorkflowProcessor中的版本作为基准，支持多种数据格式的parseSelectedItems，但未在总结中明确对比三个版本的差异和选择依据，缺少选择理由的透明说明。"
+
+[[criterion]]
+name = "代码行数缩减"
+description = "[Explicit] 是否通过消除重复有效减少了总代码行数（原三类合计约2435行）。1: 总行数反而增加；2: 减少不到10%；3: 减少10-20%；4: 减少20-35%；5: 减少35%以上，且新增的共享类行数远小于消除的重复代码行数。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了WorkflowHelperService约270行，修改了三个处理器移除了各自的重复方法，但具体减少的行数未明确统计，从提取的7个方法估算减少约20%左右。"
+
+[[criterion]]
+name = "行为一致性保证"
+description = "[Implicit] 是否确保重构后三个处理器的行为与重构前完全一致，未引入功能回归。1: 未考虑行为一致性；2: 可能引入了行为变更但未检查；3: 保持了主要方法的行为但未验证边界情况；4: 通过代码审查确认了行为一致性；5: 通过编译或测试验证了行为一致性，且处理了三个版本间的细微差异。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Bash执行了8次操作进行验证，但未明确运行编译或测试确认行为一致性，主要依靠代码审查保证。"
