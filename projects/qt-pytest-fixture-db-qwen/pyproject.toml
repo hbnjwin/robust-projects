@@ -1,0 +1,41 @@
+[build-system]
+requires = ["setuptools>=64"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quant-qmt-ptrade"
+version = "0.1.0"
+requires-python = ">=3.9"
+dependencies = [
+    "numpy",
+    "pandas",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.0",
+    "psycopg[binary]>=3.0",
+]
+
+# ── pytest configuration ──────────────────────────────────────────────────
+[tool.pytest.ini_options]
+# Look for tests only inside the testing/ directory.
+testpaths = ["testing"]
+
+# Make the project root importable so `from core.xxx import ...` works
+# without installing the package.  pytest adds pythonpath entries to
+# sys.path before collection.
+pythonpath = ["."]
+
+# Custom markers — use `pytest -m <marker>` to filter.
+markers = [
+    "db: tests that require a live PostgreSQL connection (deselect with -m 'not db')",
+    "slow: tests that take a long time to run",
+    "integration: end-to-end integration tests",
+]
+
+# Fail on unknown markers so typos don't silently pass.
+addopts = [
+    "--strict-markers",
+    "-v",
+]

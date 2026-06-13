@@ -1,0 +1,62 @@
+[[criterion]]
+name = "conftest与db_connection fixture设计"
+description = "[Explicit] 是否创建conftest.py并提供可复用的db_connection session-scoped fixture，通过环境变量控制PG连接参数。1: 未创建conftest.py；2: 创建了conftest但fixture缺少环境变量参数化；3: fixture读取环境变量但scope或teardown处理不当；4: fixture完整实现环境变量读取、session-scope、连接失败自动skip；5: fixture额外处理了连接池复用和fixture间依赖注入。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "conftest.py中db_connection使用session-scope，从PG_HOST/PG_USER/PG_PASSWORD/PG_DBNAME/PG_PORT环境变量读取参数，psycopg未安装或连接失败时自动pytest.skip，实现完整。"
+
+[[criterion]]
+name = "test_architecture迁移"
+description = "[Explicit] 是否将test_architecture.py从手动assert风格迁移为pytest风格，移除if __name__入口。1: 未修改test_architecture.py；2: 只移除了main入口未改测试结构；3: 改为pytest函数但保留了手动数据构造；4: 完整迁移为pytest风格并使用fixture替代手动数据构造；5: 迁移后增加了参数化测试覆盖更多场景。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "完整将test_architecture.py迁移为pytest函数风格，移除main入口，使用conftest中的fixture替代手动数据构造。"
+
+[[criterion]]
+name = "test_p0_t1_lotsize迁移"
+description = "[Explicit] 是否将test_p0_t1_lotsize.py迁移为pytest风格，保留T+1和整手约束的测试覆盖。1: 未修改该文件；2: 仅移除main入口；3: 迁移为pytest但丢失了部分原有场景；4: 完整保留原有场景并改为pytest断言和fixture；5: 迁移后扩展了更多T+1和手数边界场景。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "完整迁移test_p0_t1_lotsize.py为pytest风格，保留所有原有场景并使用conftest fixture。"
+
+[[criterion]]
+name = "metrics_v2参数化边界测试"
+description = "[Explicit] 是否使用pytest.mark.parametrize覆盖metrics_v2的边界情况——空序列、单元素、全负收益等。1: 未添加参数化测试；2: 仅用parametrize测试了1-2个边界；3: 覆盖了空序列和单元素但缺少全负收益场景；4: 参数化覆盖空序列、单元素、全负收益三类边界；5: 参数化覆盖全部边界并验证了每种指标函数的返回值合理性。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用pytest.mark.parametrize系统覆盖空序列、单元素、全负收益三类边界情况，每类包含多组参数。"
+
+[[criterion]]
+name = "无PG环境自动skip机制"
+description = "[Explicit] 是否实现没有PostgreSQL时db相关测试自动skip而非报错失败。1: 无PG时测试直接失败；2: 用try-except捕获但skip信息不明确；3: 使用pytest.importorskip或mark.skipif但条件不完整；4: fixture内检测psycopg可用性和连接状态，失败时pytest.skip附带明确原因；5: 自动skip且在CI日志中输出被跳过测试的统计信息。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "db_connection fixture分层检测——psycopg2未安装时pytest.skip说明原因，连接失败时同样skip并附带具体错误，CI环境无PG时测试被正确跳过。"
+
+[[criterion]]
+name = "sys.path硬编码消除"
+description = "[Implicit] 是否通过conftest.py统一管理sys.path，消除每个测试文件中的sys.path.insert硬编码。1: 未处理sys.path问题；2: 在conftest中加了sys.path但未清理测试文件中的硬编码；3: conftest统一管理path但部分测试文件仍有残留；4: conftest统一加入项目根目录到sys.path，所有测试文件中的硬编码已移除；5: 使用pyproject.toml的pythonpath配置替代sys.path操作。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "conftest.py统一将项目根目录加入sys.path，取代每个测试文件中的sys.path.insert硬编码，所有测试文件已清理。"
+
+[[criterion]]
+name = "测试运行验证"
+description = "[Implicit] 是否实际运行pytest验证所有迁移后的测试通过且无警告。1: 未运行任何测试；2: 运行了但有失败未修复；3: 运行通过但有deprecation警告未处理；4: 全部测试通过无失败；5: 全部通过且输出了测试覆盖统计。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "运行pytest验证57个测试全部通过，无失败无错误。"
