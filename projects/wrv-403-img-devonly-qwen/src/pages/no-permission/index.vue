@@ -1,7 +1,7 @@
 <template>
 	<el-result>
 		<template #icon>
-			<img src="/src/assets/image/error/403.svg" style="height: 70vh" />
+			<img :src="errorImg" style="height: 70vh" />
 		</template>
 		<template #extra>
 			<h1 class="m-b-20">很抱歉，您暂无权限访问</h1>
@@ -12,6 +12,7 @@
 
 <script setup>
 import oauth2 from '@/utils/oauth2'
+import errorImg from '@/assets/image/error/403.svg'
 
 const onLogin = () => {
 	oauth2.remove()
