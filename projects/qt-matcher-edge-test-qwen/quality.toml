@@ -5,7 +5,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "测试了科创板和创业板的20%涨跌停拒绝场景，涵盖了688和300前缀，但对689和301前缀的覆盖不完整，部分用例缺少主板10%对照。"
+rationale = "测试了科创板和创业板的20%涨跌停拒绝场景，覆盖了688和300前缀，但未完整覆盖689和301等全部板块代码前缀的涨跌停识别。"
 
 [[criterion]]
 name = "成交量上限部分成交"
@@ -14,7 +14,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "测试了买入超过volume_limit_pct时的部分成交，但对整手截断后剩余量不足100股时的零成交边界处理不够充分。"
+rationale = "测试了买入超过volume_limit_pct时的部分成交逻辑，验证了成交数量按比例削减，但未检查整手截断后的实际成交股数是否为100的整数倍。"
 
 [[criterion]]
 name = "滑点参数影响验证"
@@ -23,7 +23,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "测试了slippage参数对成交价的影响，覆盖了买入方向的价格上移，但卖出方向的价格下移验证较简略。"
+rationale = "测试了slippage参数在0.001和0.01等多个档位下的成交价偏移，但仅验证了买入方向的价格上移，未覆盖卖出方向的滑点影响。"
 
 [[criterion]]
 name = "T+1约束连续交易测试"
@@ -32,7 +32,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "测试了T+1约束的基本流程（当日买入次日卖出），但未深入验证buy_date字段在持仓记录中的更新机制。"
+rationale = "测试了T+1约束的基本流程——当日买入次日可卖，但未检查buy_date字段在持仓记录中是否被正确记录和更新。"
 
 [[criterion]]
 name = "停牌股票撮合行为"
@@ -41,7 +41,7 @@ type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "测试了价格为0时的撮合行为返回空成交，但未覆盖行情数据完全缺失（DataFrame中无该股票行）的停牌场景。"
+rationale = "仅测试了价格为0时的停牌撮合行为，验证了买入返回空成交，未覆盖价格为NaN或行情数据缺失等其他停牌表现形式。"
 
 [[criterion]]
 name = "parametrize组织结构"
