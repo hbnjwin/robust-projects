@@ -19,10 +19,21 @@ import com.linkyoyo.reportaudit.repository.DocumentsRepository;
 import com.linkyoyo.reportaudit.info.ReferenceDocInfo;
 import com.linkyoyo.reportaudit.entity.ProjectInfo;
 import com.linkyoyo.reportaudit.repository.ProjectInfoRepository;
+import com.linkyoyo.reportaudit.util.WorkflowService;
+import com.linkyoyo.reportaudit.util.WorkflowResult;
+import com.linkyoyo.reportaudit.util.WorkflowItemResult;
+import com.linkyoyo.reportaudit.util.WorkflowEvent;
+import com.linkyoyo.reportaudit.util.EnhancedWorkflowProcessor;
+import com.linkyoyo.reportaudit.service.WorkflowResultService;
+import com.linkyoyo.reportaudit.service.TaskProgressNotificationService;
+import com.querydsl.jpa.impl.JPAQueryFactory;
+import static com.linkyoyo.reportaudit.entity.QTasks.tasks;
+import static com.linkyoyo.reportaudit.entity.QDocuments.documents;
 
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.stream.Collectors;
+import java.util.function.Consumer;
 import com.github.wenhao.jpa.Specifications;
 
 import org.springframework.beans.BeanUtils;
@@ -36,6 +47,7 @@ import java.util.UUID;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.core.type.TypeReference;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 import java.util.HashSet;
@@ -76,6 +88,21 @@ public class TasksServiceImpl implements TasksService {
     
     @Autowired
     private CheckItemsRepository checkItemsRepository;
+
+    @Autowired
+    private WorkflowService workflowService;
+
+    @Autowired
+    private WorkflowResultService workflowResultService;
+
+    @Autowired
+    private EnhancedWorkflowProcessor enhancedWorkflowProcessor;
+
+    @Autowired
+    private JPAQueryFactory queryFactory;
+
+    @Autowired
+    private TaskProgressNotificationService taskProgressNotificationService;
 
     @Override
     public PageInfo<TasksInfo> getTasksList(TasksQuery tasksQuery) {
@@ -572,5 +599,278 @@ public class TasksServiceImpl implements TasksService {
         
         log.info("任务报告生成成功，文件路径: {}", finalOutputPath);
         return finalOutputPath;
+    }
+
+    @Override
+    public Map<String, Object> executeCheckTask(String taskId) throws Exception {
+        log.info("开始执行工作流检查任务: taskId={}", taskId);
+
+        // 发送任务开始通知
+        taskProgressNotificationService.notifyTaskStarted(taskId, "check");
+
+        // 通过QueryDSL查询任务信息获取originalDocId
+        Tasks task = queryFactory
+            .selectFrom(tasks)
+            .where(tasks.id.eq(taskId))
+            .fetchOne();
+
+        if (task == null) {
+            log.error("未找到检查任务: taskId={}", taskId);
+            throw new IllegalArgumentException("未找到指定的检查任务");
+        }
+
+        if (task.getOriginalDocId() == null) {
+            log.error("检查任务缺少原始文档ID: taskId={}", taskId);
+            throw new IllegalArgumentException("检查任务缺少原始文档ID");
+        }
+
+        // 通过QueryDSL查询Documents表获取mdContent
+        Documents document = queryFactory
+            .selectFrom(documents)
+            .where(documents.id.eq(task.getOriginalDocId().intValue()))
+            .fetchOne();
+
+        if (document == null) {
+            log.error("未找到原始文档: docId={}", task.getOriginalDocId());
+            throw new IllegalArgumentException("未找到原始文档");
+        }
+
+        String filesText = document.getMdContent();
+        if (filesText == null || filesText.trim().isEmpty()) {
+            log.error("原始文档内容为空: docId={}", task.getOriginalDocId());
+            throw new IllegalArgumentException("原始文档内容为空");
+        }
+
+        log.info("获取到文档内容: taskId={}, docId={}, contentLength={}",
+            taskId, task.getOriginalDocId(), filesText.length());
+
+        // 创建事件处理器来收集工作流事件
+        StringBuilder eventLog = new StringBuilder();
+        Consumer<WorkflowEvent> eventHandler = event -> {
+            String eventInfo = String.format("[%s] %s - %s",
+                event.getEvent(), event.getWorkflowRunId(), event.getData());
+            eventLog.append(eventInfo).append("\n");
+            log.info("工作流事件: {}", eventInfo);
+        };
+
+        // 同步执行工作流任务
+        WorkflowResult result = workflowService.executeCheckTaskSync(
+            taskId, filesText, eventHandler);
+
+        // 工作流执行完成后的结果处理和入库操作
+        log.info("工作流执行完成，开始处理结果入库: taskId={}", taskId);
+        Map<String, Object> processResult = workflowResultService.processWorkflowResult(result, filesText);
+
+        // 构建响应数据
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("taskId", result.getTaskId());
+        responseData.put("taskType", result.getTaskType());
+        responseData.put("success", result.isSuccess());
+        responseData.put("errorMessage", result.getErrorMessage());
+        responseData.put("itemResults", result.getItemResults());
+        responseData.put("eventLog", eventLog.toString());
+
+        // 添加入库处理结果
+        responseData.put("processResult", processResult);
+        responseData.put("processSuccess", processResult.get("success"));
+        responseData.put("processMessage", processResult.get("message"));
+
+        if (result.isSuccess()) {
+            log.info("工作流任务执行成功: taskId={}, itemCount={}, processSuccess={}",
+                taskId, result.getItemResults() != null ? result.getItemResults().size() : 0,
+                processResult.get("success"));
+            taskProgressNotificationService.notifyTaskCompleted(taskId, "check", true);
+        } else {
+            log.error("工作流任务执行失败: taskId={}, error={}", taskId, result.getErrorMessage());
+            taskProgressNotificationService.notifyTaskError(taskId, "check", result.getErrorMessage());
+        }
+
+        return responseData;
+    }
+
+    @Override
+    public Map<String, Object> executeCheckTaskBatch(String[] taskIds, String filesText) throws Exception {
+        log.info("开始批量执行工作流检查任务: count={}", taskIds.length);
+
+        // 创建事件处理器
+        List<String> eventLogs = new ArrayList<>();
+        Consumer<WorkflowEvent> eventHandler = event -> {
+            String eventInfo = String.format("[%s] TaskId:%s WorkflowRunId:%s - %s",
+                event.getEvent(), event.getTaskId(), event.getWorkflowRunId(), event.getData());
+            eventLogs.add(eventInfo);
+            log.info("批量工作流事件: {}", eventInfo);
+        };
+
+        // 同步批量执行
+        WorkflowResult[] results = workflowService.executeCheckTasksBatchSync(
+            taskIds, filesText, eventHandler);
+
+        // 批量工作流执行完成后的结果处理和入库操作
+        log.info("批量工作流执行完成，开始处理结果入库: count={}", results.length);
+
+        int successProcessCount = 0;
+        int errorProcessCount = 0;
+        for (WorkflowResult result : results) {
+            try {
+                String workflowResultJson = convertWorkflowResultToJson(result);
+
+                Map<String, Object> processResult;
+                if ("extraction".equals(result.getTaskType())) {
+                    processResult = workflowResultService.processExtractionWorkflowResult(workflowResultJson);
+                } else {
+                    processResult = workflowResultService.processCheckWorkflowResult(workflowResultJson);
+                }
+
+                if ((Boolean) processResult.get("success")) {
+                    successProcessCount++;
+                } else {
+                    errorProcessCount++;
+                    log.warn("工作流结果处理失败: taskId={}, message={}",
+                        result.getTaskId(), processResult.get("message"));
+                }
+            } catch (Exception e) {
+                errorProcessCount++;
+                log.error("处理工作流结果异常: taskId={}, error={}", result.getTaskId(), e.getMessage(), e);
+            }
+        }
+
+        Map<String, Object> batchProcessResult = new HashMap<>();
+        batchProcessResult.put("success", errorProcessCount == 0);
+        batchProcessResult.put("savedItemCount", successProcessCount);
+        batchProcessResult.put("errorItemCount", errorProcessCount);
+        batchProcessResult.put("message", String.format("批量处理完成，成功%d项，失败%d项", successProcessCount, errorProcessCount));
+
+        // 统计结果
+        int successCount = 0;
+        int failureCount = 0;
+        List<Map<String, Object>> resultList = new ArrayList<>();
+
+        for (WorkflowResult result : results) {
+            Map<String, Object> resultData = new HashMap<>();
+            resultData.put("taskId", result.getTaskId());
+            resultData.put("taskType", result.getTaskType());
+            resultData.put("success", result.isSuccess());
+            resultData.put("errorMessage", result.getErrorMessage());
+            resultData.put("itemResults", result.getItemResults());
+
+            if (result.isSuccess()) {
+                successCount++;
+            } else {
+                failureCount++;
+            }
+
+            resultList.add(resultData);
+        }
+
+        // 构建响应数据
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("totalCount", results.length);
+        responseData.put("successCount", successCount);
+        responseData.put("failureCount", failureCount);
+        responseData.put("results", resultList);
+        responseData.put("eventLogs", eventLogs);
+
+        // 添加批量入库处理结果
+        responseData.put("batchProcessResult", batchProcessResult);
+        responseData.put("processSuccess", batchProcessResult.get("success"));
+        responseData.put("processMessage", batchProcessResult.get("message"));
+        responseData.put("savedItemCount", batchProcessResult.get("savedItemCount"));
+        responseData.put("errorItemCount", batchProcessResult.get("errorItemCount"));
+
+        log.info("批量工作流任务执行完成: total={}, success={}, failure={}, processSuccess={}",
+            results.length, successCount, failureCount, batchProcessResult.get("success"));
+
+        return responseData;
+    }
+
+    @Override
+    public Map<String, Object> executeEnhanceCheckTask(String taskId) throws Exception {
+        log.info("开始执行增强版工作流检查任务（异步）: taskId={}", taskId);
+
+        // 通过QueryDSL查询任务信息
+        Tasks task = queryFactory
+            .selectFrom(tasks)
+            .where(tasks.id.eq(taskId))
+            .fetchOne();
+
+        if (task == null) {
+            log.error("未找到检查任务: taskId={}", taskId);
+            taskProgressNotificationService.notifyTaskError(taskId, "check", "未找到指定的检查任务");
+            throw new IllegalArgumentException("未找到指定的检查任务");
+        }
+
+        if (task.getOriginalDocId() == null) {
+            log.error("检查任务缺少原始文档ID: taskId={}", taskId);
+            taskProgressNotificationService.notifyTaskError(taskId, "check", "检查任务缺少原始文档ID");
+            throw new IllegalArgumentException("检查任务缺少原始文档ID");
+        }
+
+        log.info("获取到任务信息: taskId={}, originalDocId={}, selectedItems={}",
+            taskId, task.getOriginalDocId(), task.getSelectedItems());
+
+        // 发送任务开始通知
+        taskProgressNotificationService.notifyTaskStarted(taskId, "check");
+
+        // 异步执行任务
+        enhancedWorkflowProcessor.executeEnhanceCheckTaskAsync(task, taskId, taskProgressNotificationService);
+
+        // 构建启动响应
+        Map<String, Object> responseData = new HashMap<>();
+        responseData.put("taskId", taskId);
+        responseData.put("taskType", "enhance_check");
+        responseData.put("status", "started");
+        responseData.put("message", "检查任务已开始执行，请通过WebSocket监听执行进度");
+
+        return responseData;
+    }
+
+    /**
+     * 将WorkflowResult转换为JSON字符串
+     * 用于兼容工作流结果处理逻辑
+     */
+    String convertWorkflowResultToJson(WorkflowResult result) {
+        try {
+            Map<String, Object> workflowResult = new HashMap<>();
+            workflowResult.put("event", "workflow_finished");
+            workflowResult.put("workflow_run_id", UUID.randomUUID().toString());
+            workflowResult.put("task_id", result.getTaskId());
+
+            Map<String, Object> data = new HashMap<>();
+            data.put("id", UUID.randomUUID().toString());
+            data.put("workflow_id", UUID.randomUUID().toString());
+            data.put("sequence_number", 1);
+            data.put("status", result.isSuccess() ? "succeeded" : "failed");
+
+            // 构建outputs节点
+            Map<String, Object> outputs = new HashMap<>();
+            if (result.getItemResults() != null && !result.getItemResults().isEmpty()) {
+                WorkflowItemResult firstItem = result.getItemResults().get(0);
+                outputs.put("text", firstItem.getOutput());
+                outputs.put("taskId", result.getTaskId());
+                outputs.put("documentId", "1");
+                outputs.put("checkId", firstItem.getItemId());
+                outputs.put("checkName", firstItem.getItemName());
+            } else {
+                outputs.put("text", result.getErrorMessage());
+                outputs.put("taskId", result.getTaskId());
+                outputs.put("documentId", "1");
+                outputs.put("checkId", "1");
+                outputs.put("checkName", "未知");
+            }
+
+            data.put("outputs", outputs);
+            data.put("error", result.isSuccess() ? null : result.getErrorMessage());
+            data.put("created_at", System.currentTimeMillis() / 1000);
+            data.put("finished_at", System.currentTimeMillis() / 1000);
+
+            workflowResult.put("data", data);
+
+            ObjectMapper mapper = new ObjectMapper();
+            return mapper.writeValueAsString(workflowResult);
+
+        } catch (Exception e) {
+            log.error("转换WorkflowResult为JSON失败: taskId={}, error={}", result.getTaskId(), e.getMessage(), e);
+            return "{}";
+        }
     }
 }
