@@ -1,8 +1,53 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "倒计时定时器清理"
+description = "[Explicit] 是否在组件卸载时清除所有指令的倒计时setInterval防止后台泄漏。1: 未保存interval引用无法清除; 2: 仅清除当前可见指令的定时器; 3: onUnmounted中清除主定时器但遗漏子项; 4: 维护timerId映射表在卸载时遍历清除所有定时器; 5: 封装useCountdown composable统一管理多个倒计时的创建与销毁"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "ControlExecution.vue中用timerId变量保存interval返回值，封装startCountdownTimer/stopCountdownTimer方法，onUnmounted中调用clearInterval，但对多条指令各自的倒计时管理未采用映射表方式"
+
+[[criterion]]
+name = "指令分解参数正确性"
+description = "[Explicit] 是否修复分解API调用时参数顺序错误导致指令分解失败的问题。1: API调用参数顺序仍然错误; 2: 参数顺序修正但类型不匹配; 3: 参数顺序和类型都正确但缺少必要的校验; 4: API接口定义与调用处参数完全匹配且有TypeScript类型约束; 5: 接口定义加参数校验加错误重试机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "api.ts中修正了分解接口的参数定义，commandStore中调用时传参顺序与接口一致，但缺少参数类型的运行时校验"
+
+[[criterion]]
+name = "状态机转换约束"
+description = "[Explicit] 是否实现指令状态的有效转换校验，禁止非法状态跳转如从待分解直接到已反馈。1: 无状态校验允许任意跳转; 2: 部分转换有检查但遗漏了某些非法路径; 3: 完整的状态转换表定义但未在mutation中强制校验; 4: 状态转换函数中查询合法转换表并拒绝非法跳转抛出错误; 5: 状态机模式含转换守卫加日志记录加乐观更新回滚"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "commandStore中状态更新逻辑按线性流程处理，未定义显式的状态转换表来约束合法跳转路径，存在跳过中间状态的可能"
+
+[[criterion]]
+name = "超时检测与正常完成竞态"
+description = "[Explicit] 是否处理超时定时器触发时指令已正常完成的竞态条件。1: 超时触发时不检查当前状态直接标记超时; 2: 检查状态但有时序窗口导致误标; 3: 超时回调中先检查当前状态，已完成则跳过; 4: 正常完成时主动清除对应的超时定时器避免竞态; 5: 双向保护（完成时清定时器加超时时检查状态）加超时恢复机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "超时回调中检查指令当前状态是否已变为已反馈，若已完成则跳过超时标记，但正常完成时未主动清除对应的超时定时器"
+
+[[criterion]]
+name = "指令类型与状态枚举"
+description = "[Implicit] 是否使用TypeScript枚举或联合类型定义指令状态，避免魔法字符串。1: 状态值使用原始字符串如pending/completed; 2: 定义了常量但未用TypeScript类型约束; 3: 使用enum定义状态但未在所有引用处使用; 4: enum贯穿类型定义、store操作、组件模板的所有引用; 5: 枚举加类型守卫函数加穷举检查确保所有状态分支被覆盖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "command.ts中定义了CommandStatus类型，但store和组件中部分状态比较仍使用字符串字面量而非引用枚举值"
+
+[[criterion]]
+name = "负数倒计时显示修正"
+description = "[Implicit] 是否防止倒计时在到达零后继续减为负数显示在界面上。1: 倒计时显示负数如-5秒; 2: 到零后停止但显示0而非超时标识; 3: 到零后显示超时文字但定时器未清除; 4: 倒计时到零时clearInterval并切换显示为超时状态标签; 5: 倒计时归零时清除定时器加触发超时回调加UI状态联动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "倒计时逻辑中当剩余时间小于等于0时停止减少，但未主动触发超时状态变更，需等待后端超时回调才更新UI显示"
