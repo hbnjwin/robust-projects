@@ -15,6 +15,7 @@ import com.github.wenhao.jpa.PredicateBuilder;
 import com.github.wenhao.jpa.Specifications;
 import com.google.common.collect.Lists;
 import com.linkyoyo.reportaudit.config.AiConfig;
+import com.linkyoyo.reportaudit.config.BlueCloudAiConfig;
 import com.linkyoyo.reportaudit.config.LinkyoyoAiConfig;
 import com.linkyoyo.reportaudit.query.CommonQueryInfo;
 import com.querydsl.jpa.impl.JPAQueryFactory;
@@ -62,6 +63,8 @@ public class CommonFunc {
 
     public static LinkyoyoAiConfig linkyoyoAiConfig;
 
+    private static BlueCloudAiConfig blueCloudAiConfig;
+
     @Autowired
     public void setAiConfig(AiConfig aiConfig) {
         CommonFunc.aiConfig = aiConfig;
@@ -70,6 +73,11 @@ public class CommonFunc {
     @Autowired
     public void setLinkyoyoAiConfig(LinkyoyoAiConfig linkyoyoAiConfig) {
         CommonFunc.linkyoyoAiConfig = linkyoyoAiConfig;
+    }
+
+    @Autowired
+    public void setBlueCloudAiConfig(BlueCloudAiConfig blueCloudAiConfig) {
+        CommonFunc.blueCloudAiConfig = blueCloudAiConfig;
     }
 
     @Autowired
@@ -716,10 +724,14 @@ public class CommonFunc {
 
     public static  void CallOpenAiBySse(String baseString64,SseEmitter sseEmitter)
     {
+        if (aiConfig == null) {
+            log.error("AiConfig未注入，无法调用Azure OpenAI SSE");
+            return;
+        }
 
         OpenAIClient client = new OpenAIClientBuilder()
-                .credential(new AzureKeyCredential("REDACTED_AZURE_KEY"))
-                .endpoint("https://bluecloud-bca-ai.openai.azure.com/")   //https://bluecloud-bca-ai.openai.azure.com/openai/deployments/
+                .credential(new AzureKeyCredential(aiConfig.getAzureKey()))
+                .endpoint(aiConfig.getAzureEndpoint())
                 .serviceVersion(OpenAIServiceVersion.V2024_05_01_PREVIEW)
                 .buildClient();
 
@@ -744,7 +756,7 @@ public class CommonFunc {
         chatCompletionsOptions.setTemperature(1.0);
         chatCompletionsOptions.setTopP(0.8);
 
-        IterableStream<ChatCompletions> chatCompletionsStream = client.getChatCompletionsStream("gpt-4o-mini",
+        IterableStream<ChatCompletions> chatCompletionsStream = client.getChatCompletionsStream(aiConfig.getAzureDeploymentSse(),
                 chatCompletionsOptions);
 
         chatCompletionsStream
@@ -771,10 +783,14 @@ public class CommonFunc {
     }
 
     public static List callOpenAi(String baseString64){
+        if (aiConfig == null) {
+            log.error("AiConfig未注入，无法调用Azure OpenAI");
+            return null;
+        }
 
         OpenAIClient client = new OpenAIClientBuilder()
-                .credential(new AzureKeyCredential("REDACTED_AZURE_KEY"))
-                .endpoint("https://bluecloud-bca-ai.openai.azure.com/")   //https://bluecloud-bca-ai.openai.azure.com/openai/deployments/
+                .credential(new AzureKeyCredential(aiConfig.getAzureKey()))
+                .endpoint(aiConfig.getAzureEndpoint())
                 .serviceVersion(OpenAIServiceVersion.V2024_05_01_PREVIEW)
                 .buildClient();
 
@@ -809,7 +825,7 @@ public class CommonFunc {
         chatCompletionsOptions.setMaxTokens(2048);
         chatCompletionsOptions.setTemperature(1.0);
         chatCompletionsOptions.setTopP(0.8);
-        ChatCompletions chatCompletions = client.getChatCompletions("gpt-4o-mini", chatCompletionsOptions);
+        ChatCompletions chatCompletions = client.getChatCompletions(aiConfig.getAzureDeployment(), chatCompletionsOptions);
 
 
         String returnMessage ="";
@@ -845,10 +861,14 @@ public class CommonFunc {
 
 
     public static JSONObject callNewOpenAi(String baseString64){
+        if (aiConfig == null) {
+            log.error("AiConfig未注入，无法调用Azure OpenAI (new)");
+            return null;
+        }
 
         OpenAIClient client = new OpenAIClientBuilder()
-                .credential(new AzureKeyCredential("REDACTED_AZURE_KEY"))
-                .endpoint("https://bluecloud-bca-ai.openai.azure.com/")   //https://bluecloud-bca-ai.openai.azure.com/openai/deployments/
+                .credential(new AzureKeyCredential(aiConfig.getAzureKey()))
+                .endpoint(aiConfig.getAzureEndpoint())
                 .serviceVersion(OpenAIServiceVersion.V2024_05_01_PREVIEW)
                 .buildClient();
 
@@ -885,7 +905,7 @@ public class CommonFunc {
         chatCompletionsOptions.setMaxTokens(2048);
         chatCompletionsOptions.setTemperature(1.0);
         chatCompletionsOptions.setTopP(0.8);
-        ChatCompletions chatCompletions = client.getChatCompletions("us-east-gpt4o", chatCompletionsOptions);
+        ChatCompletions chatCompletions = client.getChatCompletions(aiConfig.getAzureDeploymentNew(), chatCompletionsOptions);
         //gpt-4o-mini
 
         String returnMessage ="";
@@ -953,10 +973,13 @@ public class CommonFunc {
                 .build();
 
         // 从配置中获取URL和token
-        String uploadUrl = "https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/files/upload";
+        String uploadUrl = "";
         String authToken = "";
 
-        if (linkyoyoAiConfig != null) {
+        if (blueCloudAiConfig != null) {
+            uploadUrl = blueCloudAiConfig.getUploadApiUrl();
+            authToken = blueCloudAiConfig.getAuthToken();
+        } else if (linkyoyoAiConfig != null) {
             authToken = linkyoyoAiConfig.getToken();
         }
 
@@ -991,9 +1014,8 @@ public class CommonFunc {
                         "    \"open_internet\": false\n" +
                         "}",fileId) );
 
-                 // 从配置中获取URL和token
-                 String chatUrl = "https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/chat-messages";
-
+                 // 从配置中获取聊天URL
+                 String chatUrl = "";
                  if (linkyoyoAiConfig != null) {
                      chatUrl = linkyoyoAiConfig.getUrl();
                  }
@@ -1100,11 +1122,10 @@ public class CommonFunc {
     public static JSONObject callAiWithOkHttp(String content) {
 
         if (aiConfig == null) {
-            log.error("AiConfig未注入，使用默认配置");
-            return callAiWithOkHttp(content, true, "https://subs1-5.openai.azure.com/",
-                "REDACTED_AZURE_OPENAI_KEY_2",
-                "gpt-4o-5", "2024-05-01-preview",
-                "解析内容：标准类型（国标   ||   行业标准 ||  企业标准/地方标准）,标准号,标准中文名,标准英文名，发布日期,实施日期,标准状态,发布单位,提出单位,起草单位,起草人,范围,规范性引用文件,**前言,引言,术语和定义,参考文献**;以json格式输出");
+            log.error("AiConfig未注入，无法调用AI服务。请在application.yml中配置ai.azure-fallback.*属性");
+            JSONObject errorResult = new JSONObject();
+            errorResult.set("error", "AiConfig未注入，无法调用AI服务");
+            return errorResult;
         }
         return callAiWithOkHttp(content, aiConfig.isAzure(), aiConfig.getUrl(), aiConfig.getKey(),
                               aiConfig.getModel(), aiConfig.getVersion(), aiConfig.getPrompt());
@@ -1120,10 +1141,10 @@ public class CommonFunc {
 
 
         if (aiConfig == null) {
-            log.error("AiConfig未注入，使用默认配置");
-            return callAiWithOkHttp(content, false, "https://api.deepseek.com/v1/chat/completions",
-                "REDACTED_DEEPSEEK_API_KEY", "deepseek-chat", "",
-                "解析内容：标准类型（国标   ||   行业标准 ||  企业标准/地方标准）,标准号,标准中文名,标准英文名，发布日期,实施日期,标准状态,发布单位,提出单位,起草单位,起草人,范围,规范性引用文件,**前言,引言,术语和定义,参考文献**;以json格式输出");
+            log.error("AiConfig未注入，无法调用DeepSeek AI服务。请在application.yml中配置ai.deepseek.*属性");
+            JSONObject errorResult = new JSONObject();
+            errorResult.set("error", "AiConfig未注入，无法调用DeepSeek AI服务");
+            return errorResult;
         }
         return callAiWithOkHttp(content, aiConfig.isDeepseekIsAzure(), aiConfig.getDeepseekUrl(),
                               aiConfig.getDeepseekKey(), aiConfig.getDeepseekModel(), "", aiConfig.getDeepseekPrompt());

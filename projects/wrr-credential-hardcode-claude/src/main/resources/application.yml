@@ -1,0 +1,47 @@
+# ============================================================
+# Externalized credentials and endpoints
+# All sensitive values should be overridden via environment
+# variables or a profile-specific application-{env}.yml file.
+# ============================================================
+
+# --- Azure OpenAI (SDK-based calls) ---
+azure:
+  openai:
+    endpoint: ${AZURE_OPENAI_ENDPOINT:https://bluecloud-bca-ai.openai.azure.com/}
+    key: ${AZURE_OPENAI_KEY:}
+
+# --- AI Config (OkHttp-based calls) ---
+ai:
+  config:
+    is-azure: true
+    url: ${AI_CONFIG_URL:https://subs1-5.openai.azure.com/}
+    key: ${AI_CONFIG_KEY:}
+    model: gpt-4o-5
+    version: 2024-05-01-preview
+    prompt: ""
+    deepseek:
+      is-azure: false
+      url: https://api.deepseek.com/v1/chat/completions
+      key: ${DEEPSEEK_API_KEY:}
+      model: deepseek-chat
+      prompt: ""
+
+# --- Blue Cloud AI ---
+bluecloud:
+  ai:
+    upload-api-url: ${BLUECLOUD_UPLOAD_URL:https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/files/upload}
+    markdown-api-url: ${BLUECLOUD_MARKDOWN_URL:https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/files/markdown}
+    auth-token: ${BLUECLOUD_AUTH_TOKEN:}
+    provider:
+      name: textin
+    model:
+      name: gpt-4o-5
+    temperature: 0.7
+    query: ""
+
+# --- Linkyoyo AI Agent ---
+linkyoyo:
+  ai:
+    url: ${LINKYOYO_AI_URL:https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/chat-messages}
+    token: ${LINKYOYO_AI_TOKEN:}
+    upload-url: ${LINKYOYO_UPLOAD_URL:https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/files/upload}
