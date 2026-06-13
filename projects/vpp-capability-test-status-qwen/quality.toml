@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "进度条闭包修复"
+description = "[Explicit] 是否修复WebSocket回调中闭包捕获totalDevices旧值导致进度条卡在约80%的问题。1: 进度条仍卡在80%不更新; 2: 改为直接引用ref但仍有时序问题; 3: 使用computed或watchEffect动态计算进度百分比; 4: 进度百分比基于响应设备数除以总设备数的computed属性实时计算; 5: computed进度加上100%时自动停止轮询加完成状态动画过渡"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "CapabilityTest.vue中将progressPercent改为基于响应设备数计算的逻辑，但闭包捕获的totalDevices.value快照问题的根本修复方式不够明确"
+
+[[criterion]]
+name = "实时状态WebSocket更新"
+description = "[Explicit] 是否通过WebSocket消息实时更新每台设备的测试状态而非轮询。1: 仍使用轮询获取状态; 2: WebSocket连接建立但消息处理不完整; 3: 消息解析正确但状态更新有延迟或遗漏; 4: onMessage回调中正确解析设备状态消息并更新对应设备的reactive状态; 5: 实时更新加断线重连加消息队列缓冲防丢失"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "WebSocket onMessage回调中解析设备状态消息并更新deviceList中对应设备的status字段，但重连后可能丢失中间状态消息"
+
+[[criterion]]
+name = "失败设备计数修正"
+description = "[Explicit] 是否正确计算测试失败的设备数量而非将超时也算作失败。1: 失败计数包含超时设备导致数字偏大; 2: 区分了失败和超时但计数逻辑有off-by-one; 3: 正确区分failed/timeout/success三种状态并分别计数; 4: 基于设备状态枚举的computed属性分别计算各状态数量; 5: 状态计数加百分比加趋势变化可视化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "区分了设备的failed和timeout状态进行分别计数，但计数逻辑通过filter实现未使用computed缓存，每次渲染都重新遍历"
+
+[[criterion]]
+name = "测试结果持久化"
+description = "[Implicit] 是否在测试完成后将结果保存到store或后端，避免页面切换后结果丢失。1: 页面切换后所有测试结果丢失; 2: 保存到组件本地state但切换后丢失; 3: 使用Pinia store持久化测试结果; 4: store持久化加支持查看历史测试记录; 5: store加后端API持久化加测试报告导出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "测试结果仅保存在组件本地的ref变量中，切换页面后v-if销毁组件导致结果丢失，未使用Pinia store持久化"
+
+[[criterion]]
+name = "批量测试Vue响应性"
+description = "[Implicit] 是否确保大量设备状态同时更新时Vue的响应式系统不出现批量更新导致的渲染抖动。1: 每个WebSocket消息都触发独立渲染导致卡顿; 2: 使用nextTick但时机不对; 3: 合理利用Vue的自动批量更新机制; 4: 对高频消息做防抖或节流后批量更新reactive数组; 5: 虚拟列表加防抖更新加requestAnimationFrame节奏控制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "每条WebSocket消息到达时直接修改reactive数组中的设备状态，高频消息场景下可能触发大量不必要的渲染更新"
