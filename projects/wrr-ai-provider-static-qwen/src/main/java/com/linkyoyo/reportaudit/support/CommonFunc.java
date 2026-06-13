@@ -17,6 +17,8 @@ import com.google.common.collect.Lists;
 import com.linkyoyo.reportaudit.config.AiConfig;
 import com.linkyoyo.reportaudit.config.LinkyoyoAiConfig;
 import com.linkyoyo.reportaudit.query.CommonQueryInfo;
+import com.linkyoyo.reportaudit.util.llm.HttpClientFactory;
+import com.linkyoyo.reportaudit.util.llm.LinkyoyoRequestBuilder;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 //import com.squareup.okhttp.*;
 import lombok.extern.slf4j.Slf4j;
@@ -70,6 +72,13 @@ public class CommonFunc {
     @Autowired
     public void setLinkyoyoAiConfig(LinkyoyoAiConfig linkyoyoAiConfig) {
         CommonFunc.linkyoyoAiConfig = linkyoyoAiConfig;
+    }
+
+    private static HttpClientFactory httpClientFactory;
+
+    @Autowired
+    public void setHttpClientFactory(HttpClientFactory factory) {
+        CommonFunc.httpClientFactory = factory;
     }
 
     @Autowired
@@ -717,9 +726,12 @@ public class CommonFunc {
     public static  void CallOpenAiBySse(String baseString64,SseEmitter sseEmitter)
     {
 
+        String azureKey = (aiConfig != null) ? aiConfig.getKey() : "REDACTED_AZURE_KEY";
+        String azureEndpoint = (aiConfig != null) ? aiConfig.getUrl() : "https://bluecloud-bca-ai.openai.azure.com/";
+
         OpenAIClient client = new OpenAIClientBuilder()
-                .credential(new AzureKeyCredential("REDACTED_AZURE_KEY"))
-                .endpoint("https://bluecloud-bca-ai.openai.azure.com/")   //https://bluecloud-bca-ai.openai.azure.com/openai/deployments/
+                .credential(new AzureKeyCredential(azureKey))
+                .endpoint(azureEndpoint)
                 .serviceVersion(OpenAIServiceVersion.V2024_05_01_PREVIEW)
                 .buildClient();
 
@@ -772,9 +784,12 @@ public class CommonFunc {
 
     public static List callOpenAi(String baseString64){
 
+        String azureKey = (aiConfig != null) ? aiConfig.getKey() : "REDACTED_AZURE_KEY";
+        String azureEndpoint = (aiConfig != null) ? aiConfig.getUrl() : "https://bluecloud-bca-ai.openai.azure.com/";
+
         OpenAIClient client = new OpenAIClientBuilder()
-                .credential(new AzureKeyCredential("REDACTED_AZURE_KEY"))
-                .endpoint("https://bluecloud-bca-ai.openai.azure.com/")   //https://bluecloud-bca-ai.openai.azure.com/openai/deployments/
+                .credential(new AzureKeyCredential(azureKey))
+                .endpoint(azureEndpoint)
                 .serviceVersion(OpenAIServiceVersion.V2024_05_01_PREVIEW)
                 .buildClient();
 
@@ -846,9 +861,12 @@ public class CommonFunc {
 
     public static JSONObject callNewOpenAi(String baseString64){
 
+        String azureKey = (aiConfig != null) ? aiConfig.getKey() : "REDACTED_AZURE_KEY";
+        String azureEndpoint = (aiConfig != null) ? aiConfig.getUrl() : "https://bluecloud-bca-ai.openai.azure.com/";
+
         OpenAIClient client = new OpenAIClientBuilder()
-                .credential(new AzureKeyCredential("REDACTED_AZURE_KEY"))
-                .endpoint("https://bluecloud-bca-ai.openai.azure.com/")   //https://bluecloud-bca-ai.openai.azure.com/openai/deployments/
+                .credential(new AzureKeyCredential(azureKey))
+                .endpoint(azureEndpoint)
                 .serviceVersion(OpenAIServiceVersion.V2024_05_01_PREVIEW)
                 .buildClient();
 
@@ -967,29 +985,19 @@ public class CommonFunc {
                 .build();
         Response response = null;
         try {
-            OkHttpClient okHttpClient = new OkHttpClient();
+            OkHttpClient okHttpClient = (httpClientFactory != null)
+                    ? httpClientFactory.createClientSeconds(60, 60, 60)
+                    : new OkHttpClient();
             response = okHttpClient.newCall(request).execute();
             int status = response.code();
             if (response.isSuccessful()) {
                JSONObject   rtnJson = new JSONObject(response.body().string()) ;
                String fileId= rtnJson.get("id").toString() ;
+
+                // 使用共享的请求体构建器
+                JSONObject chatRequest = LinkyoyoRequestBuilder.buildFileChatRequest(fileId);
                 requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"),
-                        String.format("{"+
-                        "    \n" +
-                        "    \"response_mode\": \"blocking\",\n" +
-                        "    \"inputs\": {},\n" +
-                        "    \"query\": \"分析图片中内容\",\n" +
-                        "    \"files\": [\n" +
-                        "        {\n" +
-                        "            \"transfer_method\": \"local_file\",\n" +
-                        "            \"type\": \"image\",\n" +
-                        "            \"upload_file_id\": \"%s\",\n" +
-                        "            \"url\": \"\"\n" +
-                        "        }\n" +
-                        "    ],\n" +
-                        "    \"custom_files\": [],\n" +
-                        "    \"open_internet\": false\n" +
-                        "}",fileId) );
+                        chatRequest.toString());
 
                  // 从配置中获取URL和token
                  String chatUrl = "https://ai-verify.bluecloudatlas.cn/gateway/hcmsp-ai-keystone/api/chat-messages";
@@ -1145,12 +1153,16 @@ public class CommonFunc {
 
     /**
      * 创建一个配置了SSL和超时的OkHttpClient
+     * 委托给HttpClientFactory，如果factory不可用则使用内置实现
      *
      * @return 配置好的OkHttpClient实例
      * @throws Exception 如果创建过程中发生错误
      */
     private static OkHttpClient createSecureHttpClient() throws Exception {
-        // 创建信任所有证书的TrustManager
+        if (httpClientFactory != null) {
+            return httpClientFactory.createClientSeconds(60, 120, 60);
+        }
+        // Fallback: factory未注入时的内置实现
         final TrustManager[] trustAllCerts = new TrustManager[] {
             new X509TrustManager() {
                 @Override
@@ -1168,11 +1180,9 @@ public class CommonFunc {
             }
         };
 
-        // 创建SSLContext并使用我们的TrustManager
         final SSLContext sslContext = SSLContext.getInstance("SSL");
         sslContext.init(null, trustAllCerts, new java.security.SecureRandom());
 
-        // 创建OkHttpClient并配置SSL和超时
         return new OkHttpClient.Builder()
             .sslSocketFactory(sslContext.getSocketFactory(), (X509TrustManager) trustAllCerts[0])
             .hostnameVerifier((hostname, session) -> true)
@@ -1372,85 +1382,18 @@ public class CommonFunc {
 
 
 
-        OkHttpClient okHttpClient =  new OkHttpClient().newBuilder()
+        OkHttpClient okHttpClient = (httpClientFactory != null)
+                ? httpClientFactory.createClientSeconds(60, 60, 60)
+                : new OkHttpClient().newBuilder()
                 .connectTimeout(1, TimeUnit.MINUTES)
                 .readTimeout(1, TimeUnit.MINUTES)
                 .writeTimeout(1, TimeUnit.MINUTES)
-                .build()   ;
+                .build();
         String orgQuery = query;
         try {
 
-            // 使用JSONObject构建请求，避免字符串格式问题
-            JSONObject modelCompletionParams = new JSONObject();
-            modelCompletionParams.set("frequency_penalty", 0);
-            modelCompletionParams.set("max_tokens", 4096);
-            modelCompletionParams.set("presence_penalty", 0);
-            modelCompletionParams.set("stop", new String[]{});
-            modelCompletionParams.set("temperature", 0);
-            modelCompletionParams.set("top_p", 1);
-
-            JSONObject modelConfig = new JSONObject();
-            modelConfig.set("completion_params", modelCompletionParams);
-            modelConfig.set("is_system", true);
-            modelConfig.set("mode", "chat");
-            modelConfig.set("name", "gpt-4o-5");
-            modelConfig.set("provider", "azure_openai");
-            modelConfig.set("vision", true);
-
-            JSONObject imageConfig = new JSONObject();
-            imageConfig.set("detail", "high");
-            imageConfig.set("enabled", false);
-            imageConfig.set("number_limits", 3);
-            imageConfig.set("transfer_methods", new String[]{"remote_url", "local_file"});
-
-            JSONObject fileUploadConfig = new JSONObject();
-            fileUploadConfig.set("image", imageConfig);
-
-            JSONObject systemParameters = new JSONObject();
-            systemParameters.set("audio_file_size_limit", 50);
-            systemParameters.set("file_size_limit", 25);
-            systemParameters.set("image_file_size_limit", 10);
-            systemParameters.set("video_file_size_limit", 100);
-            systemParameters.set("workflow_file_upload_limit", 10);
-
-            JSONObject textToSpeech = new JSONObject();
-            textToSpeech.set("enabled", false);
-            textToSpeech.set("language", "");
-            textToSpeech.set("voice", "");
-
-            JSONObject userAppConfig = new JSONObject();
-            userAppConfig.set("multiple_rounds_of_dialogue", false);
-            userAppConfig.set("public_domain_dataset", false);
-            userAppConfig.set("personal_domain_dataset", false);
-            userAppConfig.set("index_enhance", false);
-
-            JSONObject requestJson = new JSONObject();
-            requestJson.set("model_config", new JSONObject()
-                .set("annotation_reply", new JSONObject().set("enabled", false))
-                .set("file_upload", fileUploadConfig)
-                .set("index_enhance_config", null)
-                .set("model", modelConfig)
-                .set("more_like_this", new JSONObject().set("enabled", false))
-                .set("opening_statement", "")
-                .set("retriever_resource", new JSONObject().set("enabled", false))
-                .set("sensitive_word_avoidance", new JSONObject().set("enabled", false))
-                .set("speech_to_text", new JSONObject().set("enabled", false))
-                .set("suggested_questions", new String[]{})
-                .set("suggested_questions_after_answer", new JSONObject().set("enabled", false))
-                .set("system_parameters", systemParameters)
-                .set("text_to_speech", textToSpeech)
-                .set("url_format", null)
-                .set("user_input_form", new String[]{})
-                .set("userAppConfig", userAppConfig)
-            );
-            requestJson.set("response_mode", "blocking");
-            requestJson.set("inputs", new JSONObject());
-            requestJson.set("query", query);
-            requestJson.set("conversation_id", "");
-            requestJson.set("files", new String[]{});
-            requestJson.set("custom_files", new String[]{});
-            requestJson.set("file_read_info", null);
-            requestJson.set("open_internet", false);
+            // 使用共享的请求体构建器
+            JSONObject requestJson = LinkyoyoRequestBuilder.buildRequest(query, "gpt-4o-5", 0f, 4096);
 
             String requestContent = requestJson.toString();
             RequestBody requestBody = RequestBody.create(MediaType.parse("application/json; charset=utf-8"), requestContent);

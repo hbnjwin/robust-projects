@@ -1,0 +1,62 @@
+[[criterion]]
+name = "SSL信任管理器重复消除"
+description = "[Explicit] 是否将CommonFunc和DynamicLLMService中各出现一次的信任所有证书SSL配置统一为一处。1: 未处理SSL重复；2: 识别了重复但未合并；3: 合并到一个类但接口设计不合理；4: 创建了独立的工厂类统一SSL配置；5: 工厂类提供可复用的OkHttpClient实例且支持配置化切换信任策略。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了HttpClientFactory类统一SSL配置和OkHttpClient创建，消除了两处重复的TrustManager代码，但工厂类的命名和设计上未体现安全配置的可切换性。"
+
+[[criterion]]
+name = "Linkyoyo请求构建统一"
+description = "[Explicit] 是否将CommonFunc.callAi和DynamicLLMService.buildLinkyoyoAgentRequest中完全重复的约80行嵌套JSON请求体构建逻辑统一为一处。1: 未处理请求构建重复；2: 识别了重复但未提取；3: 提取了部分逻辑但两处仍有残留重复；4: 完全统一到一个Builder或工具类；5: 统一后的请求构建支持参数化配置且两个调用点无残留重复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了LinkyoyoRequestBuilder类封装了嵌套JSON请求体的构建逻辑，CommonFunc.callAi和DynamicLLMService.buildLinkyoyoAgentRequest中约80行的重复代码替换为调用LinkyoyoRequestBuilder。"
+
+[[criterion]]
+name = "提供商抽象层设计"
+description = "[Implicit] 是否在重构中引入了合理的AI提供商抽象（如策略接口、枚举类型、Provider模式），使新增AI提供商更容易接入。1: 未引入任何抽象；2: 简单的if-else或switch替代；3: 引入了枚举类型区分提供商但缺少统一接口；4: 引入了Provider接口或策略模式；5: 完整的Provider抽象层，新增提供商只需实现接口并注册。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了LLMProviderType枚举和LLMConfig抽象基类，通过AzureOpenAIConfig、OpenAIConfig、LinkyoyoAgentConfig三个子类区分提供商，并由LLMConfigService作为桥接服务构建配置体系，提供商抽象结构较完整。"
+
+[[criterion]]
+name = "CommonFunc静态方法迁移"
+description = "[Explicit] 是否将CommonFunc中分散的AI调用静态方法（CallOpenAiBySse、callNewOpenAi、callAi、callAiWithOkHttp、callDeepSeekAi）迁移到统一的服务层。1: 静态方法原封不动；2: 只迁移了1-2个方法；3: 迁移了主要方法但部分辅助方法残留；4: 所有AI调用方法迁移到DynamicLLMService或新服务类；5: 完全迁移且CommonFunc中不再保留任何AI相关代码。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修改了DynamicLLMService的switch分派逻辑并创建了配置层，但CommonFunc中的静态AI调用方法本身未被迁移，仍保留在CommonFunc类中。"
+
+[[criterion]]
+name = "DynamicLLMService整合"
+description = "[Explicit] 是否改进了DynamicLLMService的callLLM方法，消除其内部的switch语句分派模式，使其成为真正统一的AI调用入口。1: switch结构未变；2: 减少了switch分支但结构保留；3: switch替换为策略分派但仍在同一类中；4: 通过Provider接口或配置驱动分派；5: 完全消除switch，通过注册机制动态选择Provider。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了DynamicLLMService的内部结构，通过LLMConfigService桥接现有配置到新配置体系，但callLLM方法内部的分派模式仍然保留，只是配置获取方式改为通过LLMAgentConfig。"
+
+[[criterion]]
+name = "配置与调用解耦"
+description = "[Implicit] 是否将AI提供商的配置（密钥、端点、模型参数）与调用逻辑（HTTP请求、响应解析）分离到不同层次。1: 配置和调用混在一起；2: 部分分离但仍有耦合；3: 配置提取到独立类但调用方法仍直接引用配置字段；4: 配置和调用通过接口解耦；5: 完全分层——配置层读取外部属性，调用层仅依赖配置接口。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了配置层与调用层分离，但配置类同时承担了配置构建和桥接两个职责，分层不够清晰。"
+
+[[criterion]]
+name = "重构验证完整性"
+description = "[Implicit] 是否通过编译、运行或代码审查验证重构后的代码不会引入功能回归。1: 未做任何验证；2: 只做了代码审查；3: 尝试编译但未解决编译问题；4: 通过Bash执行编译或grep验证确认无遗漏；5: 完整的编译验证通过且确认所有调用点已更新。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "创建了大量配置文件和工具类但未通过Bash执行编译验证，主要依赖代码结构的正确性推断。"
