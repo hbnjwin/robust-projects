@@ -1,53 +1,44 @@
 [[criterion]]
-name = "表单验证规则触发"
-description = "[Explicit] 是否修复点击提交按钮时NaiveUI表单验证规则不生效的问题。1: 提交时仍无验证直接提交; 2: 部分字段验证触发但必填项遗漏; 3: 所有必填项验证触发但异步校验缺失; 4: formRef.validate()在handleSubmit中正确调用且阻止无效提交; 5: validate返回Promise链式处理且验证失败时定位到首个错误字段"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "handleSubmit中调用formRef.value.validate()并在Promise.catch中阻止提交，验证规则对所有必填字段生效且错误提示正确显示"
-
-[[criterion]]
 name = "编辑模式数据回填"
-description = "[Explicit] 是否在编辑资源时将已有数据正确填充到表单各字段中。1: 编辑弹窗打开后所有字段为空; 2: 部分字段回填但类型转换错误如数字变字符串; 3: 基本字段回填正确但枚举类型select未选中; 4: 所有字段含select下拉框正确回填且类型匹配; 5: 回填后表单状态为pristine且修改后dirty状态正确追踪"
+description = "[Explicit] 是否修复编辑已有资源时表单弹窗不回填数据导致用户需重新输入的问题。1: 编辑弹窗打开后所有字段仍为空; 2: 部分字段回填但类型字段select未正确选中; 3: 基本字段回填正确但数值字段有类型转换问题; 4: 所有字段含NSelect下拉框正确回填且类型匹配不丢失精度; 5: 回填后表单dirty状态正确追踪且修改指示器显示哪些字段被改动"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "编辑模式下watch监听editId变化，从资源列表中查找对应数据并逐字段赋值给formData，select组件通过value-field配置确保枚举值正确回填"
+rationale = "ResourceModel.vue编辑模式下watch监听editId变化，从资源列表中查找对应数据并逐字段赋值给formData，NSelect通过value-field配置确保枚举值正确回填"
 
 [[criterion]]
-name = "额定功率数值校验"
-description = "[Explicit] 是否对额定功率字段添加正数校验，拒绝负数和零值输入。1: 无数值范围校验接受任意值; 2: 有min属性但未阻止手动输入负数; 3: 自定义validator拒绝负数和零但错误提示不明确; 4: validator含正数检查加NInputNumber的min属性双重保护加明确错误提示; 5: 双重校验加单位提示加合理上限限制加输入时实时反馈"
+name = "类型切换字段清除"
+description = "[Explicit] 是否在资源类型从光伏切换到储能时清空不属于新类型的字段值防止提交脏数据。1: 切换类型后旧字段值仍保留并被提交; 2: 清除了部分字段但遗漏了某些类型特有字段; 3: watch监听类型变化时重置额外字段但有时序问题; 4: watch handler中根据新类型定义的字段集合重置所有不属于该类型的字段为null; 5: 类型切换加字段重置加用户确认提示防止误操作"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "NInputNumber组件设置min=0.01阻止零和负值，同时自定义validator函数检查typeof为number且大于0，双重校验配合明确的错误提示"
+rationale = "ResourceModel.vue中watch监听resourceType变化，回调中根据新类型的fieldConfig映射表将不属于当前类型的字段值重置为null，确保切换后无脏数据"
 
 [[criterion]]
-name = "资源名称重复检查"
-description = "[Implicit] 是否在提交前检查资源名称是否与已有资源重复（编辑时排除自身）。1: 无重复检查允许同名资源; 2: 前端检查但未排除编辑模式下的自身记录; 3: 正确排除自身的前端去重检查; 4: 前端即时检查加提交时再验证的双重保护; 5: 异步validator实时检查加防抖加编辑排除自身加后端校验"
-type = "likert"
-points = 5
-weight = 1.0
-score = 3
-rationale = "自定义validator中通过遍历现有资源列表检查名称是否重复，但未处理编辑模式下排除当前资源自身的逻辑"
-
-[[criterion]]
-name = "表单重置与弹窗关闭"
-description = "[Implicit] 是否在弹窗关闭或切换新增/编辑模式时正确重置表单状态和验证错误。1: 关闭弹窗后再打开仍保留上次数据和错误; 2: 数据重置但验证错误提示残留; 3: 数据和错误都重置但编辑切新增时有残留; 4: handleClose中formRef.restoreValidation()清除错误加重置formData; 5: 完整重置含动画过渡后执行防止闪烁"
+name = "额定功率正数校验"
+description = "[Explicit] 是否对额定功率字段添加正数校验拒绝负数和零值输入。1: 无数值范围校验接受任意值包括负数; 2: 有NInputNumber的min属性但未阻止手动输入负数; 3: 自定义validator拒绝负数和零但错误提示不明确; 4: validator含正数检查加NInputNumber的min属性双重保护加明确错误提示; 5: 双重校验加合理上限限制加输入时实时反馈错误状态"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "弹窗关闭和模式切换时调用formRef.value.restoreValidation()清除错误状态，并将formData重置为初始默认值对象"
+rationale = "NInputNumber组件设置min=0.01阻止零和负值输入，同时自定义validator函数检查值大于0，双重校验配合明确的中文错误提示信息"
 
 [[criterion]]
-name = "类型约束与接口定义"
-description = "[Implicit] 是否为资源表单数据定义TypeScript接口确保字段类型与NaiveUI组件props匹配。1: 使用any或无类型定义; 2: 有interface但字段类型与组件不匹配; 3: 基本类型定义正确但枚举值用string未用联合类型; 4: 完整interface含联合类型枚举加nullable字段加组件props类型对齐; 5: 类型定义含zod或valibot运行时校验联动"
+name = "条件字段动态显隐"
+description = "[Implicit] 是否根据资源类型正确控制额外字段（如充放电功率、电池容量、装机容量）的动态显示和隐藏。1: 所有类型显示相同字段; 2: v-if条件判断但字段配置硬编码且不完整; 3: 根据类型显示对应额外字段但切换时有闪烁; 4: 通过computed或map配置根据当前类型动态渲染对应的表单字段组; 5: 动态字段加过渡动画加字段说明提示加类型间字段差异可视化"
 type = "likert"
 points = 5
 weight = 1.0
 score = 4
-rationale = "定义了ResourceType联合类型字面量和ResourceFormData接口，字段类型与NaiveUI表单组件的props精确匹配"
+rationale = "ResourceModel.vue通过typeFieldConfig对象映射每种资源类型到其额外字段列表，模板中v-for遍历当前类型的字段配置动态渲染表单项"
+
+[[criterion]]
+name = "表单提交数据完整性"
+description = "[Implicit] 是否确保表单提交的数据仅包含当前类型的有效字段且格式正确。1: 提交数据包含其他类型的字段值; 2: 字段过滤了但数值类型转换有问题; 3: 提交前过滤无关字段但对数值精度处理不完整; 4: handleSubmit中根据当前类型筛选有效字段组装提交数据且数值字段类型正确; 5: 数据组装加字段校验加提交前二次确认加提交后表单重置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ResourceModel.vue的handleSubmit中根据当前resourceType从typeFieldConfig获取有效字段列表，仅组装属于当前类型的字段数据提交"
