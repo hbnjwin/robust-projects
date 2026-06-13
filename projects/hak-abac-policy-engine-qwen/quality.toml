@@ -1,0 +1,44 @@
+[[criterion]]
+name = "策略匹配算法"
+description = "[Explicit] 是否解读了ABAC策略引擎的策略匹配方式（贪婪匹配还是短路匹配）。1: 未分析匹配方式；2: 描述了匹配但未区分贪婪和短路；3: 识别了匹配方式但未分析其对性能的影响；4: 准确识别了匹配方式并分析了性能影响和安全影响；5: 匹配方式分析完整且对比了贪婪和短路两种策略的安全权衡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在policy_engine.py分析中识别了引擎采用遍历所有策略的贪婪匹配方式，但未量化分析策略数量增长对判定延迟的影响"
+
+[[criterion]]
+name = "冲突合并规则"
+description = "[Explicit] 是否分析了多条策略命中时的冲突合并规则。1: 未分析冲突处理；2: 提到了冲突但未分析合并规则；3: 识别了deny-override或allow-override但未分析实现；4: 准确分析了合并规则的实现代码并举例说明；5: 合并规则分析完整且指出了当前规则可能导致的安全漏洞"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了引擎采用deny-override策略（任何一条deny策略命中则拒绝），但未举例说明当allow和deny策略同时命中时的具体处理逻辑"
+
+[[criterion]]
+name = "跨部门越权根因"
+description = "[Explicit] 是否准确定位了技术部主管策略被其他部门主管命中的根因。1: 未分析越权；2: 提到了越权但未定位代码；3: 定位到策略配置但根因分析不准确；4: 准确定位到属性匹配条件中department字段的匹配逻辑错误；5: 根因定位精确且给出了策略修复方案和回归测试建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了越权可能是策略配置中主体条件的department字段使用了contains而非equals运算符，导致其他包含'技术'的部门（如'技术支持部'）也命中了策略"
+
+[[criterion]]
+name = "属性条件运算符"
+description = "[Explicit] 是否解读了策略条件中支持的比较运算符及其实现。1: 未分析运算符；2: 只列出了部分运算符；3: 列出了主要运算符但未分析实现；4: 完整列出运算符并分析了match_condition的实现逻辑；5: 运算符分析完整且指出了缺少的运算符类型和扩展方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "列出了eq/in/contains/gt/lt等运算符，但对match_condition方法的具体dispatch逻辑（if-elif链还是策略模式）分析不够具体"
+
+[[criterion]]
+name = "策略数量性能影响"
+description = "[Implicit] 是否评估了策略数量增长对判定延迟的影响并给出优化建议。1: 未评估性能；2: 提到了性能但未量化；3: 给出了O(n)复杂度分析但未提供优化方案；4: 分析了性能瓶颈并建议索引或缓存优化；5: 性能评估完整含基准测试建议和缓存失效策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "提到了策略越多判定越慢但未做复杂度分析，建议用缓存但未说明缓存key的设计和失效策略"
