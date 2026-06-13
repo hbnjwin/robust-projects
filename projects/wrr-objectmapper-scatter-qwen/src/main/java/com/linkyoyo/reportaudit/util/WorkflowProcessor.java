@@ -41,7 +41,8 @@ public class WorkflowProcessor {
     
     private JPAQueryFactory queryFactory;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private ObjectMapper objectMapper;
     
     @javax.annotation.PostConstruct
     public void init() {

@@ -1,0 +1,53 @@
+[[criterion]]
+name = "ObjectMapper实例识别"
+description = "[Explicit] 是否完整识别项目中16处以上new ObjectMapper()独立实例的分布位置。1: 只识别了部分实例；2: 识别了5-8处；3: 识别了9-12处；4: 识别了13-16处并分析了各实例的使用场景；5: 完整识别16处以上并区分了可替换和需保留的实例。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Agent和Grep搜索定位了SysOperaLogAspect、TokenInterceptor、JwtUtil、WorkflowProcessor、EnhancedWorkflowProcessor、TextinService、TasksServiceImpl等文件中的独立ObjectMapper实例，并区分了每个实例的使用场景。"
+
+[[criterion]]
+name = "JacksonConfig统一配置"
+description = "[Explicit] 是否创建了集中的JacksonConfig配置类提供统一的ObjectMapper Bean，并配置了合理的默认行为（如FAIL_ON_UNKNOWN_PROPERTIES=false）。1: 未创建统一配置；2: 创建了配置类但未注册为Spring Bean；3: 创建了@Bean但配置不完整；4: @Bean @Primary完整配置且提供了静态访问器；5: 完整配置含@Primary Bean、静态访问器、合理的序列化和反序列化默认设置。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "创建了JacksonConfig.java提供@Bean @Primary的ObjectMapper，配置了FAIL_ON_UNKNOWN_PROPERTIES=false，同时提供了staticInstance()静态访问器供JwtUtil等非Spring管理类使用。"
+
+[[criterion]]
+name = "Spring依赖注入替换"
+description = "[Explicit] 是否将Spring管理的类（如@Service、@Component、@Aspect）中的new ObjectMapper()替换为通过依赖注入使用统一Bean。1: 未替换任何实例；2: 替换了1-3处；3: 替换了主要的Spring组件中的实例；4: 所有Spring管理类都改为依赖注入；5: 所有Spring管理类使用注入且验证了注入后行为正确。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将SysOperaLogAspect中遮蔽注入字段的局部new ObjectMapper()删除，WorkflowProcessor和EnhancedWorkflowProcessor改为通过构造器注入，TextinService通过@RequiredArgsConstructor自动注入。"
+
+[[criterion]]
+name = "热路径实例消除"
+description = "[Explicit] 是否消除了TasksServiceImpl.getTasksDetail方法中每次调用都new两个ObjectMapper的性能问题（422行和447行）。1: 未处理TasksServiceImpl；2: 只处理了其中一处；3: 两处都替换但使用方式不一致；4: 两处都替换为注入的共享实例；5: 替换为共享实例并验证了JSON解析行为不受影响。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将TasksServiceImpl.getTasksDetail方法中422行和447行每次调用new ObjectMapper()的两处替换为注入的共享ObjectMapper实例。"
+
+[[criterion]]
+name = "序列化行为统一"
+description = "[Implicit] 是否确保替换后所有使用点的JSON序列化和反序列化行为一致（特别是对未知属性的处理策略）。1: 未考虑行为一致性；2: 意识到问题但未验证；3: 配置了统一设置但未逐一验证各使用点；4: 验证了主要使用点的行为一致性；5: 完整验证所有使用点的序列化行为且处理了特殊配置需求。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "统一配置FAIL_ON_UNKNOWN_PROPERTIES=false并在验证阶段通过grep确认剩余的new ObjectMapper()均为预期保留的实例。"
+
+[[criterion]]
+name = "特殊场景保留判断"
+description = "[Implicit] 是否正确判断了需要保留独立ObjectMapper的场景（如RedisSessionConfig的Redis序列化专用配置），避免不当替换导致功能异常。1: 全部替换未考虑特殊场景；2: 替换了不应替换的实例；3: 保留了特殊场景但未说明理由；4: 正确识别并保留了特殊场景（如Redis专用）并说明理由；5: 正确保留并在代码或总结中说明了每处保留的具体理由。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "保留了RedisSessionConfig中的独立ObjectMapper但未在总结中详细说明每处保留或替换的具体理由。"

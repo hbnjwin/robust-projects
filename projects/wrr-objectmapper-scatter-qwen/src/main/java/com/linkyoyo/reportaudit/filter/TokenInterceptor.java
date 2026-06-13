@@ -18,6 +18,7 @@ public class TokenInterceptor implements HandlerInterceptor {
 
     private static final String AUTHORIZATION_HEADER = "Authorization";
     private static final String AUTHORIZATION_TYPE = "Bearer";
+    private static final ObjectMapper OBJECT_MAPPER = new ObjectMapper();
 
 
 //    private final SysOperatorRepository sysOperatorRepository;
@@ -68,8 +69,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             } else {
                 json = JSONUtil.parseObj(returnMessage);
                 String userId = json.getStr("userId");
-                ObjectMapper objectMapper = new ObjectMapper();
-                SysOperator sysOperator = objectMapper.readValue(json.getStr("sysUser"), SysOperator.class);
+                SysOperator sysOperator = OBJECT_MAPPER.readValue(json.getStr("sysUser"), SysOperator.class);
                 token = JwtUtil.generateToken(sysOperator);
                 json = new JSONObject();
                 json.put("code", 401) ;

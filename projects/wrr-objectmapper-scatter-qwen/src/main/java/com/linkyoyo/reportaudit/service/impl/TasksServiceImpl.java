@@ -77,6 +77,9 @@ public class TasksServiceImpl implements TasksService {
     @Autowired
     private CheckItemsRepository checkItemsRepository;
 
+    @Autowired
+    private ObjectMapper objectMapper;
+
     @Override
     public PageInfo<TasksInfo> getTasksList(TasksQuery tasksQuery) {
         Pageable pageable = PageableUtil.build(tasksQuery);
@@ -419,7 +422,6 @@ public class TasksServiceImpl implements TasksService {
         List<ReferenceDocInfo> listReferenceDoc = new ArrayList<>();
         if (Objects.nonNull(tasks) && Objects.nonNull(tasks.getReferenceDocId()) && !tasks.getReferenceDocId().trim().isEmpty()) {
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
                 // 解析JSONB格式的referenceDocId，期望格式如：[22, 23] 或 ["22", "23"]
                 List<Integer> docIds = objectMapper.readValue(tasks.getReferenceDocId(), new TypeReference<List<Integer>>() {});
                 
@@ -444,7 +446,6 @@ public class TasksServiceImpl implements TasksService {
         List<CheckItemsSimpleInfo> lstCheckItems = new ArrayList<>();
         if (Objects.nonNull(tasks) && Objects.nonNull(tasks.getSelectedItems()) && !tasks.getSelectedItems().trim().isEmpty()) {
             try {
-                ObjectMapper objectMapper = new ObjectMapper();
                 // 解析JSONB格式的selectedItems，期望格式如：[1, 2, 3] 或 ["1", "2", "3"]
                 List<Integer> checkItemIds = objectMapper.readValue(tasks.getSelectedItems(), new TypeReference<List<Integer>>() {});
                 
