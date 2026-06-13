@@ -1,0 +1,53 @@
+[[criterion]]
+name = "OCR方法重复模式识别"
+description = "[Explicit] 是否识别出8个以上文档转换方法共享的重复流程（HTTP请求构建、OkHttp调用、JSON解析、Markdown提取、文档保存、文件写入）。1: 未分析重复流程；2: 识别了部分步骤但遗漏了关键环节；3: 识别了主要流程步骤但未区分提供商差异点；4: 完整识别六步流程并明确标记了各方法的差异点（提供商、同步/异步）；5: 完整识别重复流程并分析了各方法参数签名差异、错误处理差异和返回值差异。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "识别了HTTP调用、响应解析等重复步骤并提取了14个私有辅助成员，但对三个提供商（Textin、BlueCloud、SysParaset）之间的差异点标记不够清晰，部分辅助方法的职责边界模糊。"
+
+[[criterion]]
+name = "模板方法或策略提取"
+description = "[Explicit] 是否通过模板方法、策略模式或辅助方法消除了8个方法之间的代码重复。1: 未做任何重复消除；2: 只提取了1-2个辅助方法；3: 提取了多个辅助方法但主流程仍有重复；4: 通过辅助方法消除了大部分重复，各转换方法精简为调用辅助方法的编排逻辑；5: 通过模板方法或策略模式从根本上消除重复，新增方法只需指定差异参数。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "提取了14个私有成员（含executeHttpRequest、parseMarkdownContent等），将每个转换方法精简为调用辅助方法的编排逻辑，重复消除效果显著，行数从1451减至1032行（29%缩减）。"
+
+[[criterion]]
+name = "空指针修复覆盖"
+description = "[Explicit] 是否在重构中顺带修复了query提到的响应体空指针问题（之前只改了4个方法，另4个遗漏）。1: 未注意到空指针问题；2: 注意到但未修复；3: 修复了部分方法的空指针；4: 通过统一辅助方法自然修复了所有方法的空指针问题；5: 通过统一辅助方法修复空指针并添加了显式的空值检查和错误日志。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在提取executeHttpRequest辅助方法时明确添加了空指针保护，并在总结中特别提到修复了原来只改了4个方法漏了4个的bug，通过统一入口确保所有8个方法都受到保护。"
+
+[[criterion]]
+name = "同步异步差异处理"
+description = "[Explicit] 是否合理处理了同步方法和异步方法（Async后缀）之间的差异，避免在统一模板中丢失异步特性。1: 未区分同步和异步；2: 将异步方法改为同步；3: 保留了异步方法但实现中混入了同步逻辑；4: 正确区分同步和异步，异步方法通过CompletableFuture或@Async实现；5: 统一模板支持同步和异步两种模式，通过参数或回调切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "在提取辅助方法时未明确区分同步和异步方法的实现差异，异步方法（convertPdfToMarkdownAsync等）的CompletableFuture或@Async机制在重构中可能被简化处理。"
+
+[[criterion]]
+name = "代码缩减幅度"
+description = "[Explicit] 是否将TextinService从约1450行有效精简（目标至少减少25%以上）。1: 行数基本未变或增加；2: 减少不到15%；3: 减少15-25%；4: 减少25-35%；5: 减少35%以上。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "从1451行减至1032行，减少29%，接近但未达到35%的优秀标准。"
+
+[[criterion]]
+name = "提供商扩展性"
+description = "[Implicit] 是否在重构后使新增OCR提供商变得更简单（无需再复制完整流程）。1: 新增提供商仍需完整复制所有步骤；2: 新增提供商仍需大量复制；3: 新增提供商只需实现差异部分但缺少明确扩展点；4: 新增提供商通过实现特定接口或继承即可接入；5: 提供了明确的扩展点（如策略接口或配置类），新增提供商只需添加配置和差异实现。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "新增OCR提供商仍需在TextinService中完整添加新方法并手动调用各辅助方法，辅助方法提取降低了每个方法内部的重复但新增方法的框架代码仍需完整编写，扩展成本改善有限。"
