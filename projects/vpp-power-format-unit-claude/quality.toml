@@ -1,8 +1,53 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "Tooltip原始值格式化"
+description = "[Explicit] 是否修复Dashboard总功率卡片的tooltip显示原始瓦特值而非格式化的MW值。1: tooltip仍显示原始850000 W; 2: 调用了格式化但单位转换系数错误; 3: 正确调用formatPowerMw但tooltip模板绑定位置不对; 4: tooltip的content绑定调用formatPowerMw()显示如0.85 MW; 5: tooltip格式化加悬停时显示完整精度如850.000 kW的补充信息"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "Dashboard.vue中KPI卡片的tooltip内容绑定formatPowerMw()函数，原始值经过除以1000000转换后按MW单位格式化显示，模板中直接调用方法绑定"
+
+[[criterion]]
+name = "功率排序数值化"
+description = "[Explicit] 是否修复ResourceList按功率排序时因字符串比较导致顺序错误的问题。1: 排序仍按字符串比较如100排在99后面; 2: 用Number()转换但未处理非数值; 3: 排序比较函数中使用parseFloat提取数值部分; 4: 排序基于原始number类型的powerKw字段而非格式化后的字符串; 5: 支持多列排序加升降序切换加空值排末尾"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ResourceList.vue排序比较函数使用资源对象的原始capacityKw数值字段做减法比较，NaN和undefined输入通过power.ts的toSafeNumber归零处理"
+
+[[criterion]]
+name = "空值安全防护"
+description = "[Explicit] 是否修复formatPowerMw传入null或undefined时返回NaN MW的问题。1: 仍返回NaN MW; 2: 判断null但遗漏undefined和NaN; 3: 入口判断null/undefined/NaN统一返回0.00 MW; 4: toSafeNumber工具函数处理所有非数值输入含Infinity; 5: 安全函数加TypeScript重载签名区分number和nullable参数"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "formatPowerMw函数入口通过value == null或Number.isNaN(value)守卫判断，非法输入统一返回0.00 MW，参数类型声明为number或null或undefined联合类型"
+
+[[criterion]]
+name = "负零显示消除"
+description = "[Explicit] 是否处理极小负数如-0.000001格式化后显示为-0.00 MW的问题。1: 仍显示-0.00 MW; 2: 用Math.abs但改变了负数的正常显示; 3: 格式化后字符串检查是否为-0.00并替换; 4: 格式化前对绝对值小于显示精度阈值的数做归零处理; 5: 阈值可配置加正负零统一加不影响正常负值显示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "formatPowerMw中对转换后的MW值检查绝对值是否小于0.005即toFixed(2)的精度阈值，若是则置为0避免-0.00显示且不影响正常负值"
+
+[[criterion]]
+name = "格式化函数一致性"
+description = "[Implicit] 是否确保所有页面调用power.ts时使用统一的格式化接口而非各自实现。1: 不同页面各自实现格式化逻辑; 2: 部分页面调用power.ts部分内联; 3: 所有页面调用power.ts但传参方式不统一; 4: Dashboard和ResourceList统一调用formatPowerMw和formatPowerKw; 5: 统一接口加自动单位选择（kW/MW/GW）加国际化支持"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Dashboard.vue和ResourceList.vue统一从utils/power导入formatPowerMw和kWToMW函数，调用方式一致"
+
+[[criterion]]
+name = "单元测试覆盖"
+description = "[Implicit] 是否为power.ts的格式化函数编写单元测试覆盖正常值、边界值和异常值。1: 无测试; 2: 仅测试正常路径1-2个用例; 3: 含正常值和null的测试但缺少边界; 4: 覆盖正常转换加null/undefined/NaN加负零加极大值等场景; 5: 完整测试含参数化用例加性能基准"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "未创建独立的单元测试文件验证power.ts的格式化函数在各种边界输入下的行为"
