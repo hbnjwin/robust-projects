@@ -4,6 +4,7 @@ import cn.hutool.core.util.StrUtil;
 import cn.hutool.json.JSONObject;
 import cn.hutool.json.JSONUtil;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.linkyoyo.reportaudit.config.JacksonConfig;
 import com.linkyoyo.reportaudit.entity.QSysOperator;
 import com.linkyoyo.reportaudit.entity.SysOperator;
 import com.linkyoyo.reportaudit.security.JwtUtil;
@@ -68,7 +69,7 @@ public class TokenInterceptor implements HandlerInterceptor {
             } else {
                 json = JSONUtil.parseObj(returnMessage);
                 String userId = json.getStr("userId");
-                ObjectMapper objectMapper = new ObjectMapper();
+                ObjectMapper objectMapper = JacksonConfig.staticInstance();
                 SysOperator sysOperator = objectMapper.readValue(json.getStr("sysUser"), SysOperator.class);
                 token = JwtUtil.generateToken(sysOperator);
                 json = new JSONObject();

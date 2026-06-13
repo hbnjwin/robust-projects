@@ -64,8 +64,12 @@ public class EnhancedWorkflowProcessor {
     
     private JPAQueryFactory queryFactory;
 
-    private final ObjectMapper objectMapper = new ObjectMapper();
-    
+    private final ObjectMapper objectMapper;
+
+    public EnhancedWorkflowProcessor(ObjectMapper objectMapper) {
+        this.objectMapper = objectMapper;
+    }
+
     @javax.annotation.PostConstruct
     public void init() {
         this.queryFactory = new JPAQueryFactory(entityManager);
