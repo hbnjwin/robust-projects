@@ -1,0 +1,49 @@
+# ============================================
+# AI Services Configuration
+# All sensitive credentials must be provided via environment variables
+# or external property sources. NEVER commit real keys to source control.
+# ============================================
+
+# --- Azure OpenAI (primary, used by CallOpenAiBySse / callOpenAi / callNewOpenAi) ---
+ai:
+  azure:
+    endpoint: ${AI_AZURE_ENDPOINT:}
+    key: ${AI_AZURE_KEY:}
+    service-version: ${AI_AZURE_SERVICE_VERSION:2024-05-01-preview}
+    deployment-sse: ${AI_AZURE_DEPLOYMENT_SSE:gpt-4o-mini}
+    deployment: ${AI_AZURE_DEPLOYMENT:gpt-4o-mini}
+    deployment-new: ${AI_AZURE_DEPLOYMENT_NEW:us-east-gpt4o}
+
+  # --- Azure OpenAI fallback (used by callAiWithOkHttp) ---
+  azure-fallback:
+    url: ${AI_AZURE_FALLBACK_URL:}
+    key: ${AI_AZURE_FALLBACK_KEY:}
+    model: ${AI_AZURE_FALLBACK_MODEL:gpt-4o-5}
+    version: ${AI_AZURE_FALLBACK_VERSION:2024-05-01-preview}
+    prompt: ${AI_AZURE_FALLBACK_PROMPT:解析内容：标准类型（国标   ||   行业标准 ||  企业标准/地方标准）,标准号,标准中文名,标准英文名，发布日期,实施日期,标准状态,发布单位,提出单位,起草单位,起草人,范围,规范性引用文件,**前言,引言,术语和定义,参考文献**;以json格式输出}
+
+  # --- DeepSeek (used by callDeepSeekAi) ---
+  deepseek:
+    url: ${AI_DEEPSEEK_URL:}
+    key: ${AI_DEEPSEEK_KEY:}
+    model: ${AI_DEEPSEEK_MODEL:deepseek-chat}
+    prompt: ${AI_DEEPSEEK_PROMPT:解析内容：标准类型（国标   ||   行业标准 ||  企业标准/地方标准）,标准号,标准中文名,标准英文名，发布日期,实施日期,标准状态,发布单位,提出单位,起草单位,起草人,范围,规范性引用文件,**前言,引言,术语和定义,参考文献**;以json格式输出}
+
+# --- Linkyoyo Agent (upload + chat) ---
+linkyoyo:
+  ai:
+    url: ${LINKYOYO_AI_URL:}
+    token: ${LINKYOYO_AI_TOKEN:}
+
+# --- BlueCloud AI (file upload / markdown / auth) ---
+bluecloud:
+  ai:
+    upload-api-url: ${BLUECLOUD_AI_UPLOAD_URL:}
+    markdown-api-url: ${BLUECLOUD_AI_MARKDOWN_URL:}
+    auth-token: ${BLUECLOUD_AI_AUTH_TOKEN:}
+    provider:
+      name: textin
+    model:
+      name: gpt-4o-5
+    temperature: 0.7
+    query: 请解析文件为markdown格式内容

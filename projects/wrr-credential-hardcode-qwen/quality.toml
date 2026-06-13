@@ -1,0 +1,53 @@
+[[criterion]]
+name = "Azure OpenAI凭证外部化"
+description = "[Explicit] 是否将CommonFunc中硬编码的Azure OpenAI AzureKeyCredential和endpoint URL（至少三处）提取到外部配置。1: 未处理任何Azure凭证；2: 只处理了一处；3: 处理了主要调用但遗漏备用端点或fallback密钥；4: 主端点和备用端点的key与URL均已外部化；5: 所有Azure凭证外部化并通过Spring @ConfigurationProperties或@Value注入。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将CommonFunc中Azure OpenAI的AzureKeyCredential和endpoint URL提取到新建的AiConfig.java配置类，通过@Value注入application.yml中的属性值，覆盖了主要的callOpenAi和callNewOpenAi方法中的凭证，但未创建独立的Properties类来管理这些配置。"
+
+[[criterion]]
+name = "DeepSeek凭证和备用端点处理"
+description = "[Explicit] 是否将DeepSeek的API密钥和备用Azure端点/密钥从CommonFunc代码中移除并外部化。1: 未处理DeepSeek相关凭证；2: 处理了DeepSeek但遗漏备用端点；3: DeepSeek密钥已外部化但备用端点仍硬编码；4: DeepSeek和备用端点均已外部化到配置文件；5: 所有备用凭证外部化且配置结构清晰支持多提供商切换。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在AiConfig中添加了DeepSeek的apiKey配置项，CommonFunc中的callDeepSeekAi方法改为从配置读取密钥，但备用Azure端点的处理依赖于已有的AiConfig主配置，未单独管理备用凭证的切换逻辑。"
+
+[[criterion]]
+name = "BlueCloudAi JWT令牌清理"
+description = "[Explicit] 是否将BlueCloudAiConfig中@Value默认值里嵌入的完整Bearer JWT令牌和生产URL移除，改为必须从外部配置提供。1: 未修改BlueCloudAiConfig；2: 修改了但仍保留部分默认值；3: 移除了JWT令牌默认值但URL默认值保留；4: JWT令牌和URL默认值均已清空，改为必须外部提供；5: 默认值清空并在application.yml中配置了占位符，文档说明了必需的环境变量。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改了BlueCloudAiConfig.java，移除了@Value注解中硬编码的Bearer JWT令牌和生产环境URL默认值，改为从application.yml读取配置属性。"
+
+[[criterion]]
+name = "Linkyoyo Agent URL外部化"
+description = "[Explicit] 是否将CommonFunc中callAi方法里硬编码的Linkyoyo Agent上传和聊天接口URL提取到外部配置。1: 未处理Linkyoyo相关URL；2: 只处理了其中一个URL；3: 两个URL都已外部化但配置结构不够清晰；4: URL外部化到LinkyoyoAiConfig配置类；5: URL外部化并与已有的LinkyoyoAiConfig配置体系统一管理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修改了CommonFunc中的callAi方法但Linkyoyo Agent的上传和聊天接口URL的外部化处理不够完整，未在LinkyoyoAiConfig中增加相应的URL配置属性来统一管理。"
+
+[[criterion]]
+name = "配置类Spring集成"
+description = "[Implicit] 是否利用Spring的配置管理机制（@Configuration、@Value、@ConfigurationProperties、Environment等）来管理外部化后的凭证，而非简单的常量替换。1: 使用静态常量替代硬编码；2: 使用简单的Properties文件读取；3: 使用@Value注入但配置分散在多个地方；4: 使用@Configuration集中管理，配置结构清晰；5: 使用@ConfigurationProperties类型安全绑定，配置层次分明。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了AiConfig.java作为@Configuration类集中管理AI服务凭证，通过@Value注入application.yml属性，并更新了LinkyoyoAiConfig的配置方式，配置结构较清晰。"
+
+[[criterion]]
+name = "环境变量安全模式"
+description = "[Implicit] 是否在application.yml中使用${ENV_VAR:}模式支持通过环境变量注入敏感凭证，避免凭证明文写入配置文件。1: 凭证明文写在application.yml中；2: 部分使用环境变量但主要凭证仍明文；3: 主要凭证使用环境变量但默认值非空；4: 所有敏感凭证使用${ENV_VAR:}空默认值模式；5: 环境变量模式完整并在注释或文档中说明了必需的环境变量清单。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在application.yml中使用了${ENV_VAR:}模式配置部分凭证，但并非所有敏感值都采用了环境变量注入方式，部分配置仍使用占位符默认值。"
