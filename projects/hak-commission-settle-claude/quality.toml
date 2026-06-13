@@ -1,0 +1,44 @@
+[[criterion]]
+name = "三级佣金计算逻辑"
+description = "[Explicit] 是否完整解读了直接推荐10%、二级5%、三级2%的佣金计算链路。1: 未分析佣金计算；2: 只描述了一级佣金；3: 三级比例描述正确但计算基数不明确；4: 三级计算链路和基数（订单金额vs实付金额）都分析清晰；5: 计算链路完整且分析了退款和取消对已计算佣金的影响"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在commission_service.py中解读了calculate_commission方法的三级计算逻辑，确认基数为订单实付金额（扣除运费），每级佣金独立计算后写入commission_records表"
+
+[[criterion]]
+name = "推荐关系变更处理"
+description = "[Explicit] 是否分析了推荐人变更后历史订单佣金归属的处理逻辑和问题根因。1: 未分析关系变更；2: 提到了变更但未分析历史归属；3: 分析了变更对新订单的影响但未处理历史订单；4: 准确定位了历史订单佣金归属未切换的根因；5: 根因定位精确且给出了快照机制或事件溯源方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了推荐关系变更时应该冻结历史佣金快照（commission_records中保存下单时刻的referrer_chain而非动态查询），定位了问题根因是结算任务在打款时实时查询user_referral而非使用佣金记录中的快照"
+
+[[criterion]]
+name = "退款佣金扣回计算"
+description = "[Explicit] 是否分析了部分退款时佣金扣回的计算方式错误（退30%金额扣了30%佣金而非退款额的比例佣金）。1: 未分析退款扣回；2: 描述了需要扣回但公式错误；3: 识别了扣回比例问题但未给出正确公式；4: 准确指出了错误（应扣退款金额×佣金比例而非总佣金×退款比例）并给出正确公式；5: 扣回分析完整且考虑了跨批次退款和已提现佣金的追回"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "准确指出错误公式revoke_amount = commission × (refund/total)应改为revoke_amount = refund × commission_rate，并分析了三级推荐人各自的扣回金额计算方式，同时考虑了已提现佣金无法直接扣回需要挂账处理的场景"
+
+[[criterion]]
+name = "结算幂等性分析"
+description = "[Explicit] 是否分析了结算打款任务重跑导致重复打款的幂等性问题根因。1: 未分析幂等性；2: 提到了重复打款但未分析原因；3: 定位到缺少幂等键但未给出方案；4: 准确分析了settle_batch方法缺少settlement_id去重导致重复打款；5: 幂等性分析完整且给出了基于settlement_id+状态机的去重方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了settle_batch方法在遍历可结算佣金记录时直接调用payment_gateway.transfer()，没有先检查该批次是否已结算过。建议增加settlement_batch_id作为幂等键，结算前先查询该ID是否已存在已完成的结算记录"
+
+[[criterion]]
+name = "佣金生命周期管理"
+description = "[Implicit] 是否分析了佣金从冻结到可提现到已结算的完整状态流转。1: 未分析状态流转；2: 列出了部分状态；3: 状态流转基本完整但缺少异常状态处理；4: 完整的状态机分析含异常回退路径；5: 状态机分析专业且包含状态持久化和并发控制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了佣金的完整状态链frozen→available→settling→settled，以及异常路径frozen→revoked（退款扣回）和available→frozen（争议冻结），commission_records表通过status字段和状态变更时间戳记录流转"
