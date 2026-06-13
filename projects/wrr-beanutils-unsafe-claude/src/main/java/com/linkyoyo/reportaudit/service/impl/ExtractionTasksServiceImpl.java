@@ -18,7 +18,7 @@ import java.util.List;
 import java.util.stream.Collectors;
 import com.github.wenhao.jpa.Specifications;
 
-import org.springframework.beans.BeanUtils;
+import com.linkyoyo.reportaudit.mapper.ExtractionTasksMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -44,6 +44,9 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
     @Autowired
     private ExtractionTasksItemsRepository extractionTasksItemsRepository;
 
+    @Autowired
+    private ExtractionTasksMapper extractionTasksMapper;
+
     @Override
     public PageInfo<ExtractionTasks> getExtractionTasksList(ExtractionTasksQuery extractionTasksQuery) {
         Pageable pageable = PageableUtil.build(extractionTasksQuery);
@@ -53,8 +56,7 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
     @Override
     public ExtractionTasks createOrUpdate(ExtractionTasksInfo extractionTasksInfo) {
         if (Objects.isNull(extractionTasksInfo.getId())) {
-            ExtractionTasks extractionTasks = ExtractionTasks.builder().build();
-            BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
+            ExtractionTasks extractionTasks = extractionTasksMapper.toEntity(extractionTasksInfo);
             // 为新任务生成UUID作为ID
             extractionTasks.setId(UUID.randomUUID().toString());
             // 设置创建时间
@@ -75,8 +77,7 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
                 // 保存新的ExtractionResult数据
                 List<ExtractionResultInfo> extractionResultList = extractionTasksInfo.getExtractionResultList();
                 for (ExtractionResultInfo extractionResultInfo : extractionResultList) {
-                    ExtractionResult extractionResult = ExtractionResult.builder().build();
-                    BeanUtils.copyProperties(extractionResultInfo, extractionResult);
+                    ExtractionResult extractionResult = extractionTasksMapper.resultToEntity(extractionResultInfo);
                     extractionResult.setTaskId(extractionTasks.getId());
                     extractionResultRepository.save(extractionResult);
                 }
@@ -94,8 +95,7 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
                 // 保存新的ExtractionTasksItems数据
                 List<ExtractionTasksItemsInfo> extractionTasksItemsList = extractionTasksInfo.getExtractionTasksItemsList();
                 for (ExtractionTasksItemsInfo extractionTasksItemsInfo : extractionTasksItemsList) {
-                    ExtractionTasksItems extractionTasksItems = ExtractionTasksItems.builder().build();
-                    BeanUtils.copyProperties(extractionTasksItemsInfo, extractionTasksItems);
+                    ExtractionTasksItems extractionTasksItems = extractionTasksMapper.itemsToEntity(extractionTasksItemsInfo);
                     extractionTasksItems.setExtractionTaskId(extractionTasks.getId());
                     extractionTasksItemsRepository.save(extractionTasksItems);
                 }
@@ -106,7 +106,7 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
             Optional<ExtractionTasks> optionalExtractionTasks = extractionTasksRepository.findById(extractionTasksInfo.getId());
             if (optionalExtractionTasks.isPresent()) {
                 ExtractionTasks extractionTasks = optionalExtractionTasks.get();
-                BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
+                extractionTasksMapper.updateEntity(extractionTasksInfo, extractionTasks);
                 // 更新时间
                 extractionTasks.setUpdatedAt(LocalDateTime.now());
                 extractionTasks = extractionTasksRepository.save(extractionTasks);
@@ -124,8 +124,7 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
                     // 保存新的ExtractionResult数据
                     List<ExtractionResultInfo> extractionResultList = extractionTasksInfo.getExtractionResultList();
                     for (ExtractionResultInfo extractionResultInfo : extractionResultList) {
-                        ExtractionResult extractionResult = ExtractionResult.builder().build();
-                        BeanUtils.copyProperties(extractionResultInfo, extractionResult);
+                        ExtractionResult extractionResult = extractionTasksMapper.resultToEntity(extractionResultInfo);
                         extractionResult.setTaskId(extractionTasks.getId());
                         extractionResultRepository.save(extractionResult);
                     }
@@ -143,8 +142,7 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
                     // 保存新的ExtractionTasksItems数据
                     List<ExtractionTasksItemsInfo> extractionTasksItemsList = extractionTasksInfo.getExtractionTasksItemsList();
                     for (ExtractionTasksItemsInfo extractionTasksItemsInfo : extractionTasksItemsList) {
-                        ExtractionTasksItems extractionTasksItems = ExtractionTasksItems.builder().build();
-                        BeanUtils.copyProperties(extractionTasksItemsInfo, extractionTasksItems);
+                        ExtractionTasksItems extractionTasksItems = extractionTasksMapper.itemsToEntity(extractionTasksItemsInfo);
                         extractionTasksItems.setExtractionTaskId(extractionTasks.getId());
                         extractionTasksItemsRepository.save(extractionTasksItems);
                     }

@@ -1,0 +1,53 @@
+[[criterion]]
+name = "MapStruct集成配置"
+description = "[Explicit] 是否正确在pom.xml中添加了MapStruct依赖（mapstruct加mapstruct-processor）并配置了maven-compiler-plugin的注解处理器（含lombok-mapstruct-binding）。1: 未添加MapStruct依赖；2: 添加了依赖但缺少processor配置；3: 添加了依赖和processor但缺少lombok绑定；4: 完整配置含mapstruct、mapstruct-processor和lombok-mapstruct-binding；5: 完整配置且版本选择合理（1.5.5.Final），processor顺序正确。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在pom.xml中添加了mapstruct 1.5.5.Final依赖并配置maven-compiler-plugin，注解处理器顺序为lombok到lombok-mapstruct-binding到mapstruct-processor。"
+
+[[criterion]]
+name = "Mapper接口覆盖范围"
+description = "[Explicit] 是否为所有涉及BeanUtils.copyProperties的Entity-Info对创建了对应的MapStruct Mapper接口。1: 只创建了1-2个Mapper；2: 创建了3-4个但遗漏了主要映射对；3: 创建了大部分但遗漏了子实体映射；4: 为Documents、Tasks、CheckResult、ExtractionTasks等主要实体创建了完整Mapper；5: 覆盖所有实体映射对且包含子实体的Mapper。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "创建了4个Mapper接口，其中DocumentsMapper合并处理了Documents、DocumentsToc、ProjectInfo、DocumentsExtraction、DocumentsCheckItems共5组映射。"
+
+[[criterion]]
+name = "双向映射完整性"
+description = "[Explicit] 是否为需要双向转换的实体对（Entity到Info和Info到Entity）都提供了对应的映射方法（toInfo和toEntity）。1: 只提供了单向映射；2: 主要实体有双向但子实体缺少；3: 大部分有双向映射；4: 所有createOrUpdate涉及的实体对都有双向映射；5: 完整的双向映射且toEntity方法处理了属性排除。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "为需要双向转换的实体对提供了toInfo和toEntity方法，DocumentsMapper包含5组映射的双向方法。"
+
+[[criterion]]
+name = "选择性更新映射"
+description = "[Explicit] 是否处理了TasksServiceImpl.createOrUpdate修改分支中通过ignore参数排除title和status字段的拷贝需求（原304行BeanUtils.copyProperties的第三个参数）。1: 未考虑选择性排除；2: 忽略了排除需求直接全量映射；3: 通过运行时参数排除但未利用MapStruct编译时特性；4: 使用@Mapping(target=xxx, ignore=true)声明式排除；5: updateEntitySelective方法完整覆盖所有需排除字段且通过@Mapping注解编译时验证。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在TasksMapper中创建了updateEntitySelective()方法，使用12个@Mapping(target=xxx, ignore=true)注解声明式排除title、status等字段，将运行时字符串数组转换为编译时可验证的类型安全映射。"
+
+[[criterion]]
+name = "服务类BeanUtils替换"
+description = "[Explicit] 是否将DocumentsServiceImpl和TasksServiceImpl等服务类中30处以上的BeanUtils.copyProperties全部替换为Mapper方法调用。1: 替换不到10处；2: 替换了10-15处；3: 替换了15-20处；4: 替换了20-27处；5: 27处以上全部替换为Mapper调用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改了DocumentsServiceImpl（7处）、TasksServiceImpl（8+处）、CheckResultServiceImpl和ExtractionTasksServiceImpl的BeanUtils.copyProperties调用，大部分替换为对应Mapper的toInfo/toEntity方法。"
+
+[[criterion]]
+name = "编译时类型安全验证"
+description = "[Implicit] 是否通过MapStruct的编译时代码生成确保Entity和Info之间的字段名变更能在编译期被发现，消除运行时静默跳过的风险。1: 仍存在运行时映射；2: 部分使用MapStruct但关键映射仍用BeanUtils；3: 主要映射用MapStruct但未验证编译行为；4: 核心映射全部用MapStruct且说明了编译时验证的优势；5: 所有映射用MapStruct，尝试编译验证Mapper生成正确性。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "核心映射全部使用MapStruct，在总结中说明了编译时代码生成能在字段重命名时产生编译错误而非运行时静默跳过的优势。"

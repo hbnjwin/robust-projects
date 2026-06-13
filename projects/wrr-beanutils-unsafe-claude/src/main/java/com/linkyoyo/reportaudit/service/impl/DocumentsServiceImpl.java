@@ -44,7 +44,7 @@ import com.linkyoyo.reportaudit.util.SysUserUtils;
 import com.linkyoyo.reportaudit.util.RuleClassUtils;
 import com.linkyoyo.reportaudit.entity.RuleClass;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.BeanUtils;
+import com.linkyoyo.reportaudit.mapper.DocumentsMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Pageable;
@@ -92,6 +92,9 @@ public class DocumentsServiceImpl implements DocumentsService {
 
     @Autowired
     private TextinService textinService;
+
+    @Autowired
+    private DocumentsMapper documentsMapper;
 
     @Autowired
     private DocumentOcrProcessorService documentOcrProcessorService;
@@ -161,8 +164,7 @@ public class DocumentsServiceImpl implements DocumentsService {
         // 转换为DocumentsInfo并填充项目信息
         List<DocumentsInfo> documentsInfoList = documentsPageInfo.getList().stream()
                 .map(documents -> {
-                    DocumentsInfo documentsInfo = new DocumentsInfo();
-                    BeanUtils.copyProperties(documents, documentsInfo);
+                    DocumentsInfo documentsInfo = documentsMapper.toInfo(documents);
                     
                     // 清空mdContent字段，减少数据传输量，提升列表查询性能
                     documentsInfo.setMdContent(null);
@@ -205,8 +207,7 @@ public class DocumentsServiceImpl implements DocumentsService {
     @Override
     public Documents createOrUpdate(DocumentsInfo documentsInfo) {
         if (Objects.isNull(documentsInfo.getId())) {
-            Documents documents = Documents.builder().build();
-            BeanUtils.copyProperties(documentsInfo, documents);
+            Documents documents = documentsMapper.toEntity(documentsInfo);
             documents = documentsRepository.save(documents);
 
             // 保存DocumentsToc明细数据
@@ -222,8 +223,7 @@ public class DocumentsServiceImpl implements DocumentsService {
                 // 保存新的DocumentsToc数据
                 List<DocumentsTocInfo> documentsTocList = documentsInfo.getDocumentsTocList();
                 for (DocumentsTocInfo documentsTocInfo : documentsTocList) {
-                    DocumentsToc documentsToc = DocumentsToc.builder().build();
-                    BeanUtils.copyProperties(documentsTocInfo, documentsToc);
+                    DocumentsToc documentsToc = documentsMapper.tocToEntity(documentsTocInfo);
                     documentsToc.setDocId(documents.getId());
                     documentsTocRepository.save(documentsToc);
                 }
@@ -233,7 +233,7 @@ public class DocumentsServiceImpl implements DocumentsService {
             entityManager.clear();
             Documents documents = documentsRepository.findById(documentsInfo.getId()).orElse(null);
             if (documents != null) {
-                BeanUtils.copyProperties(documentsInfo, documents);
+                documentsMapper.updateEntity(documentsInfo, documents);
                 documents = documentsRepository.save(documents);
 
                 // 保存DocumentsToc明细数据
@@ -249,8 +249,7 @@ public class DocumentsServiceImpl implements DocumentsService {
                     // 保存新的DocumentsToc数据
                     List<DocumentsTocInfo> documentsTocList = documentsInfo.getDocumentsTocList();
                     for (DocumentsTocInfo documentsTocInfo : documentsTocList) {
-                        DocumentsToc documentsToc = DocumentsToc.builder().build();
-                        BeanUtils.copyProperties(documentsTocInfo, documentsToc);
+                        DocumentsToc documentsToc = documentsMapper.tocToEntity(documentsTocInfo);
                         documentsToc.setDocId(documents.getId());
                         documentsTocRepository.save(documentsToc);
                     }
@@ -264,9 +263,9 @@ public class DocumentsServiceImpl implements DocumentsService {
     public DocumentsInfo getDocumentsDetail(Integer id) {
         entityManager.clear();
         Documents documents = documentsRepository.findById(id).orElse(null);
-        DocumentsInfo documentsInfo = new DocumentsInfo();
-        if (Objects.nonNull(documents))
-            BeanUtils.copyProperties(documents, documentsInfo);
+        DocumentsInfo documentsInfo = Objects.nonNull(documents)
+            ? documentsMapper.toInfo(documents)
+            : new DocumentsInfo();
 
         // 查询DocumentsToc明细数据
         List<DocumentsToc> documentsTocList = documentsTocRepository.findAll(
@@ -277,11 +276,7 @@ public class DocumentsServiceImpl implements DocumentsService {
 
         // 转换为Info对象
         List<DocumentsTocInfo> documentsTocListInfo = documentsTocList.stream()
-                .map(item -> {
-                    DocumentsTocInfo info = new DocumentsTocInfo();
-                    BeanUtils.copyProperties(item, info);
-                    return info;
-                })
+                .map(documentsMapper::tocToInfo)
                 .collect(Collectors.toList());
 
         //增加 抽取结果list，检查结果list
@@ -298,8 +293,7 @@ public class DocumentsServiceImpl implements DocumentsService {
         // 如果存在项目信息，取第一条并转换为Info对象
         if (!projectInfoList.isEmpty()) {
             ProjectInfo projectInfo = projectInfoList.get(0);
-            ProjectInfoInfo projectInfoInfo = new ProjectInfoInfo();
-            BeanUtils.copyProperties(projectInfo, projectInfoInfo);
+            ProjectInfoInfo projectInfoInfo = documentsMapper.projectInfoToInfo(projectInfo);
             documentsInfo.setProjectInfo(projectInfoInfo);
         }
 
@@ -310,11 +304,7 @@ public class DocumentsServiceImpl implements DocumentsService {
                         .build()
         );
         List<DocumentsExtractionInfo> documentsExtractionInfoList = documentsExtractionList.stream()
-                .map(item -> {
-                    DocumentsExtractionInfo info = new DocumentsExtractionInfo();
-                    BeanUtils.copyProperties(item, info);
-                    return info;
-                })
+                .map(documentsMapper::extractionToInfo)
                 .sorted((a, b) -> {
                     if (a.getExtractionRuleId() == null && b.getExtractionRuleId() == null) return 0;
                     if (a.getExtractionRuleId() == null) return 1;
@@ -331,11 +321,7 @@ public class DocumentsServiceImpl implements DocumentsService {
                         .build()
         );
         List<DocumentsCheckItemsInfo> documentsCheckItemsInfoList = documentsCheckItemsList.stream()
-                .map(item -> {
-                    DocumentsCheckItemsInfo info = new DocumentsCheckItemsInfo();
-                    BeanUtils.copyProperties(item, info);
-                    return info;
-                })
+                .map(documentsMapper::checkItemsToInfo)
                 .sorted((a, b) -> {
                     if (a.getCheckItemId() == null && b.getCheckItemId() == null) return 0;
                     if (a.getCheckItemId() == null) return 1;

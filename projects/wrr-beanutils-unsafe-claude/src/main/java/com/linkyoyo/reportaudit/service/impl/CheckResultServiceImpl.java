@@ -10,7 +10,7 @@ import com.linkyoyo.reportaudit.support.CommonFunc;
 import com.linkyoyo.reportaudit.util.PageableUtil;
 
 
-import org.springframework.beans.BeanUtils;
+import com.linkyoyo.reportaudit.mapper.CheckResultMapper;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -27,6 +27,9 @@ public class CheckResultServiceImpl implements CheckResultService {
     @Autowired
     private CheckResultRepository checkResultRepository;
 
+    @Autowired
+    private CheckResultMapper checkResultMapper;
+
 
 
     @Override
@@ -38,8 +41,7 @@ public class CheckResultServiceImpl implements CheckResultService {
     @Override
     public CheckResult createOrUpdate(CheckResultInfo checkResultInfo) {
         if (Objects.isNull(checkResultInfo.getId())) {
-            CheckResult checkResult = CheckResult.builder().build();
-            BeanUtils.copyProperties(checkResultInfo, checkResult);
+            CheckResult checkResult = checkResultMapper.toEntity(checkResultInfo);
             checkResult = checkResultRepository.save(checkResult);
             // TODO: 保存明细数据
             return checkResult;
@@ -47,7 +49,7 @@ public class CheckResultServiceImpl implements CheckResultService {
             entityManager.clear();
             CheckResult checkResult = checkResultRepository.findById(checkResultInfo.getId()).orElse(null);
             if (checkResult != null) {
-                BeanUtils.copyProperties(checkResultInfo, checkResult);
+                checkResultMapper.updateEntity(checkResultInfo, checkResult);
                 checkResult = checkResultRepository.save(checkResult);
             // TODO: 保存明细数据
             }
@@ -59,9 +61,9 @@ public class CheckResultServiceImpl implements CheckResultService {
     public CheckResultInfo getCheckResultDetail(Integer id) {
         entityManager.clear();
         CheckResult checkResult = checkResultRepository.findById(id).orElse(null);
-        CheckResultInfo checkResultInfo = new CheckResultInfo();
-        if (Objects.nonNull(checkResult))
-           BeanUtils.copyProperties(checkResult, checkResultInfo);
+        CheckResultInfo checkResultInfo = Objects.nonNull(checkResult)
+            ? checkResultMapper.toInfo(checkResult)
+            : new CheckResultInfo();
         // TODO: 查询明细数据
         return checkResultInfo;
     }
