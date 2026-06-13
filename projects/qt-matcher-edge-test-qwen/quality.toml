@@ -1,0 +1,53 @@
+[[criterion]]
+name = "涨跌停限价拒绝测试"
+description = "[Explicit] 是否测试科创板和创业板20%涨跌停的限价拒绝，包括688/689/300/301代码前缀识别。1: 未编写涨跌停测试；2: 仅测试10%涨停未区分板块；3: 测试了20%但未覆盖全部板块代码前缀；4: 覆盖科创板688/689和创业板300/301的20%涨跌停拒绝，附带主板10%对照；5: 额外测试了ST股票5%限制和北交所30%限制。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了科创板和创业板的20%涨跌停拒绝场景，涵盖了688和300前缀，但对689和301前缀的覆盖不完整，部分用例缺少主板10%对照。"
+
+[[criterion]]
+name = "成交量上限部分成交"
+description = "[Explicit] 是否测试买入量超过当日volume_limit_pct时的部分成交行为和整手截断。1: 未测试成交量限制；2: 测试了全量拒绝但未验证部分成交；3: 验证了部分成交但未检查整手截断；4: 完整验证部分成交数量和整手截断后的实际成交股数；5: 额外验证了极小成交量场景下的零成交处理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了买入超过volume_limit_pct时的部分成交，但对整手截断后剩余量不足100股时的零成交边界处理不够充分。"
+
+[[criterion]]
+name = "滑点参数影响验证"
+description = "[Explicit] 是否验证slippage参数在不同档位下对买入和卖出成交价的影响。1: 未测试滑点；2: 仅测试了单个滑点值；3: 测试了多个滑点值但仅验证买入方向；4: 测试了买入和卖出两个方向在不同滑点档位下的成交价偏移；5: 额外验证了滑点为0和极大值时的边界行为。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了slippage参数对成交价的影响，覆盖了买入方向的价格上移，但卖出方向的价格下移验证较简略。"
+
+[[criterion]]
+name = "T+1约束连续交易测试"
+description = "[Explicit] 是否测试连续两个交易日对同一只股票先买后卖的T+1约束，验证buy_date字段的记录和校验。1: 未测试T+1；2: 测试了当日买卖被拒绝但未验证次日可卖；3: 测试了T+1基本流程但未检查buy_date字段的更新；4: 完整验证买入当日卖出被拒、次日卖出成功、buy_date字段正确记录；5: 额外测试了跨多日持仓和部分卖出的T+1行为。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了T+1约束的基本流程（当日买入次日卖出），但未深入验证buy_date字段在持仓记录中的更新机制。"
+
+[[criterion]]
+name = "停牌股票撮合行为"
+description = "[Explicit] 是否测试停牌股票（价格为0或无数据）的撮合行为。1: 未测试停牌场景；2: 仅测试了价格为0的情况；3: 测试了价格为0和NaN但未验证返回值语义；4: 验证停牌时买卖均被拒绝且返回特定状态码；5: 区分了临时停牌（盘中无成交）和全天停牌（无行情数据）两种场景。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "测试了价格为0时的撮合行为返回空成交，但未覆盖行情数据完全缺失（DataFrame中无该股票行）的停牌场景。"
+
+[[criterion]]
+name = "parametrize组织结构"
+description = "[Explicit] 是否使用pytest.mark.parametrize组织所有测试场景。1: 未使用parametrize；2: 仅部分测试使用了parametrize；3: 大部分测试使用parametrize但参数命名不清晰；4: 所有测试场景均用parametrize组织，参数带ids标识；5: parametrize参数化覆盖完整且用pytest.param标记xfail的已知问题场景。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "大部分测试使用了parametrize，但部分测试类内的参数命名和组织不够清晰，缺少ids标识。"
