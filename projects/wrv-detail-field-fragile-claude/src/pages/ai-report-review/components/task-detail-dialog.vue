@@ -123,6 +123,7 @@
 
 <script setup>
 import { ref, computed, defineEmits, defineExpose } from 'vue'
+import { TTag } from 'tdesign-vue-next'
 
 const emit = defineEmits(['close'])
 
@@ -145,7 +146,7 @@ const checkItemColumns = [
 		cell: (h, { row }) => {
 			const theme = getCheckStatusTheme(row.status)
 			const text = getCheckStatusText(row.status)
-			return h('t-tag', { theme, size: 'small' }, text)
+			return h(TTag, { theme, size: 'small' }, () => text)
 		}
 	},
 	{
@@ -181,7 +182,7 @@ const checkItems = computed(() => {
 		id: item.id || item.taskId || index,
 		itemName: item.checkItemName || item.itemName || `检查项目 ${index + 1}`,
 		status: item.status || 'pending',
-		description: item.extractedContent || item.description || item.errorMessage || item.remark || `检查项ID: ${item.checkItemId || item.id}`
+		description: item.checkItemDescription || item.description || item.extractedContent || item.errorMessage || item.remark || `检查项ID: ${item.checkItemId || item.id}`
 	}))
 })
 
