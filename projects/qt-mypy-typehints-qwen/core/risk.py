@@ -35,7 +35,7 @@ class RiskCheckResult:
     passed: bool
     reason: str = ""
 
-    def __bool__(self):
+    def __bool__(self) -> bool:
         return self.passed
 
 
@@ -418,4 +418,4 @@ class OrderPersistence:
         if not self._path.exists():
             return None
         with open(self._path, encoding="utf-8") as f:
-            return json.load(f)
+            return json.load(f)  # type: ignore[no-any-return]

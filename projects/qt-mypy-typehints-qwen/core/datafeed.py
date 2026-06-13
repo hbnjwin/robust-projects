@@ -9,7 +9,7 @@ from __future__ import annotations
 import sys
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Iterator
+from typing import Any, Iterator
 
 _ROOT = Path(__file__).resolve().parent.parent
 
@@ -45,7 +45,7 @@ class BaseDataFeed(ABC):
         raise NotImplementedError(f"{self.__class__.__name__} 不支持 Tick 数据")
 
     @staticmethod
-    def _df_to_dict(df) -> dict:
+    def _df_to_dict(df: Any) -> dict:
         """pandas DataFrame → market_data dict"""
         import pandas as pd
         result = {}
@@ -108,7 +108,7 @@ class PostgresDataFeed(BaseDataFeed):
             ORDER BY trade_date, ts_code
         """
         conn = psycopg.connect(**self._cfg)
-        df = pd.read_sql(query, conn, params=params)
+        df = pd.read_sql(query, conn, params=params)  # type: ignore[call-overload]
         conn.close()
         return self._df_to_dict(df)
 
@@ -245,7 +245,7 @@ class MemoryDataFeed(BaseDataFeed):
 
 
 # ── 工厂函数 ─────────────────────────────────────────────────
-def create_datafeed(backend: str = "auto", **kwargs) -> BaseDataFeed:
+def create_datafeed(backend: str = "auto", **kwargs: Any) -> BaseDataFeed:
     """
     DataFeed 工厂
 

@@ -1,0 +1,34 @@
+[tool.mypy]
+python_version = "3.11"
+warn_return_any = true
+check_untyped_defs = true
+warn_unused_configs = true
+ignore_missing_imports = true
+
+# core/ 和 analytics/ 严格要求类型注解
+[[tool.mypy.overrides]]
+module = ["core.*", "analytics.*"]
+disallow_untyped_defs = true
+
+# 其他模块暂时忽略
+[[tool.mypy.overrides]]
+module = [
+    "live.*",
+    "testing.*",
+    "strategies.*",
+    "services.*",
+    "scripts.*",
+    "dao.*",
+    "data.*",
+    "config.*",
+    "utils.*",
+    "signals.*",
+    "ml.*",
+    "factor.*",
+    "factor_engine.*",
+    "factor_lib.*",
+    "vnpy_ext.*",
+    "quant-qmt-ptrade.*",
+    "gpu-train.*",
+]
+ignore_errors = true

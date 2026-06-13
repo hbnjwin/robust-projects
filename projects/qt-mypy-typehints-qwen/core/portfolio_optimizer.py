@@ -22,7 +22,7 @@ import warnings
 import numpy as np
 import pandas as pd
 import scipy.optimize as so
-from typing import Optional, Union
+from typing import Any, Callable, Optional, Union
 
 
 class PortfolioOptimizer:
@@ -80,32 +80,35 @@ class PortfolioOptimizer:
         index = None
         if isinstance(S, pd.DataFrame):
             index = S.index
-            S = S.values
+            S = S.values  # type: ignore[assignment]
 
+        r_arr: np.ndarray | None = None
         if r is not None:
-            if isinstance(r, pd.Series):
-                r = r.values
-            r = np.array(r, dtype=float)
+            r_arr = np.asarray(r, dtype=float)
 
+        w0_arr: np.ndarray | None = None
         if w0 is not None:
-            if isinstance(w0, pd.Series):
-                w0 = w0.values
-            w0 = np.array(w0, dtype=float)
+            w0_arr = np.asarray(w0, dtype=float)
 
         # 预期收益归一化
-        if r is not None and self.scale_return:
-            std = r.std()
+        if r_arr is not None and self.scale_return:
+            std = r_arr.std()
             if std > 0:
-                r = r / std * np.sqrt(np.mean(np.diag(S)))
+                r_arr = r_arr / std * np.sqrt(np.mean(np.diag(S)))
 
-        w = self._optimize(S, r, w0)
+        w: np.ndarray | pd.Series = self._optimize(S, r_arr, w0_arr)
 
         if index is not None:
-            w = pd.Series(w, index=index)
+            w = pd.Series(w, index=index)  # type: ignore[arg-type]
 
         return w
 
-    def _optimize(self, S, r, w0) -> np.ndarray:
+    def _optimize(
+        self,
+        S: np.ndarray,
+        r: np.ndarray | None,
+        w0: np.ndarray | None,
+    ) -> np.ndarray:
         n = len(S)
 
         # ── 反波动率（最简单，不需要优化求解）────────────────
@@ -113,24 +116,24 @@ class PortfolioOptimizer:
             vols = np.sqrt(np.diag(S))
             vols = np.where(vols > 0, vols, 1e-8)
             w = 1.0 / vols
-            return w / w.sum()
+            return w / w.sum()  # type: ignore[no-any-return]
 
         # ── 全局最小方差 ──────────────────────────────────────
         if self.method == self.OPT_GMV:
-            def objective(w):
-                return w @ S @ w + self.alpha * np.sum(w ** 2)
+            def objective(w: np.ndarray) -> float:
+                return float(w @ S @ w + self.alpha * np.sum(w ** 2))
 
             return self._solve(n, objective, S, r=None, w0=w0)
 
         # ── 风险平价 ──────────────────────────────────────────
         if self.method == self.OPT_RP:
-            def objective(w):
+            def objective(w: np.ndarray) -> float:
                 port_var = w @ S @ w
                 # 各股风险贡献
                 rc = w * (S @ w) / (port_var + 1e-10)
                 # 最小化风险贡献差异（等风险贡献）
                 target = np.ones(n) / n
-                return np.sum((rc - target) ** 2) + self.alpha * np.sum(w ** 2)
+                return float(np.sum((rc - target) ** 2) + self.alpha * np.sum(w ** 2))
 
             return self._solve(n, objective, S, r=None, w0=w0)
 
@@ -139,19 +142,26 @@ class PortfolioOptimizer:
             if r is None:
                 raise ValueError("mvo 方法需要传入预期收益 r")
 
-            def objective(w):
+            def objective(w: np.ndarray) -> float:
                 ret  = w @ r
                 risk = w @ S @ w
                 turn = 0.0
                 if w0 is not None and self.delta > 0:
                     turn = self.delta * np.sum(np.abs(w - w0))
-                return -self.lamb * ret + risk + turn + self.alpha * np.sum(w ** 2)
+                return float(-self.lamb * ret + risk + turn + self.alpha * np.sum(w ** 2))
 
             return self._solve(n, objective, S, r=r, w0=w0)
 
         raise ValueError(f"未知优化方法: {self.method}")
 
-    def _solve(self, n, objective, S, r, w0) -> np.ndarray:
+    def _solve(
+        self,
+        n: int,
+        objective: Callable[[np.ndarray], float],
+        S: np.ndarray,
+        r: np.ndarray | None,
+        w0: np.ndarray | None,
+    ) -> np.ndarray:
         """通用约束优化求解"""
         # 初始权重
         x0 = np.ones(n) / n if w0 is None else w0.copy()
@@ -180,11 +190,11 @@ class PortfolioOptimizer:
 
         if not result.success:
             warnings.warn(f"优化未收敛: {result.message}，使用等权")
-            return np.ones(n) / n
+            return np.ones(n) / n  # type: ignore[no-any-return]
 
         w = np.clip(result.x, 0, 1)
         w /= w.sum() + 1e-10
-        return w
+        return w  # type: ignore[no-any-return]
 
 
 # ── 便捷函数：从信号和历史收益计算协方差矩阵 ─────────────────
@@ -259,4 +269,4 @@ def optimize_weights(
     w = w.clip(0, max_weight)
     w = w / w.sum()
 
-    return w
+    return w  # type: ignore[no-any-return]

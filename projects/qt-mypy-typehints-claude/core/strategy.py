@@ -30,18 +30,18 @@ class BaseStrategy(ABC):
         pass
 
     @abstractmethod
-    def on_bars(self, date: str, prices: dict) -> list[dict]:
+    def on_bars(self, date: str, prices: dict[str, Any]) -> list[dict[str, Any]]:
         """
         每日 Bar 回调
         返回信号列表，空列表表示无操作
         """
         pass
 
-    def on_trade(self, trade: dict) -> None:
+    def on_trade(self, trade: dict[str, Any]) -> None:
         """成交回报回调，子类可覆盖"""
         pass
 
-    def warmup(self, date: str, prices: dict) -> None:
+    def warmup(self, date: str, prices: dict[str, Any]) -> None:
         """
         预热期回调（不产生信号，仅更新内部状态）
         默认调用 on_bars 但丢弃结果，子类可覆盖以优化性能
@@ -65,10 +65,11 @@ class LegacyStrategyAdapter(BaseStrategy):
         super().__init__(name)
         self._strategy = legacy_strategy
 
-    def on_bars(self, date: str, prices: dict) -> list[dict]:
-        return self._strategy.generate(date, prices)
+    def on_bars(self, date: str, prices: dict[str, Any]) -> list[dict[str, Any]]:
+        result: list[dict[str, Any]] = self._strategy.generate(date, prices)
+        return result
 
-    def warmup(self, date: str, prices: dict) -> None:
+    def warmup(self, date: str, prices: dict[str, Any]) -> None:
         """旧策略预热：调用 generate 但丢弃结果"""
         self._strategy.generate(date, prices)
 
