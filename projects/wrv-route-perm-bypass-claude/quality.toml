@@ -1,0 +1,62 @@
+[[criterion]]
+name = "路由守卫权限校验定位"
+description = "[Explicit] 是否准确识别 beforeEach 守卫仅检查 token 存在而未校验 meta.auth 字段的根因。1: 未找到路由守卫代码或完全误判问题方向；2: 找到 beforeEach 但未意识到缺少权限校验；3: 识别出守卫未校验权限但修复方案不完整；4: 准确定位根因并在 beforeEach 中添加 meta.auth 与用户角色的匹配逻辑；5: 完整理解路由元信息配置与守卫执行流程并实现精确的权限拦截。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "准确定位 beforeEach 守卫仅判断 token 存在而未读取 meta.auth 的根因，在 router/index.js 中添加了角色与 auth 字段的匹配拦截逻辑，修复方案针对性强。"
+
+[[criterion]]
+name = "403页面拦截跳转"
+description = "[Explicit] 是否实现无权限用户访问受限路由时正确重定向到 403 页面。1: 未实现任何拦截跳转；2: 有跳转逻辑但目标页面错误或条件判断反转；3: 能跳转到 403 但部分受限路由未覆盖；4: 所有配置了 auth 的路由均能正确跳转到 403 页面；5: 跳转逻辑覆盖全部受限路由且保留原始请求路径便于后续引导。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在 beforeEach 中对所有配置了 meta.auth 的路由实现了权限不匹配时跳转 403 的逻辑，/system/management 和 /system/rulebase 均被正确拦截。"
+
+[[criterion]]
+name = "导航菜单角色过滤"
+description = "[Explicit] 是否修复左侧导航菜单对所有角色显示相同菜单项的问题。1: 未涉及菜单过滤相关代码；2: 尝试修改菜单但过滤条件错误导致菜单全部隐藏或显示；3: 实现了菜单过滤但仅处理一级菜单未递归子菜单；4: 根据用户角色正确过滤菜单项包括子菜单递归；5: 菜单过滤与路由 auth 配置完全联动且处理了无子菜单时父菜单自动隐藏。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改集中在 router/index.js 和 index.vue，未直接修改菜单生成逻辑文件，导航菜单过滤依赖路由守卫的间接效果而非显式菜单过滤。"
+
+[[criterion]]
+name = "auth字段匹配方式"
+description = "[Implicit] 是否正确解析路由 meta.auth 配置并与当前用户角色进行可靠匹配。1: 未读取 meta.auth 字段；2: 读取了 auth 但匹配逻辑有误导致角色误判；3: 基本匹配正确但未处理 auth 为数组的多角色场景；4: 能处理字符串和数组形式的 auth 配置并准确匹配用户角色；5: 匹配逻辑健壮且处理了空值和未定义 auth 路由的默认放行行为。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在守卫中正确读取 meta.auth 并判断当前用户角色是否在允许列表中，对未配置 auth 的公共路由默认放行处理合理。"
+
+[[criterion]]
+name = "权限边界场景处理"
+description = "[Implicit] 是否处理未配置 auth 的公共路由和用户角色信息缺失的边界情况。1: 未考虑边界场景导致公共页面被误拦截；2: 公共路由处理正确但无角色用户访问时页面白屏；3: 处理了公共路由放行但 token 过期后跳转逻辑有缺陷；4: 公共路由正常放行且无角色用户被合理引导到登录页；5: 所有边界场景均有明确处理且不引入新的访问控制漏洞。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "对未配置 meta.auth 的路由默认放行，token 缺失时跳转登录页的原有逻辑保持不变，边界场景处理合理。"
+
+[[criterion]]
+name = "改动范围与副作用"
+description = "[Implicit] 是否保持最小必要改动且不破坏已有的登录跳转和路由配置。1: 大范围重写路由文件破坏原有登录流程；2: 改动较多且引入了未登录用户的跳转回环；3: 改动范围基本合理但包含与权限无关的代码调整；4: 仅修改权限校验相关逻辑且原有登录跳转完全保留；5: 改动精准简洁且代码结构清晰便于后续维护。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "仅修改 router/index.js 和 403 页面 index.vue 两个文件，改动集中在权限校验逻辑，原有登录跳转流程完全保留。"
+
+[[criterion]]
+name = "双问题修复验证"
+description = "[Explicit] 是否同时修复路由拦截缺失和菜单显示不区分角色两个问题且最终代码可用。1: 两个问题均未修复；2: 仅修复其中一个问题另一个完全未涉及；3: 两个问题都有涉及但其中一个修复不完整或引入新缺陷；4: 两个问题的核心路径均已修复且最终代码状态一致；5: 两个问题完整修复且通过实际操作验证了修复效果。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "路由拦截问题通过 beforeEach 守卫修复完成，菜单问题通过路由级别的权限控制间接解决，最终代码状态一致且修复逻辑清晰。"

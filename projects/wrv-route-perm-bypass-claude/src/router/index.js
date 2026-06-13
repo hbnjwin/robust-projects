@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import nprogress from 'nprogress'
 import oauth2 from '@/utils/oauth2'
-// import { useUserinfoStore } from '@/store/modules/userinfo'
+import { useUserinfoStore } from '@/store/modules/userinfo'
 
 import LoginRoute from './modules/login'
 import ExpertDatabaseRoute from './modules/expert-database'
@@ -46,7 +46,7 @@ const router = createRouter({
 	routes: routes
 })
 // 全局的路由拦截
-const baseRouterNames = ['403', '404']
+const baseRouterNames = ['403', '404', 'Login']
 
 router.beforeEach(async (to, from, next) => {
 	nprogress.start()
@@ -62,9 +62,15 @@ router.beforeEach(async (to, from, next) => {
 	if (!to.name) {
 		nprogress.done()
 		return next({ name: '404', replace: true })
-	} else {
-		nprogress.done()
-		return next()
 	}
+	// 权限校验
+	const { userInfo } = useUserinfoStore()
+	const menus = userInfo?.menus || []
+	if (to.meta?.auth && !menus.includes(to.meta.auth)) {
+		nprogress.done()
+		return next({ name: '403', replace: true })
+	}
+	nprogress.done()
+	return next()
 })
 export default router

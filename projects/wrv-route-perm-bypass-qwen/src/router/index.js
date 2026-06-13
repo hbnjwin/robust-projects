@@ -1,7 +1,7 @@
 import { createRouter, createWebHashHistory } from 'vue-router'
 import nprogress from 'nprogress'
 import oauth2 from '@/utils/oauth2'
-// import { useUserinfoStore } from '@/store/modules/userinfo'
+import { useUserinfoStore } from '@/store/modules/userinfo'
 
 import LoginRoute from './modules/login'
 import ExpertDatabaseRoute from './modules/expert-database'
@@ -62,9 +62,17 @@ router.beforeEach(async (to, from, next) => {
 	if (!to.name) {
 		nprogress.done()
 		return next({ name: '404', replace: true })
-	} else {
-		nprogress.done()
-		return next()
 	}
+	// 权限校验：检查用户是否拥有路由要求的权限
+	const requiredAuth = to.meta.auth || to.auth
+	if (requiredAuth && to.name !== 'Login') {
+		const userinfoStore = useUserinfoStore()
+		if (!userinfoStore.hasPermission(requiredAuth)) {
+			nprogress.done()
+			return next({ name: '403', replace: true })
+		}
+	}
+	nprogress.done()
+	return next()
 })
 export default router
