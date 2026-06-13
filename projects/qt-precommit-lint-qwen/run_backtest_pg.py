@@ -11,7 +11,7 @@ from analytics.metrics import max_drawdown, annual_return
 def main():
     dao = PostgresDAO(**PG_CONFIG)
 
-    df = dao.get_daily_price('603019.SH')
+    df = dao.get_daily_price("603019.SH")
 
     datafeed = DataFeed(df)
     strategy = MATrendRiskStrategy()

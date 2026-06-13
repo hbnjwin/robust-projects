@@ -9,6 +9,7 @@
     python testing/monte_carlo_sim.py --daemon      # 后台驻留
     python testing/monte_carlo_sim.py --count 10    # 连续跑10次
 """
+
 import sys
 import os
 import json
@@ -107,10 +108,10 @@ def run_single_sim(start_date=None, end_date=None, months=None):
     sim_id = gen_sim_id()
     ml_signals = load_ml_signals()
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  {sim_id}")
     print(f"  Window: {start_date} ~ {end_date} ({months}M)")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # 加载行情（含预热期）
     warmup_start = (datetime.strptime(start_date, "%Y-%m-%d") - timedelta(days=90)).strftime("%Y-%m-%d")
@@ -191,36 +192,47 @@ def run_single_sim(start_date=None, end_date=None, months=None):
         lowvol_acc.mark_to_market(prices)
         factor_acc.mark_to_market(prices)
 
-        total_eq = (trend_acc.total_equity + lowvol_acc.total_equity
-                    + factor_acc.total_equity + INITIAL_CAPITAL * CASH_RATIO)
+        total_eq = (
+            trend_acc.total_equity + lowvol_acc.total_equity + factor_acc.total_equity + INITIAL_CAPITAL * CASH_RATIO
+        )
         daily_ret = (total_eq - prev_equity) / prev_equity if prev_equity > 0 else 0
         prev_equity = total_eq
 
         # 记录每日快照
-        daily_records.append({
-            "sim_id": sim_id, "trade_date": date, "day_num": day_num,
-            "regime": regime, "total_equity": round(total_eq, 2),
-            "daily_return": round(daily_ret, 6),
-            "trend_equity": round(trend_acc.total_equity, 2),
-            "lowvol_equity": round(lowvol_acc.total_equity, 2),
-            "factor_equity": round(factor_acc.total_equity, 2),
-            "trend_positions": len(trend_acc.positions),
-            "lowvol_positions": len(lowvol_acc.positions),
-            "factor_positions": len(factor_acc.positions),
-        })
+        daily_records.append(
+            {
+                "sim_id": sim_id,
+                "trade_date": date,
+                "day_num": day_num,
+                "regime": regime,
+                "total_equity": round(total_eq, 2),
+                "daily_return": round(daily_ret, 6),
+                "trend_equity": round(trend_acc.total_equity, 2),
+                "lowvol_equity": round(lowvol_acc.total_equity, 2),
+                "factor_equity": round(factor_acc.total_equity, 2),
+                "trend_positions": len(trend_acc.positions),
+                "lowvol_positions": len(lowvol_acc.positions),
+                "factor_positions": len(factor_acc.positions),
+            }
+        )
 
         # 记录交易明细
         for strat_name, acc in [("Trend", trend_acc), ("LowVol", lowvol_acc), ("Factor", factor_acc)]:
             for t in acc.trade_log:
-                all_trades.append({
-                    "sim_id": sim_id, "trade_date": date,
-                    "strategy": strat_name, "ts_code": t["code"],
-                    "action": t["action"], "price": t["price"],
-                    "shares": t["shares"],
-                    "amount": round(t["price"] * t["shares"], 2),
-                    "fee": round(t["fee"], 4),
-                    "reason": t.get("reason", ""),
-                })
+                all_trades.append(
+                    {
+                        "sim_id": sim_id,
+                        "trade_date": date,
+                        "strategy": strat_name,
+                        "ts_code": t["code"],
+                        "action": t["action"],
+                        "price": t["price"],
+                        "shares": t["shares"],
+                        "amount": round(t["price"] * t["shares"], 2),
+                        "fee": round(t["fee"], 4),
+                        "reason": t.get("reason", ""),
+                    }
+                )
             acc.trade_log.clear()
 
         # 记录持仓明细
@@ -237,14 +249,20 @@ def run_single_sim(start_date=None, end_date=None, months=None):
                     hold = (datetime.strptime(date, "%Y-%m-%d") - datetime.strptime(str(buy_date), "%Y-%m-%d")).days
                 except Exception:
                     pass
-                all_positions.append({
-                    "sim_id": sim_id, "trade_date": date,
-                    "strategy": strat_name, "ts_code": code,
-                    "shares": shares, "avg_cost": round(avg_cost, 4),
-                    "market_price": round(mkt_price, 4),
-                    "market_value": mkt_val, "pnl_pct": pnl,
-                    "hold_days": hold,
-                })
+                all_positions.append(
+                    {
+                        "sim_id": sim_id,
+                        "trade_date": date,
+                        "strategy": strat_name,
+                        "ts_code": code,
+                        "shares": shares,
+                        "avg_cost": round(avg_cost, 4),
+                        "market_price": round(mkt_price, 4),
+                        "market_value": mkt_val,
+                        "pnl_pct": pnl,
+                        "hold_days": hold,
+                    }
+                )
 
     # 计算结果
     equities = [INITIAL_CAPITAL] + [r["total_equity"] for r in daily_records]
@@ -278,7 +296,8 @@ def run_single_sim(start_date=None, end_date=None, months=None):
     conn = psycopg.connect(**PG_CONFIG)
     cur = conn.cursor()
 
-    cur.execute("""
+    cur.execute(
+        """
         INSERT INTO sim_runs (sim_id, start_date, end_date, duration_months, trading_days,
             final_equity, total_return, annual_return, max_drawdown, sharpe,
             trend_return, trend_dd, trend_sharpe,
@@ -286,47 +305,104 @@ def run_single_sim(start_date=None, end_date=None, months=None):
             factor_return, factor_dd, factor_sharpe,
             bull_days, crisis_days, neutral_days)
         VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-    """, (sim_id, start_date, end_date, months, days,
-          round(final_eq, 2), round(total_ret, 4), round(annual_ret, 4),
-          round(max_dd * 100, 4), round(total_sharpe, 4),
-          t_ret, t_dd, round(t_sharpe, 4),
-          l_ret, l_dd, round(l_sharpe, 4),
-          f_ret, f_dd, round(f_sharpe, 4),
-          regime_counts.get("BULL", 0), regime_counts.get("CRISIS", 0),
-          regime_counts.get("NEUTRAL", 0)))
+    """,
+        (
+            sim_id,
+            start_date,
+            end_date,
+            months,
+            days,
+            round(final_eq, 2),
+            round(total_ret, 4),
+            round(annual_ret, 4),
+            round(max_dd * 100, 4),
+            round(total_sharpe, 4),
+            t_ret,
+            t_dd,
+            round(t_sharpe, 4),
+            l_ret,
+            l_dd,
+            round(l_sharpe, 4),
+            f_ret,
+            f_dd,
+            round(f_sharpe, 4),
+            regime_counts.get("BULL", 0),
+            regime_counts.get("CRISIS", 0),
+            regime_counts.get("NEUTRAL", 0),
+        ),
+    )
 
     # 批量写入每日快照
     for r in daily_records:
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO sim_daily (sim_id, trade_date, day_num, regime,
                 total_equity, daily_return, drawdown,
                 trend_equity, lowvol_equity, factor_equity,
                 trend_positions, lowvol_positions, factor_positions)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """, (r["sim_id"], r["trade_date"], r["day_num"], r["regime"],
-              r["total_equity"], r["daily_return"], 0,
-              r["trend_equity"], r["lowvol_equity"], r["factor_equity"],
-              r["trend_positions"], r["lowvol_positions"], r["factor_positions"]))
+        """,
+            (
+                r["sim_id"],
+                r["trade_date"],
+                r["day_num"],
+                r["regime"],
+                r["total_equity"],
+                r["daily_return"],
+                0,
+                r["trend_equity"],
+                r["lowvol_equity"],
+                r["factor_equity"],
+                r["trend_positions"],
+                r["lowvol_positions"],
+                r["factor_positions"],
+            ),
+        )
 
     # 批量写入交易明细
     for t in all_trades:
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO sim_trades (sim_id, trade_date, strategy, ts_code,
                 action, price, shares, amount, fee, reason)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
-        """, (t["sim_id"], t["trade_date"], t["strategy"], t["ts_code"],
-              t["action"], t["price"], t["shares"], t["amount"], t["fee"], t["reason"]))
+        """,
+            (
+                t["sim_id"],
+                t["trade_date"],
+                t["strategy"],
+                t["ts_code"],
+                t["action"],
+                t["price"],
+                t["shares"],
+                t["amount"],
+                t["fee"],
+                t["reason"],
+            ),
+        )
 
     # 批量写入持仓明细
     for p in all_positions:
-        cur.execute("""
+        cur.execute(
+            """
             INSERT INTO sim_positions (sim_id, trade_date, strategy, ts_code,
                 shares, avg_cost, market_price, market_value, pnl_pct, hold_days)
             VALUES (%s,%s,%s,%s,%s,%s,%s,%s,%s,%s)
             ON CONFLICT (sim_id, trade_date, strategy, ts_code) DO NOTHING
-        """, (p["sim_id"], p["trade_date"], p["strategy"], p["ts_code"],
-              p["shares"], p["avg_cost"], p["market_price"],
-              p["market_value"], p["pnl_pct"], p["hold_days"]))
+        """,
+            (
+                p["sim_id"],
+                p["trade_date"],
+                p["strategy"],
+                p["ts_code"],
+                p["shares"],
+                p["avg_cost"],
+                p["market_price"],
+                p["market_value"],
+                p["pnl_pct"],
+                p["hold_days"],
+            ),
+        )
 
     # 自动打标签
     tags = []
@@ -370,10 +446,13 @@ def run_single_sim(start_date=None, end_date=None, months=None):
         tags.append("全线盈利")
 
     if tags:
-        cur.execute("""
+        cur.execute(
+            """
             UPDATE sim_runs SET tags = %s, is_notable = %s, label = %s
             WHERE sim_id = %s
-        """, (tags, is_notable, "/".join(tags), sim_id))
+        """,
+            (tags, is_notable, "/".join(tags), sim_id),
+        )
 
     conn.commit()
     conn.close()
@@ -394,9 +473,11 @@ def run_single_sim(start_date=None, end_date=None, months=None):
         pos_section += "| 策略 | 股票 | 股数 | 成本 | 现价 | 市值 | 盈亏% | 持仓天数 |\n"
         pos_section += "|------|------|------|------|------|------|-------|----------|\n"
         for p in sorted(last_positions, key=lambda x: (x["strategy"], -x["market_value"])):
-            pos_section += (f"| {p['strategy']} | {p['ts_code']} | {p['shares']} | "
-                          f"{p['avg_cost']:.2f} | {p['market_price']:.2f} | "
-                          f"{p['market_value']:,.0f} | {p['pnl_pct']:+.2f}% | {p['hold_days']} |\n")
+            pos_section += (
+                f"| {p['strategy']} | {p['ts_code']} | {p['shares']} | "
+                f"{p['avg_cost']:.2f} | {p['market_price']:.2f} | "
+                f"{p['market_value']:,.0f} | {p['pnl_pct']:+.2f}% | {p['hold_days']} |\n"
+            )
 
     report = f"""# 模拟交易报告 {sim_id}
 
@@ -405,7 +486,7 @@ def run_single_sim(start_date=None, end_date=None, months=None):
 | 模拟编号 | {sim_id} |
 | 时间窗口 | {start_date} ~ {end_date} |
 | 持仓时长 | {months} 个月 ({days} 个交易日) |
-| 市场环境 | BULL {regime_counts.get('BULL',0)}天 / NEUTRAL {regime_counts.get('NEUTRAL',0)}天 / CRISIS {regime_counts.get('CRISIS',0)}天 |
+| 市场环境 | BULL {regime_counts.get("BULL", 0)}天 / NEUTRAL {regime_counts.get("NEUTRAL", 0)}天 / CRISIS {regime_counts.get("CRISIS", 0)}天 |
 | 标签 | {tag_str} |
 | 代表性 | {notable_str} |
 
@@ -413,10 +494,10 @@ def run_single_sim(start_date=None, end_date=None, months=None):
 
 | 策略 | 收益% | 回撤% | Sharpe | 交易数 |
 |------|-------|-------|--------|--------|
-| Trend | {t_ret:+.2f} | {t_dd:.2f} | {t_sharpe:.2f} | {sum(1 for t in all_trades if t['strategy']=='Trend')} |
-| LowVol | {l_ret:+.2f} | {l_dd:.2f} | {l_sharpe:.2f} | {sum(1 for t in all_trades if t['strategy']=='LowVol')} |
-| Factor | {f_ret:+.2f} | {f_dd:.2f} | {f_sharpe:.2f} | {sum(1 for t in all_trades if t['strategy']=='Factor')} |
-| **组合** | **{total_ret:+.2f}** | **{max_dd*100:.2f}** | **{total_sharpe:.2f}** | **{len(all_trades)}** |
+| Trend | {t_ret:+.2f} | {t_dd:.2f} | {t_sharpe:.2f} | {sum(1 for t in all_trades if t["strategy"] == "Trend")} |
+| LowVol | {l_ret:+.2f} | {l_dd:.2f} | {l_sharpe:.2f} | {sum(1 for t in all_trades if t["strategy"] == "LowVol")} |
+| Factor | {f_ret:+.2f} | {f_dd:.2f} | {f_sharpe:.2f} | {sum(1 for t in all_trades if t["strategy"] == "Factor")} |
+| **组合** | **{total_ret:+.2f}** | **{max_dd * 100:.2f}** | **{total_sharpe:.2f}** | **{len(all_trades)}** |
 {pos_section}
 ## 标注
 
@@ -432,7 +513,7 @@ def run_single_sim(start_date=None, end_date=None, months=None):
         f.write(report)
 
     # 输出摘要
-    print(f"\n  Result: ret={total_ret:+.2f}% dd={max_dd*100:.2f}% sharpe={total_sharpe:.2f}")
+    print(f"\n  Result: ret={total_ret:+.2f}% dd={max_dd * 100:.2f}% sharpe={total_sharpe:.2f}")
     print(f"  Trend={t_ret:+.2f}% LowVol={l_ret:+.2f}% Factor={f_ret:+.2f}%")
     print(f"  Trades: {len(all_trades)}, Report: {report_path}")
     print(f"  PG: sim_runs + {len(daily_records)} daily + {len(all_trades)} trades")
@@ -460,12 +541,13 @@ def main():
             time.sleep(args.interval)
     else:
         for i in range(args.count):
-            print(f"\n[sim] Run {i+1}/{args.count}")
+            print(f"\n[sim] Run {i + 1}/{args.count}")
             try:
                 run_single_sim(args.start, args.end, args.months)
             except Exception as e:
                 print(f"[sim] Error: {e}")
                 import traceback
+
                 traceback.print_exc()
 
 

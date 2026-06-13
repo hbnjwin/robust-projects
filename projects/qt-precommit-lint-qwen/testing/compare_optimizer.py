@@ -6,6 +6,7 @@ testing/compare_optimizer.py — 等权 vs 组合优化器 蒙特卡洛对比
     source .venv/bin/activate
     python testing/compare_optimizer.py [--sims 20]
 """
+
 from __future__ import annotations
 
 import sys
@@ -27,8 +28,14 @@ from live.regime_detector_v2 import RegimeDetectorV2
 from strategies.factor_strategy import FactorStrategy
 from core.portfolio_optimizer import PortfolioOptimizer
 from testing.monte_carlo_sim import (
-    load_ml_signals, random_window, gen_sim_id,
-    INITIAL_CAPITAL, TREND_RATIO, LOWVOL_RATIO, FACTOR_RATIO, CASH_RATIO,
+    load_ml_signals,
+    random_window,
+    gen_sim_id,
+    INITIAL_CAPITAL,
+    TREND_RATIO,
+    LOWVOL_RATIO,
+    FACTOR_RATIO,
+    CASH_RATIO,
 )
 
 
@@ -65,25 +72,25 @@ def inject_optimizer_weights(
         w = {c: 1.0 / len(buy_codes) for c in buy_codes}
     else:
         import pandas as pd
+
         min_len = min(len(price_history[c]) for c in valid)
         ret_data = {}
         for c in valid:
             p = price_history[c][-min_len:]
-            ret_data[c] = [p[i]/p[i-1]-1 for i in range(1, len(p))]
+            ret_data[c] = [p[i] / p[i - 1] - 1 for i in range(1, len(p))]
         ret_df = pd.DataFrame(ret_data)
         S = ret_df.cov()
         try:
             w_series = optimizer(S)
-            w = {c: min(float(w_series.get(c, 1.0/len(valid))), max_weight)
-                 for c in valid}
+            w = {c: min(float(w_series.get(c, 1.0 / len(valid))), max_weight) for c in valid}
             # 归一化
             total = sum(w.get(c, 0) for c in buy_codes)
             if total > 0:
                 w = {c: w.get(c, 0) / total for c in buy_codes}
             else:
-                w = {c: 1.0/len(buy_codes) for c in buy_codes}
+                w = {c: 1.0 / len(buy_codes) for c in buy_codes}
         except Exception:
-            w = {c: 1.0/len(buy_codes) for c in buy_codes}
+            w = {c: 1.0 / len(buy_codes) for c in buy_codes}
 
     # 注入权重
     result = []
@@ -95,8 +102,7 @@ def inject_optimizer_weights(
     return result
 
 
-def run_one(start_date: str, end_date: str, use_optimizer: bool,
-            optimizer_method: str = "rp") -> dict | None:
+def run_one(start_date: str, end_date: str, use_optimizer: bool, optimizer_method: str = "rp") -> dict | None:
     """跑一次模拟，返回统计结果"""
     ml_signals = load_ml_signals()
     warmup_start = (datetime.strptime(start_date, "%Y-%m-%d") - timedelta(days=90)).strftime("%Y-%m-%d")
@@ -105,22 +111,22 @@ def run_one(start_date: str, end_date: str, use_optimizer: bool,
         return None
 
     dates = sorted(market_data.keys())
-    sim_dates   = [d for d in dates if start_date <= d <= end_date]
+    sim_dates = [d for d in dates if start_date <= d <= end_date]
     warmup_dates = [d for d in dates if d < start_date]
     if len(sim_dates) < 5:
         return None
 
-    trend_acc  = StrategyAccount("Trend",  INITIAL_CAPITAL * TREND_RATIO)
+    trend_acc = StrategyAccount("Trend", INITIAL_CAPITAL * TREND_RATIO)
     lowvol_acc = StrategyAccount("LowVol", INITIAL_CAPITAL * LOWVOL_RATIO)
     factor_acc = StrategyAccount("Factor", INITIAL_CAPITAL * FACTOR_RATIO)
 
-    trend_eng  = ExecutionEngine(trend_acc)
+    trend_eng = ExecutionEngine(trend_acc)
     lowvol_eng = ExecutionEngine(lowvol_acc)
     factor_eng = ExecutionEngine(factor_acc)
 
-    trend  = TrendStrategyV2()
+    trend = TrendStrategyV2()
     lowvol = LowVolStrategy()
-    det    = RegimeDetectorV2()
+    det = RegimeDetectorV2()
     factor = FactorStrategy(factor_scores=ml_signals, top_n=15, rebalance_days=5)
 
     optimizer = PortfolioOptimizer(method=optimizer_method) if use_optimizer else None
@@ -162,7 +168,7 @@ def run_one(start_date: str, end_date: str, use_optimizer: bool,
             ls = [{"action": "sell", "ts_code": c} for c in list(lowvol_acc.positions)]
             fs = [{"action": "sell", "ts_code": c} for c in list(factor_acc.positions)]
         elif use_optimizer and optimizer:
-            ts = inject_optimizer_weights(ts, trend_acc,  prices, ph, optimizer)
+            ts = inject_optimizer_weights(ts, trend_acc, prices, ph, optimizer)
             ls = inject_optimizer_weights(ls, lowvol_acc, prices, ph, optimizer)
             fs = inject_optimizer_weights(fs, factor_acc, prices, ph, optimizer)
 
@@ -177,8 +183,9 @@ def run_one(start_date: str, end_date: str, use_optimizer: bool,
         lowvol_acc.mark_to_market(prices)
         factor_acc.mark_to_market(prices)
 
-        total_eq = (trend_acc.total_equity + lowvol_acc.total_equity
-                    + factor_acc.total_equity + INITIAL_CAPITAL * CASH_RATIO)
+        total_eq = (
+            trend_acc.total_equity + lowvol_acc.total_equity + factor_acc.total_equity + INITIAL_CAPITAL * CASH_RATIO
+        )
         equity_curve.append(total_eq)
         prev_equity = total_eq
 
@@ -211,28 +218,30 @@ def main():
     results = {"equal": [], "rp": [], "inv": []}
 
     for i, (start, end, months) in enumerate(windows):
-        print(f"\n[{i+1}/{args.sims}] {start} ~ {end} ({months}M)")
+        print(f"\n[{i + 1}/{args.sims}] {start} ~ {end} ({months}M)")
         for method in ["equal", "rp", "inv"]:
             use_opt = method != "equal"
             r = run_one(start, end, use_optimizer=use_opt, optimizer_method=method)
             if r:
                 results[method].append(r)
-                print(f"  {method:6s}: ret={r['total_return']:+.2%}  dd={r['max_drawdown']:.2%}  sharpe={r['sharpe']:.2f}")
+                print(
+                    f"  {method:6s}: ret={r['total_return']:+.2%}  dd={r['max_drawdown']:.2%}  sharpe={r['sharpe']:.2f}"
+                )
 
     # 汇总报告
-    print("\n" + "="*60)
+    print("\n" + "=" * 60)
     print("  等权 vs 组合优化器 对比结果")
-    print("="*60)
+    print("=" * 60)
     print(f"{'方法':8s} {'平均收益':>10s} {'平均回撤':>10s} {'平均Sharpe':>12s} {'胜率':>8s}")
-    print("-"*55)
+    print("-" * 55)
 
     equal_rets = [r["total_return"] for r in results["equal"]]
     for method, data in results.items():
         if not data:
             continue
         rets = [r["total_return"] for r in data]
-        dds  = [r["max_drawdown"] for r in data]
-        srs  = [r["sharpe"] for r in data]
+        dds = [r["max_drawdown"] for r in data]
+        srs = [r["sharpe"] for r in data]
         win = ""
         if method != "equal" and equal_rets:
             wins = sum(1 for a, b in zip(rets, equal_rets) if a > b)
@@ -251,8 +260,8 @@ def main():
             if not data:
                 continue
             rets = [r["total_return"] for r in data]
-            dds  = [r["max_drawdown"] for r in data]
-            srs  = [r["sharpe"] for r in data]
+            dds = [r["max_drawdown"] for r in data]
+            srs = [r["sharpe"] for r in data]
             win = ""
             if method != "equal" and equal_rets:
                 wins = sum(1 for a, b in zip(rets, equal_rets) if a > b)

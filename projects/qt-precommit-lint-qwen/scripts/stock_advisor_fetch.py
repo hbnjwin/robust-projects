@@ -7,6 +7,7 @@ stock_advisor_fetch.py — 个股综合分析脚本
   python scripts/stock_advisor_fetch.py --code 000802.SZ
   python scripts/stock_advisor_fetch.py --code 000802  # 自动补后缀
 """
+
 import sys
 import argparse
 import time
@@ -21,6 +22,7 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 from config import PG_CONFIG
 
 # ── 工具函数 ──────────────────────────────────────────────
+
 
 def normalize_code(code: str) -> str:
     """000802 → 000802.SZ，600519 → 600519.SH"""
@@ -39,7 +41,7 @@ def normalize_code(code: str) -> str:
 def calc_rsi(close: pd.Series, n: int = 14) -> float:
     if len(close) < n + 1:
         return float("nan")
-    delta = close.diff().iloc[-(n + 1):]
+    delta = close.diff().iloc[-(n + 1) :]
     gain = delta.clip(lower=0).mean()
     loss = (-delta.clip(upper=0)).mean()
     if loss == 0:
@@ -69,7 +71,7 @@ def calc_boll(close: pd.Series, n: int = 20):
 def vol_ratio(vol: pd.Series, n: int = 20) -> float:
     if len(vol) < n + 1:
         return float("nan")
-    avg = vol.iloc[-(n + 1):-1].mean()
+    avg = vol.iloc[-(n + 1) : -1].mean()
     return round(vol.iloc[-1] / avg, 2) if avg > 0 else float("nan")
 
 
@@ -82,12 +84,14 @@ def drawdown_from_high(close: pd.Series, n: int) -> float:
 
 # ── 数据加载 ──────────────────────────────────────────────
 
+
 def load_price(conn, ts_code: str, days: int = 150) -> pd.DataFrame:
     cutoff = (datetime.today() - timedelta(days=days * 2)).strftime("%Y-%m-%d")
     df = pd.read_sql(
         "SELECT trade_date, open, high, low, close, vol FROM daily_price "
         "WHERE ts_code=%s AND trade_date>=%s ORDER BY trade_date",
-        conn, params=(ts_code, cutoff)
+        conn,
+        params=(ts_code, cutoff),
     )
     return df.tail(days)
 
@@ -95,6 +99,7 @@ def load_price(conn, ts_code: str, days: int = 150) -> pd.DataFrame:
 def _is_trading_day() -> bool:
     """简单判断今天是否是交易日（非周末）"""
     from datetime import date
+
     return date.today().weekday() < 5  # 0=周一 4=周五
 
 
@@ -103,19 +108,22 @@ def _fetch_fund_flow_realtime(ts_code: str) -> pd.DataFrame:
     try:
         import akshare as ak
         from datetime import date
+
         code6 = ts_code.split(".")[0]
         suffix = ts_code.split(".")[1]
         market = {"SH": "sh", "SZ": "sz", "BJ": "bj"}.get(suffix, "sz")
         df = ak.stock_individual_fund_flow(stock=code6, market=market)
         if df is None or df.empty:
             return pd.DataFrame()
-        df = df.rename(columns={
-            "日期": "trade_date",
-            "主力净流入-净额": "main_net",
-            "主力净流入-净占比": "main_net_pct",
-            "超大单净流入-净额": "super_net",
-            "大单净流入-净额": "big_net",
-        })
+        df = df.rename(
+            columns={
+                "日期": "trade_date",
+                "主力净流入-净额": "main_net",
+                "主力净流入-净占比": "main_net_pct",
+                "超大单净流入-净额": "super_net",
+                "大单净流入-净额": "big_net",
+            }
+        )
         df["trade_date"] = pd.to_datetime(df["trade_date"]).dt.date
         return df[["trade_date", "main_net", "main_net_pct", "super_net", "big_net"]].tail(20)
     except Exception as e:
@@ -130,7 +138,7 @@ def load_fund_flow(conn, ts_code: str, days: int = 20) -> pd.DataFrame:
         cur.execute(
             "SELECT trade_date, main_net, main_net_pct, super_net, big_net, updated_at "
             "FROM stock_fund_flow WHERE ts_code=%s ORDER BY trade_date DESC LIMIT %s",
-            (ts_code, days)
+            (ts_code, days),
         )
         rows = cur.fetchall()
 
@@ -166,7 +174,8 @@ def load_fund_flow(conn, ts_code: str, days: int = 20) -> pd.DataFrame:
 def load_fundamentals(conn, ts_code: str) -> pd.Series:
     df = pd.read_sql(
         "SELECT * FROM stock_fundamentals_unified WHERE ts_code=%s AND roe IS NOT NULL ORDER BY report_date DESC LIMIT 1",
-        conn, params=(ts_code,)
+        conn,
+        params=(ts_code,),
     )
     return df.iloc[0] if not df.empty else pd.Series()
 
@@ -182,9 +191,11 @@ def load_stock_info(conn, ts_code: str) -> dict:
 
 # ── 实时行情（akshare）──────────────────────────────────
 
+
 def fetch_realtime(ts_code: str) -> dict:
     try:
         import akshare as ak
+
         code6 = ts_code.split(".")[0]
         df = ak.stock_individual_info_em(symbol=code6)
         info = dict(zip(df["item"], df["value"]))
@@ -201,6 +212,7 @@ def fetch_realtime(ts_code: str) -> dict:
 def fetch_news(ts_code: str, limit: int = 5) -> list:
     try:
         import akshare as ak
+
         code6 = ts_code.split(".")[0]
         df = ak.stock_news_em(symbol=code6)
         if df is None or df.empty:
@@ -211,6 +223,7 @@ def fetch_news(ts_code: str, limit: int = 5) -> list:
 
 
 # ── 综合分析 ──────────────────────────────────────────────
+
 
 def analyze(ts_code: str) -> dict:
     ts_code = normalize_code(ts_code)
@@ -245,14 +258,14 @@ def analyze(ts_code: str) -> dict:
     result["technical"] = {
         "close": cur_price,
         "today_ret": today_ret,
-        "ma5":  round(close.iloc[-5:].mean(), 3) if len(close) >= 5 else None,
+        "ma5": round(close.iloc[-5:].mean(), 3) if len(close) >= 5 else None,
         "ma10": round(close.iloc[-10:].mean(), 3) if len(close) >= 10 else None,
         "ma20": round(close.iloc[-20:].mean(), 3) if len(close) >= 20 else None,
         "ma60": round(close.iloc[-60:].mean(), 3) if len(close) >= 60 else None,
-        "ma120":round(close.iloc[-120:].mean(), 3) if len(close) >= 120 else None,
+        "ma120": round(close.iloc[-120:].mean(), 3) if len(close) >= 120 else None,
         "rsi14": calc_rsi(close, 14),
-        "macd": calc_macd(close),       # (macd, signal, hist)
-        "boll": calc_boll(close, 20),   # (upper, mid, lower)
+        "macd": calc_macd(close),  # (macd, signal, hist)
+        "boll": calc_boll(close, 20),  # (upper, mid, lower)
         "vol_ratio": vol_ratio(vol, 20),
         "drawdown_60d": drawdown_from_high(close, 60),
         "drawdown_120d": drawdown_from_high(close, 120),
@@ -264,9 +277,12 @@ def analyze(ts_code: str) -> dict:
     t = result["technical"]
     signals = []
     rsi = t["rsi14"]
-    if rsi < 20:  signals.append("RSI极度超卖(<20)")
-    elif rsi < 30: signals.append("RSI超卖(<30)")
-    elif rsi > 70: signals.append("RSI超买(>70)")
+    if rsi < 20:
+        signals.append("RSI极度超卖(<20)")
+    elif rsi < 30:
+        signals.append("RSI超卖(<30)")
+    elif rsi > 70:
+        signals.append("RSI超买(>70)")
 
     macd_val, sig_val, hist_val = t["macd"]
     if not np.isnan(hist_val):
@@ -276,8 +292,10 @@ def analyze(ts_code: str) -> dict:
             signals.append("MACD死叉")
 
     boll_u, boll_m, boll_l = t["boll"]
-    if not np.isnan(boll_l) and cur_price < boll_l: signals.append("跌破布林下轨")
-    if not np.isnan(boll_u) and cur_price > boll_u: signals.append("突破布林上轨")
+    if not np.isnan(boll_l) and cur_price < boll_l:
+        signals.append("跌破布林下轨")
+    if not np.isnan(boll_u) and cur_price > boll_u:
+        signals.append("突破布林上轨")
 
     ma5, ma20 = t.get("ma5"), t.get("ma20")
     if ma5 and ma20:
@@ -285,9 +303,12 @@ def analyze(ts_code: str) -> dict:
 
     vr = t["vol_ratio"]
     if not np.isnan(vr):
-        if vr >= 2.0: signals.append(f"放量{vr}x(异常)")
-        elif vr >= 1.5: signals.append(f"放量{vr}x")
-        elif vr < 0.5: signals.append(f"缩量{vr}x")
+        if vr >= 2.0:
+            signals.append(f"放量{vr}x(异常)")
+        elif vr >= 1.5:
+            signals.append(f"放量{vr}x")
+        elif vr < 0.5:
+            signals.append(f"缩量{vr}x")
 
     t["signals"] = signals
 
@@ -315,6 +336,7 @@ def analyze(ts_code: str) -> dict:
         stale_note = ""
         if "updated_at" in fund_df.columns:
             from datetime import datetime as _dt, timedelta as _td, date as _date
+
             latest_updated = fund_df["updated_at"].max()
             latest_fund_date = fund_df["trade_date"].max()
             today = _date.today()
@@ -329,8 +351,11 @@ def analyze(ts_code: str) -> dict:
             "main_net_pct": latest_fund["main_net_pct"],
             "super_net_wan": round(latest_fund["super_net"] / 1e4, 1) if latest_fund["super_net"] else None,
             "5d_main_net_wan": round(fund_5d["main_net"].sum() / 1e4, 1) if "main_net" in fund_5d else None,
-            "5d_trend": "持续流入" if (fund_5d["main_net"] > 0).sum() >= 3 else
-                        "持续流出" if (fund_5d["main_net"] < 0).sum() >= 3 else "震荡",
+            "5d_trend": "持续流入"
+            if (fund_5d["main_net"] > 0).sum() >= 3
+            else "持续流出"
+            if (fund_5d["main_net"] < 0).sum() >= 3
+            else "震荡",
             "stale_note": stale_note,
         }
     else:
@@ -364,6 +389,7 @@ def analyze(ts_code: str) -> dict:
 
 # ── 格式化输出 ──────────────────────────────────────────
 
+
 def format_report(r: dict) -> str:
     lines = []
     lines.append(f"【股票分析】{r['ts_code']} {r['name']}  {r['analysis_date']}")
@@ -393,24 +419,37 @@ def format_report(r: dict) -> str:
         lines.append("")
         lines.append("💰 主力资金（最新）")
         stale_tag = ff.get("stale_note", "")
-        lines.append(f"  {ff['latest_date']}  主力净流入={ff['main_net_wan']:+.1f}万  占比={ff['main_net_pct']:+.1f}%{stale_tag}")
-        lines.append(f"  超大单={ff['super_net_wan']:+.1f}万  近5日合计={ff['5d_main_net_wan']:+.1f}万  趋势={ff['5d_trend']}")
+        lines.append(
+            f"  {ff['latest_date']}  主力净流入={ff['main_net_wan']:+.1f}万  占比={ff['main_net_pct']:+.1f}%{stale_tag}"
+        )
+        lines.append(
+            f"  超大单={ff['super_net_wan']:+.1f}万  近5日合计={ff['5d_main_net_wan']:+.1f}万  趋势={ff['5d_trend']}"
+        )
 
     fund = r.get("fundamentals")
     if fund:
+
         def fmt(v, suffix="%", decimals=1):
-            return f"{v:.{decimals}f}{suffix}" if v is not None and not (isinstance(v, float) and np.isnan(v)) else "N/A"
+            return (
+                f"{v:.{decimals}f}{suffix}" if v is not None and not (isinstance(v, float) and np.isnan(v)) else "N/A"
+            )
+
         def fmt_cap(v):
             """股本转换为亿股"""
             if v is None or (isinstance(v, float) and np.isnan(v)):
                 return "N/A"
-            return f"{v/1e8:.2f}亿股"
+            return f"{v / 1e8:.2f}亿股"
+
         ann = f"  公告日：{fund['announce_date']}" if fund.get("announce_date") else ""
         lines.append("")
         lines.append(f"📋 基本面（{fund['report_date']}）{ann}")
         lines.append(f"  ROE={fmt(fund['roe'])}  净利率={fmt(fund['net_margin'])}  毛利率={fmt(fund['gross_margin'])}")
-        lines.append(f"  负债率={fmt(fund['debt_ratio'])}  营收增速={fmt(fund['revenue_growth'])}  利润增速={fmt(fund['profit_growth'])}")
-        lines.append(f"  EPS={fmt(fund['eps'],'元',2)}  EPS摊薄={fmt(fund['eps_diluted'],'元',2)}  BPS={fmt(fund['bps'],'元',2)}  每股现金流={fmt(fund['ocfps'],'元',2)}")
+        lines.append(
+            f"  负债率={fmt(fund['debt_ratio'])}  营收增速={fmt(fund['revenue_growth'])}  利润增速={fmt(fund['profit_growth'])}"
+        )
+        lines.append(
+            f"  EPS={fmt(fund['eps'], '元', 2)}  EPS摊薄={fmt(fund['eps_diluted'], '元', 2)}  BPS={fmt(fund['bps'], '元', 2)}  每股现金流={fmt(fund['ocfps'], '元', 2)}"
+        )
         lines.append(f"  总股本={fmt_cap(fund['total_capital'])}  流通股本={fmt_cap(fund['circulating_capital'])}")
 
     timing = r.get("timing", {})
@@ -426,6 +465,7 @@ def format_report(r: dict) -> str:
 
 
 # ── 主入口 ──────────────────────────────────────────────
+
 
 def fetch_and_analyze(ts_code: str) -> str:
     result = analyze(ts_code)

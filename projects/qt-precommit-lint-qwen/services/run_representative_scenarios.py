@@ -9,7 +9,7 @@ EVENTS = {
     "covid_2020": "2020-02-03",
     "top_2021": "2021-02-18",
     "downtrend_2022": "2022-04-01",
-    "ai_start_2023": "2023-01-03"
+    "ai_start_2023": "2023-01-03",
 }
 
 
@@ -20,11 +20,7 @@ def run_all():
     for tag, start_date in EVENTS.items():
         print(f"\n=== Running scenario: {tag} ===")
         try:
-            result, df = run_event_replay(
-                start_date=start_date,
-                months=6,
-                tag=tag
-            )
+            result, df = run_event_replay(start_date=start_date, months=6, tag=tag)
 
             report = generate_event_report(result, tag)
             path = f"docs/event_replay_{tag}_v1_0.md"

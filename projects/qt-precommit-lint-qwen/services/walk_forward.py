@@ -10,6 +10,7 @@ services/walk_forward.py — Walk-Forward 验证框架
   python services/walk_forward.py --train-years 3 --val-years 1
   python services/walk_forward.py --start 2019 --end 2025
 """
+
 from __future__ import annotations
 
 import argparse
@@ -44,9 +45,9 @@ OUTPUT_DIR = "data/walk_forward"
 # 动量：中短期价格动量
 MOMENTUM_COLS = ["roc_20", "roc_60", "roc_10", "cntp_20"]
 # 趋势强度：beta + R² 衡量趋势质量
-TREND_COLS    = ["beta_20", "rsqr_20", "beta_60"]
+TREND_COLS = ["beta_20", "rsqr_20", "beta_60"]
 # 量价：成交量动量与波动
-VOL_COLS      = ["vma_20", "wvma_20", "vol_ratio"]
+VOL_COLS = ["vma_20", "wvma_20", "vol_ratio"]
 # 反转：短期超跌（rsv 低 = 超卖，短期反弹概率高）
 REVERSAL_COLS = ["rsv_5"]
 
@@ -138,13 +139,17 @@ class _GRUModel(nn.Module):
     def __init__(self, n_features, hidden_size=64, num_layers=2, dropout=0.1):
         super().__init__()
         self.gru = nn.GRU(
-            input_size=n_features, hidden_size=hidden_size,
-            num_layers=num_layers, batch_first=True,
+            input_size=n_features,
+            hidden_size=hidden_size,
+            num_layers=num_layers,
+            batch_first=True,
             dropout=dropout if num_layers > 1 else 0,
         )
         self.fc = nn.Sequential(
-            nn.Linear(hidden_size, 32), nn.ReLU(),
-            nn.Dropout(dropout), nn.Linear(32, 1),
+            nn.Linear(hidden_size, 32),
+            nn.ReLU(),
+            nn.Dropout(dropout),
+            nn.Linear(32, 1),
         )
 
     def forward(self, x):
@@ -200,17 +205,19 @@ def build_gru_signals_for_period(start: str, end: str, batch_size: int = 2048) -
             date_str = str(dt)[:10]
             if date_str > end:
                 break
-            window = feats[i - seq_len:i]
+            window = feats[i - seq_len : i]
             window = np.clip(np.nan_to_num(window, nan=0.0, posinf=3.0, neginf=-3.0), -3, 3)
             all_windows.append((date_str, ts_code, window))
 
-    del df; gc.collect()
+    del df
+    gc.collect()
 
     # 按日期分组批量推理
     by_date = defaultdict(list)
     for date_str, ts_code, window in all_windows:
         by_date[date_str].append((ts_code, window))
-    del all_windows; gc.collect()
+    del all_windows
+    gc.collect()
 
     signals = {}
     for date_str in sorted(by_date.keys()):
@@ -220,7 +227,7 @@ def build_gru_signals_for_period(start: str, end: str, batch_size: int = 2048) -
         preds_list = []
         with torch.no_grad():
             for j in range(0, len(X), batch_size):
-                batch = torch.from_numpy(X[j:j + batch_size])
+                batch = torch.from_numpy(X[j : j + batch_size])
                 preds_list.append(model(batch).numpy())
         preds = np.concatenate(preds_list)
         signals[date_str] = {code: float(pred) for code, pred in zip(codes, preds)}
@@ -233,12 +240,13 @@ def build_gru_signals_for_period(start: str, end: str, batch_size: int = 2048) -
 # 带交易成本的回测包装
 # ─────────────────────────────────────────────────────────────
 
+
 def run_backtest_with_cost(
     signals: dict,
     market_data: dict,
     top_k: int,
     rebalance_days: int,
-    cost_rate: float = 0.001,   # 单边 0.1%（印花税+佣金）
+    cost_rate: float = 0.001,  # 单边 0.1%（印花税+佣金）
 ) -> dict:
     """
     在 QlibStyleBacktest 基础上叠加交易成本
@@ -267,6 +275,7 @@ def run_backtest_with_cost(
 # Walk-Forward 主逻辑
 # ─────────────────────────────────────────────────────────────
 
+
 def run_single_window(
     train_start: str,
     train_end: str,
@@ -292,36 +301,42 @@ def run_single_window(
 
     result = {
         "window": label,
-        "train_start": train_start, "train_end": train_end,
-        "val_start": val_start, "val_end": val_end,
+        "train_start": train_start,
+        "train_end": train_end,
+        "val_start": val_start,
+        "val_end": val_end,
     }
 
     # ── 规则因子回测 ──────────────────────────────────────
     t0 = time.time()
     rule_signals = build_signals_for_period(val_start, val_end)
-    print(f"    [规则因子] 信号: {len(rule_signals)} 天  ({time.time()-t0:.1f}s)")
+    print(f"    [规则因子] 信号: {len(rule_signals)} 天  ({time.time() - t0:.1f}s)")
 
     if rule_signals:
         m_rule = run_backtest_with_cost(rule_signals, market_data, top_k, rebalance_days, cost_rate)
         result["rule_metrics"] = m_rule
-        print(f"    [规则因子] 年化={m_rule.get('ann_return',0):+.2%}  "
-              f"(扣费后={m_rule.get('ann_return_after_cost',0):+.2%})  "
-              f"Sharpe={m_rule.get('sharpe',0):.2f}→{m_rule.get('sharpe_after_cost',0):.2f}  "
-              f"MaxDD={m_rule.get('max_drawdown',0):.2%}")
+        print(
+            f"    [规则因子] 年化={m_rule.get('ann_return', 0):+.2%}  "
+            f"(扣费后={m_rule.get('ann_return_after_cost', 0):+.2%})  "
+            f"Sharpe={m_rule.get('sharpe', 0):.2f}→{m_rule.get('sharpe_after_cost', 0):.2f}  "
+            f"MaxDD={m_rule.get('max_drawdown', 0):.2%}"
+        )
 
     # ── GRU 模型回测 ──────────────────────────────────────
     if use_gru:
         t1 = time.time()
         gru_signals = build_gru_signals_for_period(val_start, val_end)
-        print(f"    [GRU]    信号: {len(gru_signals)} 天  ({time.time()-t1:.1f}s)")
+        print(f"    [GRU]    信号: {len(gru_signals)} 天  ({time.time() - t1:.1f}s)")
 
         if gru_signals:
             m_gru = run_backtest_with_cost(gru_signals, market_data, top_k, rebalance_days, cost_rate)
             result["gru_metrics"] = m_gru
-            print(f"    [GRU]    年化={m_gru.get('ann_return',0):+.2%}  "
-                  f"(扣费后={m_gru.get('ann_return_after_cost',0):+.2%})  "
-                  f"Sharpe={m_gru.get('sharpe',0):.2f}→{m_gru.get('sharpe_after_cost',0):.2f}  "
-                  f"MaxDD={m_gru.get('max_drawdown',0):.2%}")
+            print(
+                f"    [GRU]    年化={m_gru.get('ann_return', 0):+.2%}  "
+                f"(扣费后={m_gru.get('ann_return_after_cost', 0):+.2%})  "
+                f"Sharpe={m_gru.get('sharpe', 0):.2f}→{m_gru.get('sharpe_after_cost', 0):.2f}  "
+                f"MaxDD={m_gru.get('max_drawdown', 0):.2%}"
+            )
 
     return result
 
@@ -344,8 +359,7 @@ def run_walk_forward(
     """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     print(f"Walk-Forward 验证")
-    print(f"  参数: train={train_years}年  val={val_years}年  "
-          f"top_k={top_k}  rebalance={rebalance_days}日")
+    print(f"  参数: train={train_years}年  val={val_years}年  top_k={top_k}  rebalance={rebalance_days}日")
     print(f"  范围: {start_year} ~ {end_year}")
     print("=" * 60)
 
@@ -353,19 +367,24 @@ def run_walk_forward(
     year = start_year
     while year + train_years + val_years - 1 <= end_year:
         train_start = f"{year}-01-01"
-        train_end   = f"{year + train_years - 1}-12-31"
-        val_start   = f"{year + train_years}-01-01"
-        val_end     = f"{year + train_years + val_years - 1}-12-31"
+        train_end = f"{year + train_years - 1}-12-31"
+        val_start = f"{year + train_years}-01-01"
+        val_end = f"{year + train_years + val_years - 1}-12-31"
         windows.append((train_start, train_end, val_start, val_end))
         year += val_years  # 滚动步长 = val_years
 
     results = []
     for train_start, train_end, val_start, val_end in windows:
         r = run_single_window(
-            train_start, train_end, val_start, val_end,
-            top_k=top_k, rebalance_days=rebalance_days,
+            train_start,
+            train_end,
+            val_start,
+            val_end,
+            top_k=top_k,
+            rebalance_days=rebalance_days,
         )
         results.append(r)
+
 
 def run_walk_forward(
     start_year: int = 2019,
@@ -384,28 +403,37 @@ def run_walk_forward(
     """
     os.makedirs(OUTPUT_DIR, exist_ok=True)
     print(f"Walk-Forward 验证（规则因子 vs GRU）")
-    print(f"  参数: train={train_years}年  val={val_years}年  top_k={top_k}  "
-          f"rebalance={rebalance_days}日  cost={cost_rate*100:.1f}%/单边")
+    print(
+        f"  参数: train={train_years}年  val={val_years}年  top_k={top_k}  "
+        f"rebalance={rebalance_days}日  cost={cost_rate * 100:.1f}%/单边"
+    )
     print(f"  范围: {start_year} ~ {end_year}  GRU={'开启' if use_gru else '关闭'}")
     print("=" * 70)
 
     windows = []
     year = start_year
     while year + train_years + val_years - 1 <= end_year:
-        windows.append((
-            f"{year}-01-01",
-            f"{year + train_years - 1}-12-31",
-            f"{year + train_years}-01-01",
-            f"{year + train_years + val_years - 1}-12-31",
-        ))
+        windows.append(
+            (
+                f"{year}-01-01",
+                f"{year + train_years - 1}-12-31",
+                f"{year + train_years}-01-01",
+                f"{year + train_years + val_years - 1}-12-31",
+            )
+        )
         year += val_years
 
     results = []
     for train_start, train_end, val_start, val_end in windows:
         r = run_single_window(
-            train_start, train_end, val_start, val_end,
-            top_k=top_k, rebalance_days=rebalance_days,
-            use_gru=use_gru, cost_rate=cost_rate,
+            train_start,
+            train_end,
+            val_start,
+            val_end,
+            top_k=top_k,
+            rebalance_days=rebalance_days,
+            use_gru=use_gru,
+            cost_rate=cost_rate,
         )
         results.append(r)
 
@@ -416,23 +444,23 @@ def run_walk_forward(
             return None
         ann = [r[key].get("ann_return_after_cost", r[key].get("ann_return", 0)) for r in valid]
         sharpes = [r[key].get("sharpe_after_cost", r[key].get("sharpe", 0)) for r in valid]
-        maxdds  = [r[key].get("max_drawdown", 0) for r in valid]
+        maxdds = [r[key].get("max_drawdown", 0) for r in valid]
         win_rate = sum(1 for x in ann if x > 0) / len(ann)
         return {
-            "n_windows":        len(valid),
-            "ann_return_mean":  round(float(np.mean(ann)), 4),
-            "ann_return_std":   round(float(np.std(ann)), 4),
-            "ann_return_min":   round(float(np.min(ann)), 4),
-            "ann_return_max":   round(float(np.max(ann)), 4),
-            "sharpe_mean":      round(float(np.mean(sharpes)), 4),
-            "sharpe_min":       round(float(np.min(sharpes)), 4),
-            "maxdd_mean":       round(float(np.mean(maxdds)), 4),
+            "n_windows": len(valid),
+            "ann_return_mean": round(float(np.mean(ann)), 4),
+            "ann_return_std": round(float(np.std(ann)), 4),
+            "ann_return_min": round(float(np.min(ann)), 4),
+            "ann_return_max": round(float(np.max(ann)), 4),
+            "sharpe_mean": round(float(np.mean(sharpes)), 4),
+            "sharpe_min": round(float(np.min(sharpes)), 4),
+            "maxdd_mean": round(float(np.mean(maxdds)), 4),
             "positive_windows": round(win_rate, 4),
-            "stable":           bool(win_rate >= 0.75 and float(np.mean(sharpes)) > 0.3),
+            "stable": bool(win_rate >= 0.75 and float(np.mean(sharpes)) > 0.3),
         }
 
     rule_summary = summarize("rule_metrics")
-    gru_summary  = summarize("gru_metrics") if use_gru else None
+    gru_summary = summarize("gru_metrics") if use_gru else None
 
     print()
     print("=" * 70)
@@ -443,9 +471,11 @@ def run_walk_forward(
             continue
         print(f"\n  [{name}]")
         print(f"    窗口数:       {s['n_windows']}")
-        print(f"    年化均值:     {s['ann_return_mean']:+.2%}  "
-              f"(min={s['ann_return_min']:+.2%}  max={s['ann_return_max']:+.2%}  "
-              f"std={s['ann_return_std']:.2%})")
+        print(
+            f"    年化均值:     {s['ann_return_mean']:+.2%}  "
+            f"(min={s['ann_return_min']:+.2%}  max={s['ann_return_max']:+.2%}  "
+            f"std={s['ann_return_std']:.2%})"
+        )
         print(f"    Sharpe 均值:  {s['sharpe_mean']:.2f}  (min={s['sharpe_min']:.2f})")
         print(f"    最大回撤均值: {s['maxdd_mean']:.2%}")
         print(f"    正收益窗口:   {s['positive_windows']:.0%}")
@@ -458,22 +488,25 @@ def run_walk_forward(
             val_y = r.get("val_start", "")[:4]
             r_ann = r.get("rule_metrics", {}).get("ann_return_after_cost", 0)
             g_ann = r.get("gru_metrics", {}).get("ann_return_after_cost", 0)
-            r_sh  = r.get("rule_metrics", {}).get("sharpe_after_cost", 0)
-            g_sh  = r.get("gru_metrics", {}).get("sharpe_after_cost", 0)
+            r_sh = r.get("rule_metrics", {}).get("sharpe_after_cost", 0)
+            g_sh = r.get("gru_metrics", {}).get("sharpe_after_cost", 0)
             winner = "GRU ✅" if g_ann > r_ann else "规则 ✅"
-            print(f"    val={val_y}  规则={r_ann:+.2%}(Sh={r_sh:.2f})  "
-                  f"GRU={g_ann:+.2%}(Sh={g_sh:.2f})  → {winner}")
+            print(f"    val={val_y}  规则={r_ann:+.2%}(Sh={r_sh:.2f})  GRU={g_ann:+.2%}(Sh={g_sh:.2f})  → {winner}")
 
     output = {
         "run_time": datetime.now().strftime("%Y-%m-%d %H:%M"),
         "params": {
-            "start_year": start_year, "end_year": end_year,
-            "train_years": train_years, "val_years": val_years,
-            "top_k": top_k, "rebalance_days": rebalance_days,
-            "cost_rate": cost_rate, "use_gru": use_gru,
+            "start_year": start_year,
+            "end_year": end_year,
+            "train_years": train_years,
+            "val_years": val_years,
+            "top_k": top_k,
+            "rebalance_days": rebalance_days,
+            "cost_rate": cost_rate,
+            "use_gru": use_gru,
         },
         "rule_summary": rule_summary,
-        "gru_summary":  gru_summary,
+        "gru_summary": gru_summary,
         "windows": results,
     }
 
@@ -487,14 +520,14 @@ def run_walk_forward(
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Walk-Forward 验证：规则因子 vs GRU 模型")
-    parser.add_argument("--start",       type=int,   default=2019)
-    parser.add_argument("--end",         type=int,   default=2025)
-    parser.add_argument("--train-years", type=int,   default=3)
-    parser.add_argument("--val-years",   type=int,   default=1)
-    parser.add_argument("--top-k",       type=int,   default=20)
-    parser.add_argument("--rebalance",   type=int,   default=5)
-    parser.add_argument("--no-gru",      action="store_true", help="跳过 GRU 对比")
-    parser.add_argument("--cost",        type=float, default=0.001, help="单边交易成本（默认0.1%%）")
+    parser.add_argument("--start", type=int, default=2019)
+    parser.add_argument("--end", type=int, default=2025)
+    parser.add_argument("--train-years", type=int, default=3)
+    parser.add_argument("--val-years", type=int, default=1)
+    parser.add_argument("--top-k", type=int, default=20)
+    parser.add_argument("--rebalance", type=int, default=5)
+    parser.add_argument("--no-gru", action="store_true", help="跳过 GRU 对比")
+    parser.add_argument("--cost", type=float, default=0.001, help="单边交易成本（默认0.1%%）")
     args = parser.parse_args()
 
     run_walk_forward(

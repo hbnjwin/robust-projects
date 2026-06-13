@@ -8,6 +8,7 @@ services/hist_signal_generate.py — HIST 模型推理，生成每只股票的�
     from services.hist_signal_generate import hist_predict
     scores = hist_predict()  # {ts_code: float}
 """
+
 from __future__ import annotations
 
 import sys
@@ -22,29 +23,26 @@ _QUANT_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(_QUANT_ROOT))
 
 HIST_MODEL_PATH = _QUANT_ROOT / "ml/model_store/v1/hist_model.pt"
-GRU_MODEL_PATH  = _QUANT_ROOT / "ml/model_store/v1/gru_model.pt"
-FACTORS_PATH    = _QUANT_ROOT / "data/factors_latest.parquet"
-S2C_PATH        = "/vol1/qlib_data/stock2concept/stock2concept.npy"
-SIDX_PATH       = "/vol1/qlib_data/stock2concept/stock_index.npy"
+GRU_MODEL_PATH = _QUANT_ROOT / "ml/model_store/v1/gru_model.pt"
+FACTORS_PATH = _QUANT_ROOT / "data/factors_latest.parquet"
+S2C_PATH = "/vol1/qlib_data/stock2concept/stock2concept.npy"
+SIDX_PATH = "/vol1/qlib_data/stock2concept/stock_index.npy"
 
-SEQ_LEN   = 20
-D_FEAT    = 75
-HIDDEN    = 128
-N_LAYERS  = 2
-DROPOUT   = 0.1
+SEQ_LEN = 20
+D_FEAT = 75
+HIDDEN = 128
+N_LAYERS = 2
+DROPOUT = 0.1
 
-_SKIP_COLS = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d",
-              "corr_ret_vol_10", "corr_ret_vol_20"}
+_SKIP_COLS = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d", "corr_ret_vol_10", "corr_ret_vol_20"}
 
 
 # ── 模型定义 ──────────────────────────────────────────────────────────
 class HISTModel(nn.Module):
     def __init__(self, d_feat, hidden_size, num_layers, dropout, n_concepts):
         super().__init__()
-        self.rnn = nn.GRU(d_feat, hidden_size, num_layers,
-                          batch_first=True,
-                          dropout=dropout if num_layers > 1 else 0)
-        self.concept_fc  = nn.Linear(hidden_size, n_concepts)
+        self.rnn = nn.GRU(d_feat, hidden_size, num_layers, batch_first=True, dropout=dropout if num_layers > 1 else 0)
+        self.concept_fc = nn.Linear(hidden_size, n_concepts)
         self.concept_emb = nn.Linear(n_concepts, hidden_size)
         self.fc_out = nn.Sequential(
             nn.Linear(hidden_size * 2, hidden_size),
@@ -100,12 +98,13 @@ def hist_predict(
     if not mpath.exists():
         print(f"[HIST] 模型文件不存在: {mpath}，fallback 到 GRU")
         from services.gru_signal_generate import gru_predict
+
         return gru_predict(factors_path=str(fpath))
 
     # ── 加载 stock2concept ────────────────────────────────────
-    s2c_matrix  = np.load(S2C_PATH)
+    s2c_matrix = np.load(S2C_PATH)
     stock_index = np.load(SIDX_PATH, allow_pickle=True).item()
-    n_concepts  = s2c_matrix.shape[1]
+    n_concepts = s2c_matrix.shape[1]
     unknown_idx = s2c_matrix.shape[0] - 1
     s2c_t = torch.from_numpy(s2c_matrix).float()
     print(f"[HIST] stock2concept: {s2c_matrix.shape}, concepts={n_concepts}")
@@ -122,10 +121,13 @@ def hist_predict(
         target_dt = pd.Timestamp(trade_date)
         # 多读 SEQ_LEN * 3 天历史，保证有足够的时序窗口
         start_dt = target_dt - pd.Timedelta(days=SEQ_LEN * 3)
-        df = pd.read_parquet(str(fpath), filters=[
-            ("trade_date", ">=", start_dt.date()),
-            ("trade_date", "<=", target_dt.date()),
-        ])
+        df = pd.read_parquet(
+            str(fpath),
+            filters=[
+                ("trade_date", ">=", start_dt.date()),
+                ("trade_date", "<=", target_dt.date()),
+            ],
+        )
     else:
         df = pd.read_parquet(str(fpath))
 
@@ -173,15 +175,15 @@ def hist_predict(
         print("[HIST] 无有效样本")
         return {}
 
-    X    = np.stack(windows, axis=0)          # (N, SEQ_LEN, D_FEAT)
+    X = np.stack(windows, axis=0)  # (N, SEQ_LEN, D_FEAT)
     sidx = np.array(sidx_list, dtype=np.int32)
 
     # ── 批量推理 ──────────────────────────────────────────────
     result: dict[str, float] = {}
     with torch.no_grad():
         for i in range(0, len(X), batch_size):
-            x_batch    = torch.from_numpy(X[i:i + batch_size])
-            sidx_batch = torch.from_numpy(sidx[i:i + batch_size]).long()
+            x_batch = torch.from_numpy(X[i : i + batch_size])
+            sidx_batch = torch.from_numpy(sidx[i : i + batch_size]).long()
             concept_mat = s2c_t[sidx_batch]
             preds = model(x_batch, concept_mat).numpy()
             for j, pred in enumerate(preds):

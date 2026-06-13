@@ -36,10 +36,7 @@ def generate_snapshot():
 
     os.makedirs(SNAPSHOT_DIR, exist_ok=True)
 
-    snapshot = {
-        "timestamp": datetime.now().isoformat(),
-        "scenarios": data
-    }
+    snapshot = {"timestamp": datetime.now().isoformat(), "scenarios": data}
 
     filename = datetime.now().strftime("%Y-%m-%d_%H-%M-%S.json")
     path = os.path.join(SNAPSHOT_DIR, filename)

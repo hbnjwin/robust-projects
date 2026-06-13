@@ -2,6 +2,7 @@
 统一配置管理 - P0-3 修复
 所有敏感配置从环境变量读取，有默认值兜底。
 """
+
 import os
 
 _pg_host = os.getenv("PG_HOST", "/var/run/postgresql")

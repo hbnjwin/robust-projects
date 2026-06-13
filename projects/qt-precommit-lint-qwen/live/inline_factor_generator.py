@@ -39,11 +39,11 @@
 
 输出格式兼容 FactorStrategy 的 factor_scores
 """
+
 import numpy as np
 
 
 class InlineFactorGenerator:
-
     def __init__(self, history_len=120):
         self.history_len = history_len
         self.price_history = {}
@@ -87,12 +87,12 @@ class InlineFactorGenerator:
         for code, data in price_dict.items():
             self.price_history.setdefault(code, []).append(data["close"])
             if len(self.price_history[code]) > self.history_len:
-                self.price_history[code] = self.price_history[code][-self.history_len:]
+                self.price_history[code] = self.price_history[code][-self.history_len :]
 
             vol = data.get("volume", 0)
             self.volume_history.setdefault(code, []).append(vol)
             if len(self.volume_history[code]) > self.history_len:
-                self.volume_history[code] = self.volume_history[code][-self.history_len:]
+                self.volume_history[code] = self.volume_history[code][-self.history_len :]
 
     def set_regime(self, regime):
         """
@@ -276,8 +276,8 @@ class InlineFactorGenerator:
             tr_sum = 0
             for j in range(1, len(window)):
                 high_diff = window[j] - window[j - 1]  # 近似+DM
-                low_diff = window[j - 1] - window[j]   # 近似-DM
-                tr = abs(window[j] - window[j - 1])     # 近似TR
+                low_diff = window[j - 1] - window[j]  # 近似-DM
+                tr = abs(window[j] - window[j - 1])  # 近似TR
                 tr_sum += tr
                 if high_diff > 0 and high_diff > low_diff:
                     plus_dm += high_diff
@@ -306,10 +306,16 @@ class InlineFactorGenerator:
         if n >= 20 and len(vols) >= 20:
             p_window = prices[-20:]
             v_window = vols[-20:]
-            p_rets = [(p_window[j] - p_window[j-1]) / p_window[j-1]
-                      for j in range(1, len(p_window)) if p_window[j-1] > 0]
-            v_rets = [(v_window[j] - v_window[j-1]) / v_window[j-1]
-                      for j in range(1, len(v_window)) if v_window[j-1] > 0]
+            p_rets = [
+                (p_window[j] - p_window[j - 1]) / p_window[j - 1]
+                for j in range(1, len(p_window))
+                if p_window[j - 1] > 0
+            ]
+            v_rets = [
+                (v_window[j] - v_window[j - 1]) / v_window[j - 1]
+                for j in range(1, len(v_window))
+                if v_window[j - 1] > 0
+            ]
             min_len = min(len(p_rets), len(v_rets))
             if min_len >= 10:
                 corr = np.corrcoef(p_rets[:min_len], v_rets[:min_len])[0, 1]

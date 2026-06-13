@@ -308,12 +308,12 @@ class OmsEngine:
         if self.on_order_update:
             self.on_order_update(order)
         if self._event_engine:
-            from core.event import Event, EVENT_ORDER
+            from core.event import EVENT_ORDER, Event
             self._event_engine.put(Event(EVENT_ORDER, order.to_dict()))
 
     def _notify_trade(self, trade: Trade) -> None:
         if self.on_trade:
             self.on_trade(trade)
         if self._event_engine:
-            from core.event import Event, EVENT_TRADE
+            from core.event import EVENT_TRADE, Event
             self._event_engine.put(Event(EVENT_TRADE, trade.to_dict()))

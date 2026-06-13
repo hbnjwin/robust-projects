@@ -5,6 +5,7 @@
 调度: 15:20, depends_on: ml_factor_compute
 输出: data/signals/YYYY-MM-DD.json (兼容 paper_trading_v1)
 """
+
 import sys
 import os
 import json
@@ -46,7 +47,7 @@ def main():
     with open(meta_path) as f:
         meta = json.load(f)
     feature_names = meta.get("feature_names", [])
-    print(f"  Models loaded: {list(models.keys())} ({time.time()-t0:.1f}s)")
+    print(f"  Models loaded: {list(models.keys())} ({time.time() - t0:.1f}s)")
 
     # 2. 加载最新因子
     t1 = time.time()
@@ -57,7 +58,7 @@ def main():
     latest_date = df["trade_date"].max()
     latest_str = latest_date.strftime("%Y-%m-%d")
     day_df = df[df["trade_date"] == latest_date]
-    print(f"  Latest date: {latest_str}, {len(day_df)} stocks ({time.time()-t1:.1f}s)")
+    print(f"  Latest date: {latest_str}, {len(day_df)} stocks ({time.time() - t1:.1f}s)")
 
     if day_df.empty:
         print("  [WARN] No data for latest date, aborting.")
@@ -89,12 +90,13 @@ def main():
     lgb_score_map = dict(zip(ts_codes, lgb_scores))
 
     # 5. GRU + HIST 预测（三模型集成）
-    LGB_WEIGHT  = 0.2
-    GRU_WEIGHT  = 0.2
+    LGB_WEIGHT = 0.2
+    GRU_WEIGHT = 0.2
     HIST_WEIGHT = 0.6
 
     try:
         from services.gru_signal_generate import gru_predict
+
         gru_score_map = gru_predict()
         print(f"  GRU scores: {len(gru_score_map)} stocks")
     except Exception as e:
@@ -103,6 +105,7 @@ def main():
 
     try:
         from services.hist_signal_generate import hist_predict
+
         hist_score_map = hist_predict()
         print(f"  HIST scores: {len(hist_score_map)} stocks")
     except Exception as e:
@@ -112,10 +115,12 @@ def main():
     # 集成：按可用模型动态分配权重
     final_scores = {}
     for code, lgb_s in lgb_score_map.items():
-        has_gru  = code in gru_score_map
+        has_gru = code in gru_score_map
         has_hist = code in hist_score_map
         if has_gru and has_hist:
-            final_scores[code] = LGB_WEIGHT * lgb_s + GRU_WEIGHT * gru_score_map[code] + HIST_WEIGHT * hist_score_map[code]
+            final_scores[code] = (
+                LGB_WEIGHT * lgb_s + GRU_WEIGHT * gru_score_map[code] + HIST_WEIGHT * hist_score_map[code]
+            )
         elif has_hist:
             w = LGB_WEIGHT + GRU_WEIGHT
             final_scores[code] = w * lgb_s + HIST_WEIGHT * hist_score_map[code]
@@ -124,7 +129,7 @@ def main():
         else:
             final_scores[code] = lgb_s
 
-    gru_coverage  = len([c for c in ts_codes if c in gru_score_map])
+    gru_coverage = len([c for c in ts_codes if c in gru_score_map])
     hist_coverage = len([c for c in ts_codes if c in hist_score_map])
     print(f"  Ensemble: LGB×{LGB_WEIGHT} + GRU×{GRU_WEIGHT} + HIST×{HIST_WEIGHT}")
     print(f"  Coverage: GRU={gru_coverage}/{len(ts_codes)}, HIST={hist_coverage}/{len(ts_codes)}")
@@ -142,14 +147,8 @@ def main():
         "hist_weight": HIST_WEIGHT,
         "gru_coverage": gru_coverage,
         "hist_coverage": hist_coverage,
-        "top_signals": [
-            {"ts_code": code, "score": round(float(score), 6)}
-            for code, score in signal_list[:top_n]
-        ],
-        "all_signals": {
-            code: round(float(score), 6)
-            for code, score in signal_list
-        },
+        "top_signals": [{"ts_code": code, "score": round(float(score), 6)} for code, score in signal_list[:top_n]],
+        "all_signals": {code: round(float(score), 6) for code, score in signal_list},
     }
 
     # 6. 保存

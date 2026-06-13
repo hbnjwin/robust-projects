@@ -1,6 +1,8 @@
 """建表脚本：蒙特卡洛模拟交易表"""
+
 import psycopg
 import sys, os
+
 sys.path.insert(0, os.path.expanduser("~/quant"))
 from config import PG_CONFIG
 

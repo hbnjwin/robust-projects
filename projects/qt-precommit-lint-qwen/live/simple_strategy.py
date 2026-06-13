@@ -4,6 +4,7 @@
 # SimpleTrendStrategy 已被 trend_strategy_v2.py (TrendStrategyV2) 取代。
 # =============================================================================
 
+
 class SimpleTrendStrategy:
     def generate(self, date, price_dict):
         if not price_dict:

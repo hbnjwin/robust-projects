@@ -16,6 +16,7 @@ services/portfolio_optimizer.py — 组合优化器
   3. 按调整后得分分配权重（softmax 归一化）
   4. 截断到 max_weight，重新归一化
 """
+
 from __future__ import annotations
 
 import json
@@ -35,13 +36,13 @@ OUTPUT_DIR = "data/portfolio"
 
 # 默认参数
 DEFAULT_CONFIG = {
-    "top_pool": 100,       # 候选池大小
-    "max_stocks": 30,      # 最终持仓数
-    "min_stocks": 10,      # 最少持仓数
-    "max_weight": 0.08,    # 单只上限 8%
+    "top_pool": 100,  # 候选池大小
+    "max_stocks": 30,  # 最终持仓数
+    "min_stocks": 10,  # 最少持仓数
+    "max_weight": 0.08,  # 单只上限 8%
     "risk_aversion": 1.0,  # 波动率惩罚系数
-    "beta_penalty": 0.5,   # 高 beta 惩罚
-    "softmax_temp": 5.0,   # softmax 温度（越高越集中）
+    "beta_penalty": 0.5,  # 高 beta 惩罚
+    "softmax_temp": 5.0,  # softmax 温度（越高越集中）
 }
 
 
@@ -108,7 +109,7 @@ def optimize(
 
     # 取 top_pool 候选
     ranked = sorted(all_scores.items(), key=lambda x: x[1], reverse=True)
-    pool = dict(ranked[:cfg["top_pool"]])
+    pool = dict(ranked[: cfg["top_pool"]])
 
     # 加载风险因子
     try:
@@ -137,7 +138,7 @@ def optimize(
 
     # 按调整后得分排序，取 max_stocks
     final_ranked = sorted(adjusted_scores.items(), key=lambda x: x[1], reverse=True)
-    selected = final_ranked[:cfg["max_stocks"]]
+    selected = final_ranked[: cfg["max_stocks"]]
 
     # 过滤掉负分的（除非不够 min_stocks）
     positive = [(c, s) for c, s in selected if s > 0]
@@ -180,7 +181,7 @@ def optimize(
         "max_weight": round(float(weights.max()), 4),
         "min_weight": round(float(weights.min()), 4),
         "top5_weight": round(float(weights[:5].sum()), 4),
-        "hhi": round(float((weights ** 2).sum()), 4),  # 集中度
+        "hhi": round(float((weights**2).sum()), 4),  # 集中度
         "avg_score": round(float(np.mean([all_scores.get(c, 0) for c in codes])), 6),
     }
 
@@ -199,8 +200,10 @@ def optimize(
     with open(out_path, "w") as f:
         json.dump(result, f, indent=2, ensure_ascii=False)
 
-    print(f"[optimizer] {sig_date} | {regime} | {stats['n_stocks']} stocks | "
-          f"max_w={stats['max_weight']} | HHI={stats['hhi']} | top5={stats['top5_weight']}")
+    print(
+        f"[optimizer] {sig_date} | {regime} | {stats['n_stocks']} stocks | "
+        f"max_w={stats['max_weight']} | HHI={stats['hhi']} | top5={stats['top5_weight']}"
+    )
     print(f"[optimizer] 保存: {out_path}")
 
     return result
@@ -212,4 +215,4 @@ if __name__ == "__main__":
         top10 = sorted(result["weights"].items(), key=lambda x: x[1], reverse=True)[:10]
         print("\nTop 10 持仓:")
         for code, w in top10:
-            print(f"  {code}  {w:.4f} ({w*100:.1f}%)")
+            print(f"  {code}  {w:.4f} ({w * 100:.1f}%)")

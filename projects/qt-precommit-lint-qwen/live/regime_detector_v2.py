@@ -1,7 +1,7 @@
 import numpy as np
 
-class RegimeDetectorV2:
 
+class RegimeDetectorV2:
     def __init__(self, lookback=20, history_len=120):
         self.lookback = lookback
         self.history_len = history_len  # 保留足够长的历史用于 MA60
@@ -13,18 +13,18 @@ class RegimeDetectorV2:
     def update(self, price, volume=None):
         self.index_history.append(price)
         if len(self.index_history) > self.history_len:
-            self.index_history = self.index_history[-self.history_len:]
+            self.index_history = self.index_history[-self.history_len :]
 
         if len(self.index_history) > 1:
             r = (self.index_history[-1] - self.index_history[-2]) / self.index_history[-2]
             self.return_history.append(r)
             if len(self.return_history) > self.history_len:
-                self.return_history = self.return_history[-self.history_len:]
+                self.return_history = self.return_history[-self.history_len :]
 
         if volume is not None:
             self.volume_history.append(volume)
             if len(self.volume_history) > self.history_len:
-                self.volume_history = self.volume_history[-self.history_len:]
+                self.volume_history = self.volume_history[-self.history_len :]
 
     def detect(self):
         if len(self.index_history) < self.lookback:

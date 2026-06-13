@@ -1,4 +1,5 @@
 """V4 五场景回测"""
+
 import sys, time, json
 from pathlib import Path
 import numpy as np
@@ -14,11 +15,12 @@ from strategies.factor_strategy import FactorStrategy
 
 SCENARIOS = [
     ("2018-2019 震荡熊", "2018-01-01", "2019-12-31"),
-    ("2020-2021 牛市",   "2020-01-01", "2021-12-31"),
-    ("2022 熊市",        "2022-01-01", "2022-12-31"),
-    ("2023 震荡",        "2023-01-01", "2023-12-31"),
+    ("2020-2021 牛市", "2020-01-01", "2021-12-31"),
+    ("2022 熊市", "2022-01-01", "2022-12-31"),
+    ("2023 震荡", "2023-01-01", "2023-12-31"),
     ("2024-2025 测试集", "2024-01-01", "2025-03-13"),
 ]
+
 
 def main():
     # 加载 ML 信号
@@ -27,7 +29,7 @@ def main():
     ml_signals = {}
     for d, g in sig_df.groupby("trade_date"):
         ml_signals[d] = dict(zip(g["ts_code"], g["score"]))
-    print(f"Signals: {len(ml_signals)} days in {time.time()-t0:.1f}s")
+    print(f"Signals: {len(ml_signals)} days in {time.time() - t0:.1f}s")
 
     capital = 1_000_000
     results = []
@@ -36,7 +38,7 @@ def main():
         print(f"\n--- {name} ({start}~{end}) ---")
         t1 = time.time()
         market_data = load_market_data_fast(start, end)
-        print(f"  Data: {len(market_data)} days in {time.time()-t1:.1f}s")
+        print(f"  Data: {len(market_data)} days in {time.time() - t1:.1f}s")
 
         t2 = time.time()
         acc = StrategyAccount("V4", capital)
@@ -74,30 +76,35 @@ def main():
         else:
             sharpe = 0.0
 
-        results.append({
-            "scenario": name,
-            "return": round(ret, 2),
-            "annual": round(annual, 2),
-            "max_dd": round(dd, 2),
-            "sharpe": round(sharpe, 2),
-            "final_equity": round(acc.total_equity, 0),
-            "time": round(elapsed, 1),
-        })
+        results.append(
+            {
+                "scenario": name,
+                "return": round(ret, 2),
+                "annual": round(annual, 2),
+                "max_dd": round(dd, 2),
+                "sharpe": round(sharpe, 2),
+                "final_equity": round(acc.total_equity, 0),
+                "time": round(elapsed, 1),
+            }
+        )
         print(f"  V4: ret={ret:+.2f}% annual={annual:+.2f}% dd={dd:.2f}% sharpe={sharpe:.2f} ({elapsed:.1f}s)")
 
     # 汇总
-    print(f"\n{'='*70}")
+    print(f"\n{'=' * 70}")
     print(f"  V4 (ML LightGBM) 五场景回测结果")
-    print(f"{'='*70}")
+    print(f"{'=' * 70}")
     print(f"{'场景':<20} {'收益%':>10} {'年化%':>10} {'回撤%':>10} {'Sharpe':>10}")
-    print(f"{'─'*60}")
+    print(f"{'─' * 60}")
     for r in results:
-        print(f"{r['scenario']:<20} {r['return']:>+10.2f} {r['annual']:>+10.2f} {r['max_dd']:>10.2f} {r['sharpe']:>10.2f}")
-    print(f"{'─'*60}")
+        print(
+            f"{r['scenario']:<20} {r['return']:>+10.2f} {r['annual']:>+10.2f} {r['max_dd']:>10.2f} {r['sharpe']:>10.2f}"
+        )
+    print(f"{'─' * 60}")
 
     with open("data/v4_backtest_results.json", "w") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)
     print("Saved to data/v4_backtest_results.json")
+
 
 if __name__ == "__main__":
     main()

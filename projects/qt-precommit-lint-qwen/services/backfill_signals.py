@@ -7,6 +7,7 @@ backfill_signals.py — 批量回测生成历史信号文件
   python services/backfill_signals.py --days 30
   python services/backfill_signals.py --overwrite  # 覆盖已有信号
 """
+
 import sys
 import os
 import json
@@ -22,14 +23,14 @@ sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 from ml.models import BaseModel
 
-MODEL_DIR   = "ml/model_store/v1"
+MODEL_DIR = "ml/model_store/v1"
 FACTORS_PATH = "data/factors_latest.parquet"
-REGIME_PATH  = "data/regime_labels.parquet"
-SIGNAL_DIR   = "data/signals"
-_SKIP_COLS   = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d"}
+REGIME_PATH = "data/regime_labels.parquet"
+SIGNAL_DIR = "data/signals"
+_SKIP_COLS = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d"}
 
-LGB_WEIGHT  = 0.2
-GRU_WEIGHT  = 0.2
+LGB_WEIGHT = 0.2
+GRU_WEIGHT = 0.2
 HIST_WEIGHT = 0.6
 
 
@@ -42,8 +43,7 @@ def load_lgb_models():
     return models
 
 
-def predict_one_day(day_df: pd.DataFrame, lgb_models: dict,
-                    feature_names: list, date_str: str) -> dict:
+def predict_one_day(day_df: pd.DataFrame, lgb_models: dict, feature_names: list, date_str: str) -> dict:
     """对单日因子数据做完整三模型集成推理"""
     if day_df.empty:
         return {}
@@ -65,6 +65,7 @@ def predict_one_day(day_df: pd.DataFrame, lgb_models: dict,
     gru_map = {}
     try:
         from services.gru_signal_generate import gru_predict
+
         gru_map = gru_predict(date_str=date_str)
     except Exception as e:
         print(f"    GRU failed: {e}")
@@ -73,6 +74,7 @@ def predict_one_day(day_df: pd.DataFrame, lgb_models: dict,
     hist_map = {}
     try:
         from services.hist_signal_generate import hist_predict
+
         hist_map = hist_predict(trade_date=date_str)
     except Exception as e:
         print(f"    HIST failed: {e}")
@@ -80,7 +82,7 @@ def predict_one_day(day_df: pd.DataFrame, lgb_models: dict,
     # 集成
     final = {}
     for code, lgb_s in lgb_map.items():
-        has_gru  = code in gru_map
+        has_gru = code in gru_map
         has_hist = code in hist_map
         if has_gru and has_hist:
             final[code] = LGB_WEIGHT * lgb_s + GRU_WEIGHT * gru_map[code] + HIST_WEIGHT * hist_map[code]
@@ -91,23 +93,23 @@ def predict_one_day(day_df: pd.DataFrame, lgb_models: dict,
         else:
             final[code] = lgb_s
 
-    gru_cov  = len([c for c in ts_codes if c in gru_map])
+    gru_cov = len([c for c in ts_codes if c in gru_map])
     hist_cov = len([c for c in ts_codes if c in hist_map])
     print(f"    GRU={gru_cov}/{len(ts_codes)} HIST={hist_cov}/{len(ts_codes)}", end="")
     return final
 
 
 def run(days: int = 20, min_stocks: int = 10000, overwrite: bool = False):
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"历史信号回填 — {datetime.now().strftime('%Y-%m-%d %H:%M')}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # 加载因子
     print(f"\n加载因子文件...")
     t0 = time.time()
     df = pd.read_parquet(FACTORS_PATH)
     df["trade_date"] = pd.to_datetime(df["trade_date"]).dt.strftime("%Y-%m-%d")
-    print(f"  {len(df):,} 行, {df['trade_date'].nunique()} 个交易日 ({time.time()-t0:.1f}s)")
+    print(f"  {len(df):,} 行, {df['trade_date'].nunique()} 个交易日 ({time.time() - t0:.1f}s)")
 
     # 确定目标日期（股票数足够的）
     date_counts = df.groupby("trade_date").size()
@@ -148,7 +150,7 @@ def run(days: int = 20, min_stocks: int = 10000, overwrite: bool = False):
     for i, date_str in enumerate(target_dates):
         day_df = df[df["trade_date"] == date_str].copy()
         n = len(day_df)
-        print(f"  [{i+1}/{len(target_dates)}] {date_str} ({n} 只) ", end="", flush=True)
+        print(f"  [{i + 1}/{len(target_dates)}] {date_str} ({n} 只) ", end="", flush=True)
         t1 = time.time()
 
         scores = predict_one_day(day_df, lgb_models, feature_names, date_str)
@@ -167,12 +169,12 @@ def run(days: int = 20, min_stocks: int = 10000, overwrite: bool = False):
         out = signal_dir / f"{date_str}.json"
         out.write_text(json.dumps(signal, ensure_ascii=False))
 
-        print(f" → ✅ {len(scores)} 信号 ({time.time()-t1:.1f}s)")
+        print(f" → ✅ {len(scores)} 信号 ({time.time() - t1:.1f}s)")
         success += 1
 
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"完成: {success}/{len(target_dates)} 个日期")
-    print(f"{'='*60}\n")
+    print(f"{'=' * 60}\n")
 
 
 if __name__ == "__main__":

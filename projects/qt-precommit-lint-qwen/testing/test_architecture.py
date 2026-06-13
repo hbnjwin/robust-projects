@@ -1,11 +1,19 @@
 """测试架构统一：metrics_v2 指标计算"""
+
 import sys
+
 sys.path.insert(0, "/home/tulin/quant")
 import numpy as np
 from analytics.metrics_v2 import (
-    max_drawdown, annual_return, sharpe_ratio, sortino_ratio,
-    calmar_ratio, win_rate, profit_factor, max_consecutive_loss_days,
-    turnover_rate
+    max_drawdown,
+    annual_return,
+    sharpe_ratio,
+    sortino_ratio,
+    calmar_ratio,
+    win_rate,
+    profit_factor,
+    max_consecutive_loss_days,
+    turnover_rate,
 )
 
 
@@ -17,12 +25,14 @@ def test_max_drawdown():
     assert abs(dd - 0.1818) < 0.01, f"FAIL: dd={dd}"
     print(f"  max_drawdown={dd:.4f} OK")
 
+
 def test_annual_return():
     print("=== test_annual_return ===")
     eq = [100000] * 252 + [110000]  # 一年后涨10%
     ar = annual_return(eq)
     assert abs(ar - 0.10) < 0.05, f"FAIL: ar={ar}"
     print(f"  annual_return={ar:.4f} OK")
+
 
 def test_sharpe():
     print("=== test_sharpe ===")
@@ -33,17 +43,20 @@ def test_sharpe():
     s = sharpe_ratio(eq)
     print(f"  sharpe={s:.4f} OK")
 
+
 def test_sortino():
     print("=== test_sortino ===")
     eq = [100, 101, 102, 101, 103, 104, 103, 105]
     s = sortino_ratio(eq)
     print(f"  sortino={s:.4f} OK")
 
+
 def test_calmar():
     print("=== test_calmar ===")
     eq = [100, 110, 105, 115, 120]
     c = calmar_ratio(eq)
     print(f"  calmar={c:.4f} OK")
+
 
 def test_win_rate():
     print("=== test_win_rate ===")
@@ -52,6 +65,7 @@ def test_win_rate():
     assert abs(wr - 0.6) < 0.01, f"FAIL: wr={wr}"
     print(f"  win_rate={wr:.4f} OK")
 
+
 def test_profit_factor():
     print("=== test_profit_factor ===")
     trades = [100, -50, 200, -30]
@@ -59,12 +73,14 @@ def test_profit_factor():
     assert abs(pf - 3.75) < 0.01, f"FAIL: pf={pf}"
     print(f"  profit_factor={pf:.4f} OK")
 
+
 def test_max_consecutive_loss():
     print("=== test_max_consecutive_loss ===")
     eq = [100, 99, 98, 97, 100, 99, 98, 100]
     mcl = max_consecutive_loss_days(eq)
     assert mcl == 3, f"FAIL: mcl={mcl}"
     print(f"  max_consecutive_loss={mcl} OK")
+
 
 def test_turnover():
     print("=== test_turnover ===")
@@ -75,6 +91,7 @@ def test_turnover():
     tr = turnover_rate(log, 100000)
     assert abs(tr - 0.05) < 0.01, f"FAIL: tr={tr}"
     print(f"  turnover={tr:.4f} OK")
+
 
 if __name__ == "__main__":
     test_max_drawdown()

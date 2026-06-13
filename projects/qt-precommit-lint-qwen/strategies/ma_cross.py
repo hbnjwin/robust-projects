@@ -1,5 +1,6 @@
 import pandas as pd
 
+
 class MACrossStrategy:
     def __init__(self, short=5, long=20):
         self.short = short
@@ -12,7 +13,7 @@ class MACrossStrategy:
 
         # 限制历史长度，避免 O(n²) 性能问题
         if len(self.prices) > self._max_len:
-            self.prices = self.prices[-self._max_len:]
+            self.prices = self.prices[-self._max_len :]
 
         if len(self.prices) < self.long:
             return {"action": "hold", "size": 0}

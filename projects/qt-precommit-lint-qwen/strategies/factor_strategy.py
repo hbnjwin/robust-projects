@@ -9,9 +9,7 @@ import numpy as np
 
 
 class FactorStrategy:
-
-    def __init__(self, factor_scores, top_n=20, rebalance_days=30,
-                 vol_scaling=True, vol_window=20, vol_floor=0.005):
+    def __init__(self, factor_scores, top_n=20, rebalance_days=30, vol_scaling=True, vol_window=20, vol_floor=0.005):
         """
         factor_scores   : {date: {ts_code: composite_score}}
         top_n           : 选股数量
@@ -20,14 +18,14 @@ class FactorStrategy:
         vol_window      : 计算波动率的滚动窗口（交易日）
         vol_floor       : 波动率下限，防止除零（默认 0.5%）
         """
-        self.factor_scores  = factor_scores
-        self.top_n          = top_n
+        self.factor_scores = factor_scores
+        self.top_n = top_n
         self.rebalance_days = rebalance_days
-        self.vol_scaling    = vol_scaling
-        self.vol_window     = vol_window
-        self.vol_floor      = vol_floor
+        self.vol_scaling = vol_scaling
+        self.vol_window = vol_window
+        self.vol_floor = vol_floor
 
-        self.day_count       = 0
+        self.day_count = 0
         self.current_holdings = set()
 
         # 维护价格历史，用于计算波动率
@@ -41,7 +39,7 @@ class FactorStrategy:
             hist.append(close)
             # 只保留 vol_window + 1 天（计算收益率需要多一天）
             if len(hist) > self.vol_window + 5:
-                self._price_history[code] = hist[-(self.vol_window + 5):]
+                self._price_history[code] = hist[-(self.vol_window + 5) :]
 
     def _compute_vol(self, code: str) -> float:
         """计算个股 vol_window 日收益率标准差"""
@@ -49,9 +47,9 @@ class FactorStrategy:
         if len(hist) < self.vol_window + 1:
             return None  # 历史不足，返回 None
 
-        prices = np.array(hist[-(self.vol_window + 1):])
-        rets   = np.diff(prices) / np.where(prices[:-1] > 0, prices[:-1], 1)
-        vol    = float(np.std(rets))
+        prices = np.array(hist[-(self.vol_window + 1) :])
+        rets = np.diff(prices) / np.where(prices[:-1] > 0, prices[:-1], 1)
+        vol = float(np.std(rets))
         return max(vol, self.vol_floor)
 
     def _vol_weights(self, selected: set) -> dict[str, float]:
@@ -102,14 +100,13 @@ class FactorStrategy:
             return []
 
         # 只选有行情的股票
-        available = {code: score for code, score in scores.items()
-                     if code in price_dict}
+        available = {code: score for code, score in scores.items() if code in price_dict}
         if not available:
             return []
 
         # 排序选 top_n
-        ranked   = sorted(available.items(), key=lambda x: x[1], reverse=True)
-        selected = set(code for code, _ in ranked[:self.top_n])
+        ranked = sorted(available.items(), key=lambda x: x[1], reverse=True)
+        selected = set(code for code, _ in ranked[: self.top_n])
 
         # 计算仓位权重
         if self.vol_scaling:
@@ -126,11 +123,13 @@ class FactorStrategy:
 
         # 买入：新进入选股列表的
         for code in selected - self.current_holdings:
-            signals.append({
-                "action": "buy",
-                "ts_code": code,
-                "weight": weights[code],
-            })
+            signals.append(
+                {
+                    "action": "buy",
+                    "ts_code": code,
+                    "weight": weights[code],
+                }
+            )
 
         self.current_holdings = selected
         return signals

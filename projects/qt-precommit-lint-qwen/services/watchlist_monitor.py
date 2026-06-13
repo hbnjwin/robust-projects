@@ -8,6 +8,7 @@ watchlist_monitor.py — 监控池每日技术分析 + 大盘择时
 3. 超跌候选筛选（全市场 RSI<35 + 放量）
 4. 推送飞书报告
 """
+
 import sys
 import sqlite3
 import json
@@ -22,6 +23,7 @@ from data.db import get_conn
 
 # ── 技术指标计算 ──────────────────────────────────────────
 
+
 def calc_ma(close: pd.Series, n: int) -> float:
     if len(close) < n:
         return float("nan")
@@ -31,7 +33,7 @@ def calc_ma(close: pd.Series, n: int) -> float:
 def calc_rsi(close: pd.Series, n: int = 14) -> float:
     if len(close) < n + 1:
         return float("nan")
-    delta = close.diff().iloc[-(n + 1):]
+    delta = close.diff().iloc[-(n + 1) :]
     gain = delta.clip(lower=0).mean()
     loss = (-delta.clip(upper=0)).mean()
     if loss == 0:
@@ -75,13 +77,14 @@ def vol_ratio(vol: pd.Series, n: int = 20) -> float:
     """当日成交量 / 近 n 日均量"""
     if len(vol) < n + 1:
         return float("nan")
-    avg = vol.iloc[-(n + 1):-1].mean()
+    avg = vol.iloc[-(n + 1) : -1].mean()
     if avg == 0:
         return float("nan")
     return round(vol.iloc[-1] / avg, 2)
 
 
 # ── 数据加载 ──────────────────────────────────────────────
+
 
 def _is_trading_day_and_closed() -> bool:
     """判断今天是否是交易日且已收盘（15:00后）"""
@@ -95,20 +98,17 @@ def _fetch_realtime_today(ts_code: str) -> pd.Series | None:
     """用腾讯财经拉今日收盘行情，返回一行 Series 或 None"""
     try:
         import requests, json as _json
+
         today_str = datetime.today().strftime("%Y-%m-%d")
         symbol = ts_code.split(".")[0]
         exch = "sh" if ts_code.endswith(".SH") else "sz"
         tx_code = f"{exch}{symbol}"
 
         url = "https://web.ifzq.gtimg.cn/appstock/app/fqkline/get"
-        params = {
-            "_var": "kline_dayqfq",
-            "param": f"{tx_code},day,{today_str},{today_str},1,qfq"
-        }
-        r = requests.get(url, params=params, timeout=8,
-                         headers={"User-Agent": "Mozilla/5.0"})
+        params = {"_var": "kline_dayqfq", "param": f"{tx_code},day,{today_str},{today_str},1,qfq"}
+        r = requests.get(url, params=params, timeout=8, headers={"User-Agent": "Mozilla/5.0"})
         text = r.text
-        d = _json.loads(text[text.index("=") + 1:])
+        d = _json.loads(text[text.index("=") + 1 :])
         day_data = d.get("data", {}).get(tx_code, {}).get("day", [])
         if not day_data:
             # 尝试 qfq 字段（复权）
@@ -117,14 +117,16 @@ def _fetch_realtime_today(ts_code: str) -> pd.Series | None:
             return None
 
         row = day_data[-1]  # [date, open, close, high, low, vol]
-        return pd.Series({
-            "trade_date": row[0],
-            "open":  float(row[1]),
-            "close": float(row[2]),
-            "high":  float(row[3]),
-            "low":   float(row[4]),
-            "vol":   float(row[5]) if len(row) > 5 else 0.0,
-        })
+        return pd.Series(
+            {
+                "trade_date": row[0],
+                "open": float(row[1]),
+                "close": float(row[2]),
+                "high": float(row[3]),
+                "low": float(row[4]),
+                "vol": float(row[5]) if len(row) > 5 else 0.0,
+            }
+        )
     except Exception:
         return None
 
@@ -134,7 +136,8 @@ def load_price(conn: sqlite3.Connection, ts_code: str, days: int = 150) -> pd.Da
     df = pd.read_sql(
         "SELECT trade_date, open, high, low, close, vol FROM daily_price "
         "WHERE ts_code=? AND trade_date>=? ORDER BY trade_date",
-        conn, params=(ts_code, cutoff)
+        conn,
+        params=(ts_code, cutoff),
     )
     df = df.tail(days)
 
@@ -149,8 +152,11 @@ def load_price(conn: sqlite3.Connection, ts_code: str, days: int = 150) -> pd.Da
         else:
             # DB 有历史数据，检查是否缺今日
             raw_latest = str(df.iloc[-1]["trade_date"])
-            db_latest = raw_latest[:4] + "-" + raw_latest[4:6] + "-" + raw_latest[6:] \
-                if len(raw_latest) == 8 else raw_latest[:10]
+            db_latest = (
+                raw_latest[:4] + "-" + raw_latest[4:6] + "-" + raw_latest[6:]
+                if len(raw_latest) == 8
+                else raw_latest[:10]
+            )
             if db_latest < today_str:
                 today_row = _fetch_realtime_today(ts_code)
                 if today_row is not None:
@@ -164,6 +170,7 @@ def load_watchlist(conn: sqlite3.Connection):
 
 
 # ── 大盘分析 ──────────────────────────────────────────────
+
 
 def analyze_market(conn: sqlite3.Connection) -> dict:
     hs300 = load_price(conn, "000300.SH", 150)
@@ -218,7 +225,9 @@ def analyze_market(conn: sqlite3.Connection) -> dict:
         "today_ret": today_ret,
         "drawdown_60d": drawdown,
         "rsi14": rsi,
-        "ma5": ma5, "ma20": ma20, "ma60": ma60,
+        "ma5": ma5,
+        "ma20": ma20,
+        "ma60": ma60,
         "vol_ratio": vr,
         "signal": signal,
         "alerts": alerts,
@@ -226,6 +235,7 @@ def analyze_market(conn: sqlite3.Connection) -> dict:
 
 
 # ── 个股技术分析 ──────────────────────────────────────────
+
 
 def analyze_stock(conn: sqlite3.Connection, ts_code: str, name: str) -> dict:
     df = load_price(conn, ts_code, 150)
@@ -275,7 +285,9 @@ def analyze_stock(conn: sqlite3.Connection, ts_code: str, name: str) -> dict:
         "rsi14": rsi,
         "macd_hist": hist,
         "boll": f"{boll_l}~{boll_u}",
-        "ma5": ma5, "ma20": ma20, "ma60": ma60,
+        "ma5": ma5,
+        "ma20": ma20,
+        "ma60": ma60,
         "drawdown_60d": drawdown,
         "vol_ratio": vr,
         "signals": signals,
@@ -284,13 +296,14 @@ def analyze_stock(conn: sqlite3.Connection, ts_code: str, name: str) -> dict:
 
 # ── 超跌候选筛选 ──────────────────────────────────────────
 
+
 def scan_oversold(conn: sqlite3.Connection, top_n: int = 10) -> list:
     """全市场扫描 RSI<35 + 放量的标的"""
     codes_df = pd.read_sql(
         "SELECT DISTINCT ts_code FROM daily_price "
         "WHERE ts_code NOT LIKE '0003%' AND ts_code NOT LIKE '3990%' "
         "AND ts_code NOT LIKE '5%' AND ts_code NOT LIKE '1599%'",
-        conn
+        conn,
     )
     candidates = []
     for ts_code in codes_df["ts_code"].tolist():
@@ -304,13 +317,15 @@ def scan_oversold(conn: sqlite3.Connection, top_n: int = 10) -> list:
             vr = vol_ratio(vol, 20)
             drawdown = calc_drawdown_from_high(close, 60)
             if rsi < 35 and isinstance(vr, float) and vr >= 1.3 and drawdown <= -10:
-                candidates.append({
-                    "ts_code": ts_code,
-                    "rsi": rsi,
-                    "vol_ratio": vr,
-                    "drawdown": drawdown,
-                    "close": round(close.iloc[-1], 3),
-                })
+                candidates.append(
+                    {
+                        "ts_code": ts_code,
+                        "rsi": rsi,
+                        "vol_ratio": vr,
+                        "drawdown": drawdown,
+                        "close": round(close.iloc[-1], 3),
+                    }
+                )
         except Exception:
             continue
     candidates.sort(key=lambda x: x["rsi"])
@@ -319,14 +334,16 @@ def scan_oversold(conn: sqlite3.Connection, top_n: int = 10) -> list:
 
 # ── 报告生成 ──────────────────────────────────────────────
 
+
 def build_report(market: dict, watchlist_results: list, oversold: list) -> str:
     today = datetime.now().strftime("%Y-%m-%d")
     lines = [f"📊 量化监控日报 {today}\n"]
 
     # 大盘
     lines.append("━━━ 大盘状态 ━━━")
-    sig_emoji = {"CRASH": "🔴", "WEAK": "🟠", "WATCH": "🟡",
-                 "BUY_ZONE": "🟢", "NEUTRAL": "⚪"}.get(market.get("signal", ""), "⚪")
+    sig_emoji = {"CRASH": "🔴", "WEAK": "🟠", "WATCH": "🟡", "BUY_ZONE": "🟢", "NEUTRAL": "⚪"}.get(
+        market.get("signal", ""), "⚪"
+    )
     lines.append(f"{sig_emoji} 沪深300: {market.get('close')}  今日 {market.get('today_ret')}%")
     lines.append(f"   60日回撤: {market.get('drawdown_60d')}%  RSI: {market.get('rsi14')}")
     lines.append(f"   MA5/20/60: {market.get('ma5')}/{market.get('ma20')}/{market.get('ma60')}")
@@ -353,8 +370,7 @@ def build_report(market: dict, watchlist_results: list, oversold: list) -> str:
                 continue
             sig_str = " | ".join(r.get("signals", [])) or "无明显信号"
             lines.append(
-                f"  {r['name']}({r['ts_code']}): {r['close']} "
-                f"今日{r['today_ret']}%  RSI:{r['rsi14']}  {sig_str}"
+                f"  {r['name']}({r['ts_code']}): {r['close']} 今日{r['today_ret']}%  RSI:{r['rsi14']}  {sig_str}"
             )
 
     # 超跌候选
@@ -371,6 +387,7 @@ def build_report(market: dict, watchlist_results: list, oversold: list) -> str:
 
 
 # ── 主流程 ──────────────────────────────────────────────
+
 
 def run():
     conn = get_conn()
@@ -404,14 +421,14 @@ def run():
 
     # 飞书推送
     import subprocess, json as _json, datetime as _dt
+
     feishu_target = "ou_e0fc34f4bfdadf27c59dc8e830ea32ce"
     try:
         result = subprocess.run(
-            ["openclaw", "message", "send",
-             "-t", feishu_target,
-             "--channel", "feishu",
-             "-m", report],
-            capture_output=True, text=True, timeout=15
+            ["openclaw", "message", "send", "-t", feishu_target, "--channel", "feishu", "-m", report],
+            capture_output=True,
+            text=True,
+            timeout=15,
         )
         push_ok = result.returncode == 0
         print(f"飞书推送: {'✅ 成功' if push_ok else '❌ 失败 ' + result.stderr[:80]}")
@@ -421,6 +438,7 @@ def run():
 
     # 写入 task_state
     from pathlib import Path as _Path
+
     tz = _dt.timezone(_dt.timedelta(hours=8))
     state = {
         "last_run": _dt.datetime.now(tz).isoformat(),
@@ -428,7 +446,7 @@ def run():
         "error": "",
         "report_file": str(report_path),
         "feishu_push": "success" if push_ok else "failed",
-        "note": f"watchlist {len(watchlist_results)} 只，超跌候选 {len(oversold)} 只"
+        "note": f"watchlist {len(watchlist_results)} 只，超跌候选 {len(oversold)} 只",
     }
     _Path("/home/tulin/quant/control/task_state/watchlist_monitor.json").write_text(
         _json.dumps(state, ensure_ascii=False, indent=2)

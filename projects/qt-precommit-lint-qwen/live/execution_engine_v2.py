@@ -1,5 +1,4 @@
 class ExecutionEngine:
-
     def __init__(self, account, slippage=0.001, fee=0.0003):
         self.account = account
         self.slippage = slippage
@@ -17,7 +16,6 @@ class ExecutionEngine:
         self.current_date = date
 
         for order in self.pending_orders:
-
             code = order["ts_code"]
 
             if code not in prices:
@@ -33,7 +31,6 @@ class ExecutionEngine:
             limit_down = prev_close * 0.90
 
             if order["action"] == "buy":
-
                 # 涨停限制
                 if price >= limit_up:
                     continue
@@ -84,11 +81,10 @@ class ExecutionEngine:
                         price=exec_price,
                         shares=shares,
                         fee=fee_cost,
-                        reason=order.get("reason", "signal")
+                        reason=order.get("reason", "signal"),
                     )
 
             elif order["action"] == "sell":
-
                 # 跌停限制
                 if price <= limit_down:
                     continue
@@ -124,7 +120,7 @@ class ExecutionEngine:
                         price=exec_price,
                         shares=shares,
                         fee=fee_cost,
-                        reason=order.get("reason", "signal")
+                        reason=order.get("reason", "signal"),
                     )
 
         self.pending_orders = []

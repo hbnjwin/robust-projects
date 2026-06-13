@@ -6,7 +6,9 @@ Phase 4 标准化模块验证脚本
 3. Z-score 标准化逻辑正确
 4. 多 Alpha 融合权重归一化正确
 """
+
 import sys
+
 sys.path.insert(0, "/home/tulin/quant")
 
 from alpha.alpha_manager import AlphaManager
@@ -31,13 +33,14 @@ manager2.register(alpha2, weight=1.0)
 result2 = manager2.generate(date)
 # 排序: D(0.5) < A(1.0) < C(2.0) < B(3.0)
 # rank: D=0/3, A=1/3, C=2/3, B=3/3
-expected_rank = {"D": 0.0, "A": 1/3, "C": 2/3, "B": 1.0}
+expected_rank = {"D": 0.0, "A": 1 / 3, "C": 2 / 3, "B": 1.0}
 for k, v in expected_rank.items():
     assert abs(result2[k] - v) < 1e-9, f"Test 2 FAIL: {k}={result2[k]} expected {v}"
 print(f"✅ Test 2 PASS: Rank 标准化正确 {result2}")
 
 # ── Test 3: Z-score 标准化 ────────────────────────────────────
 import numpy as np
+
 alpha3 = FactorAlpha({date: test_scores})
 manager3 = AlphaManager(standardize="zscore")
 manager3.register(alpha3, weight=1.0)

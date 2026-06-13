@@ -5,12 +5,7 @@ import io
 
 from config import PG_CONFIG
 
-FACTOR_IDS = {
-    "MA_DIFF_5_21": 1,
-    "MOM_60": 2,
-    "VOL_20": 3,
-    "VOL_RATIO_20": 4
-}
+FACTOR_IDS = {"MA_DIFF_5_21": 1, "MOM_60": 2, "VOL_20": 3, "VOL_RATIO_20": 4}
 
 
 def copy_factor(pg_conn, df):
@@ -27,7 +22,7 @@ def copy_factor(pg_conn, df):
             COPY factor_values (trade_date, ts_code, factor_id, value)
             FROM STDIN WITH CSV
             """,
-            buffer
+            buffer,
         )
     pg_conn.commit()
 
@@ -46,7 +41,7 @@ def run():
         df = pd.read_sql(
             "SELECT trade_date, ts_code, close, vol FROM daily_price WHERE ts_code=%s ORDER BY trade_date",
             pg_conn,
-            params=(ts_code,)
+            params=(ts_code,),
         )
 
         if df.empty:

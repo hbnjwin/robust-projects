@@ -3,6 +3,7 @@ qlib_bridge/qlib_workflow.py — 用 qlib 原生框架跑回测
 
 适配我们的预计算因子数据（不用 Alpha158/Alpha360）
 """
+
 from __future__ import annotations
 
 import sys
@@ -31,21 +32,79 @@ QLIB_DATA_DIR = "/vol1/qlib_data"
 
 # 我们的因子列（与 factors_full.parquet 一致）
 FEATURE_COLS = [
-    "kmid", "klen", "kmid2", "kup", "kup2", "klow", "klow2", "ksft", "ksft2",
-    "open_ratio", "high_ratio", "low_ratio", "vwap_ratio",
-    "roc_5", "roc_10", "roc_20", "roc_30", "roc_60",
-    "ma_5", "ma_10", "ma_20", "ma_30", "ma_60",
-    "std_5", "std_10", "std_20", "std_30", "std_60",
-    "beta_5", "beta_10", "beta_20", "beta_30", "beta_60",
-    "rsqr_5", "rsqr_10", "rsqr_20", "rsqr_30", "rsqr_60",
-    "max_20", "max_60", "min_20", "min_60",
-    "rsv_5", "rsv_20", "rsv_60",
-    "qtlu_20", "qtld_20", "qtlu_60", "qtld_60",
-    "vma_5", "vma_20", "vstd_5", "vstd_20", "vstd_60", "vol_ratio",
-    "cntp_5", "cntp_10", "cntp_20", "cntd_5", "cntd_10", "cntd_20",
-    "sump_5", "sump_20", "sumn_5", "sumn_20", "sumd_5", "sumd_20",
-    "wvma_5", "wvma_10", "wvma_20",
-    "vsump_5", "vsump_20", "vsumd_20",
+    "kmid",
+    "klen",
+    "kmid2",
+    "kup",
+    "kup2",
+    "klow",
+    "klow2",
+    "ksft",
+    "ksft2",
+    "open_ratio",
+    "high_ratio",
+    "low_ratio",
+    "vwap_ratio",
+    "roc_5",
+    "roc_10",
+    "roc_20",
+    "roc_30",
+    "roc_60",
+    "ma_5",
+    "ma_10",
+    "ma_20",
+    "ma_30",
+    "ma_60",
+    "std_5",
+    "std_10",
+    "std_20",
+    "std_30",
+    "std_60",
+    "beta_5",
+    "beta_10",
+    "beta_20",
+    "beta_30",
+    "beta_60",
+    "rsqr_5",
+    "rsqr_10",
+    "rsqr_20",
+    "rsqr_30",
+    "rsqr_60",
+    "max_20",
+    "max_60",
+    "min_20",
+    "min_60",
+    "rsv_5",
+    "rsv_20",
+    "rsv_60",
+    "qtlu_20",
+    "qtld_20",
+    "qtlu_60",
+    "qtld_60",
+    "vma_5",
+    "vma_20",
+    "vstd_5",
+    "vstd_20",
+    "vstd_60",
+    "vol_ratio",
+    "cntp_5",
+    "cntp_10",
+    "cntp_20",
+    "cntd_5",
+    "cntd_10",
+    "cntd_20",
+    "sump_5",
+    "sump_20",
+    "sumn_5",
+    "sumn_20",
+    "sumd_5",
+    "sumd_20",
+    "wvma_5",
+    "wvma_10",
+    "wvma_20",
+    "vsump_5",
+    "vsump_20",
+    "vsumd_20",
 ]
 
 LABEL_COL = "label_5d"
@@ -57,9 +116,12 @@ def init_qlib():
 
 
 def build_dataset(
-    train_start="2022-01-01", train_end="2024-06-30",
-    valid_start="2024-07-01", valid_end="2025-06-30",
-    test_start="2025-07-01",  test_end="2026-03-13",
+    train_start="2022-01-01",
+    train_end="2024-06-30",
+    valid_start="2024-07-01",
+    valid_end="2025-06-30",
+    test_start="2025-07-01",
+    test_end="2026-03-13",
 ):
     """构建 qlib DatasetH，使用我们的预计算因子"""
     feature_fields = [f"${col}" for col in FEATURE_COLS]
@@ -79,10 +141,15 @@ def build_dataset(
             },
         },
         "infer_processors": [
-            {"class": "RobustZScoreNorm", "kwargs": {
-                "fields_group": "feature", "clip_outlier": True,
-                "fit_start_time": train_start, "fit_end_time": train_end,
-            }},
+            {
+                "class": "RobustZScoreNorm",
+                "kwargs": {
+                    "fields_group": "feature",
+                    "clip_outlier": True,
+                    "fit_start_time": train_start,
+                    "fit_end_time": train_end,
+                },
+            },
             {"class": "Fillna", "kwargs": {"fields_group": "feature"}},
         ],
         "learn_processors": [
@@ -100,7 +167,7 @@ def build_dataset(
         segments={
             "train": (train_start, train_end),
             "valid": (valid_start, valid_end),
-            "test":  (test_start,  test_end),
+            "test": (test_start, test_end),
         },
     )
     return dataset

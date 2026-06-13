@@ -8,8 +8,8 @@
 from live.simple_strategy import SimpleTrendStrategy
 from live.low_vol_strategy import LowVolStrategy
 
-class ReplayEngine:
 
+class ReplayEngine:
     def __init__(self, strategy, market_data, start_date, end_date, initial_capital=1_000_000):
         self.market_data = market_data
         self.start_date = start_date
@@ -26,7 +26,6 @@ class ReplayEngine:
 
     def run(self):
         for date, prices in self.market_data.items():
-
             market_value = 0
             for code, shares in self.positions.items():
                 if code in prices:
@@ -43,12 +42,9 @@ class ReplayEngine:
             if drawdown > 0.25:
                 self.positions = {}
                 self.cash = total_equity
-                self.equity_curve.append({
-                    "date": date,
-                    "equity": total_equity,
-                    "cash": self.cash,
-                    "drawdown": drawdown
-                })
+                self.equity_curve.append(
+                    {"date": date, "equity": total_equity, "cash": self.cash, "drawdown": drawdown}
+                )
                 continue
 
             # ✅ 多策略生成信号
@@ -70,11 +66,6 @@ class ReplayEngine:
                             self.positions[code] = shares
                 self.cash -= sum(self.positions[c] * prices[c]["close"] for c in self.positions)
 
-            self.equity_curve.append({
-                "date": date,
-                "equity": total_equity,
-                "cash": self.cash,
-                "drawdown": drawdown
-            })
+            self.equity_curve.append({"date": date, "equity": total_equity, "cash": self.cash, "drawdown": drawdown})
 
         return self.equity_curve

@@ -2,6 +2,7 @@
 模型评估工具
 IC/IR 分析、分层回测、特征重要性报告
 """
+
 import numpy as np
 import pandas as pd
 
@@ -91,9 +92,9 @@ def print_evaluation_report(
     model_name: str = "Model",
 ):
     """打印完整评估报告"""
-    print(f"\n{'='*60}")
+    print(f"\n{'=' * 60}")
     print(f"  Evaluation Report: {model_name}")
-    print(f"{'='*60}")
+    print(f"{'=' * 60}")
 
     # 1. IC 分析
     for seg in ["valid", "test"]:
@@ -113,4 +114,4 @@ def print_evaluation_report(
         for i, (name, imp) in enumerate(top, 1):
             print(f"    {i:2d}. {name:25s} {imp:.4f}")
 
-    print(f"\n{'='*60}\n")
+    print(f"\n{'=' * 60}\n")

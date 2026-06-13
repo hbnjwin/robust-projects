@@ -7,6 +7,7 @@ V3 vs V4 Factor策略对比回测 (精简版)
     cd /home/tulin/quant
     python services/run_ml_backtest.py
 """
+
 import sys
 import time
 import json
@@ -28,9 +29,9 @@ from strategies.factor_strategy import FactorStrategy
 
 SCENARIOS = [
     ("2018-2019 震荡熊", "2018-01-01", "2019-12-31"),
-    ("2020-2021 牛市",   "2020-01-01", "2021-12-31"),
-    ("2022 熊市",        "2022-01-01", "2022-12-31"),
-    ("2023 震荡",        "2023-01-01", "2023-12-31"),
+    ("2020-2021 牛市", "2020-01-01", "2021-12-31"),
+    ("2022 熊市", "2022-01-01", "2022-12-31"),
+    ("2023 震荡", "2023-01-01", "2023-12-31"),
     ("2024-2025 测试集", "2024-01-01", "2025-03-13"),
 ]
 
@@ -107,8 +108,8 @@ def calc_stats(curve, capital=1_000_000):
 
     rets = []
     for i in range(1, len(equities)):
-        if equities[i-1] > 0:
-            rets.append((equities[i] - equities[i-1]) / equities[i-1])
+        if equities[i - 1] > 0:
+            rets.append((equities[i] - equities[i - 1]) / equities[i - 1])
     if len(rets) > 1:
         sharpe = float(np.mean(rets) / np.std(rets) * np.sqrt(240)) if np.std(rets) > 0 else 0
     else:
@@ -132,14 +133,14 @@ def main():
     # 加载 ML 信号
     t0 = time.time()
     ml_signals = load_ml_signals()
-    print(f"ML signals: {len(ml_signals)} days loaded in {time.time()-t0:.1f}s\n")
+    print(f"ML signals: {len(ml_signals)} days loaded in {time.time() - t0:.1f}s\n")
 
     results = []
 
     for name, start, end in SCENARIOS:
-        print(f"{'─'*70}")
+        print(f"{'─' * 70}")
         print(f"  {name} ({start} ~ {end})")
-        print(f"{'─'*70}")
+        print(f"{'─' * 70}")
 
         t1 = time.time()
         market_data = load_market_data_fast(start, end)
@@ -161,23 +162,31 @@ def main():
         delta = v4["return"] - v3["return"]
         results.append({"scenario": name, "v3": v3, "v4": v4, "delta": delta})
 
-        print(f"  V3: ret={v3['return']:+.2f}% annual={v3['annual']:+.2f}% dd={v3['dd']:.2f}% sharpe={v3['sharpe']:.2f} ({v3_time:.1f}s)")
-        print(f"  V4: ret={v4['return']:+.2f}% annual={v4['annual']:+.2f}% dd={v4['dd']:.2f}% sharpe={v4['sharpe']:.2f} ({v4_time:.1f}s)")
+        print(
+            f"  V3: ret={v3['return']:+.2f}% annual={v3['annual']:+.2f}% dd={v3['dd']:.2f}% sharpe={v3['sharpe']:.2f} ({v3_time:.1f}s)"
+        )
+        print(
+            f"  V4: ret={v4['return']:+.2f}% annual={v4['annual']:+.2f}% dd={v4['dd']:.2f}% sharpe={v4['sharpe']:.2f} ({v4_time:.1f}s)"
+        )
         print(f"  ML增益: {delta:+.2f}%\n")
 
     # 汇总
     print(f"\n{'=' * 80}")
     print(f"  汇总对比")
     print(f"{'=' * 80}")
-    print(f"{'场景':<20} {'V3收益%':>10} {'V4收益%':>10} {'增益%':>8} {'V3回撤%':>10} {'V4回撤%':>10} {'V3 Sharpe':>10} {'V4 Sharpe':>10}")
-    print(f"{'─'*88}")
+    print(
+        f"{'场景':<20} {'V3收益%':>10} {'V4收益%':>10} {'增益%':>8} {'V3回撤%':>10} {'V4回撤%':>10} {'V3 Sharpe':>10} {'V4 Sharpe':>10}"
+    )
+    print(f"{'─' * 88}")
 
     for r in results:
         v3, v4 = r["v3"], r["v4"]
-        print(f"{r['scenario']:<20} {v3['return']:>+10.2f} {v4['return']:>+10.2f} {r['delta']:>+8.2f} "
-              f"{v3['dd']:>10.2f} {v4['dd']:>10.2f} {v3['sharpe']:>10.2f} {v4['sharpe']:>10.2f}")
+        print(
+            f"{r['scenario']:<20} {v3['return']:>+10.2f} {v4['return']:>+10.2f} {r['delta']:>+8.2f} "
+            f"{v3['dd']:>10.2f} {v4['dd']:>10.2f} {v3['sharpe']:>10.2f} {v4['sharpe']:>10.2f}"
+        )
 
-    print(f"{'─'*88}")
+    print(f"{'─' * 88}")
 
     with open("data/v3_vs_v4_backtest_results.json", "w") as f:
         json.dump(results, f, indent=2, ensure_ascii=False)

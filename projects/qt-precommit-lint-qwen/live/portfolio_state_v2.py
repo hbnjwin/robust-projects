@@ -1,5 +1,4 @@
 class PortfolioState:
-
     def __init__(self, initial_capital):
         self.initial_capital = initial_capital
         self.cash = float(initial_capital)
@@ -19,10 +18,7 @@ class PortfolioState:
         if self.total_equity > self.max_equity:
             self.max_equity = self.total_equity
 
-        drawdown = (
-            (self.max_equity - self.total_equity) / self.max_equity
-            if self.max_equity > 0 else 0
-        )
+        drawdown = (self.max_equity - self.total_equity) / self.max_equity if self.max_equity > 0 else 0
         return drawdown
 
     def buy(self, code, price, shares):
@@ -35,9 +31,7 @@ class PortfolioState:
         else:
             old = self.positions[code]
             total_shares = old["shares"] + shares
-            new_avg = (
-                old["shares"] * old["avg_cost"] + shares * price
-            ) / total_shares
+            new_avg = (old["shares"] * old["avg_cost"] + shares * price) / total_shares
             self.positions[code]["shares"] = total_shares
             self.positions[code]["avg_cost"] = new_avg
 
@@ -60,9 +54,4 @@ class PortfolioState:
         return True
 
     def record(self, date, drawdown):
-        self.equity_curve.append({
-            "date": date,
-            "equity": self.total_equity,
-            "cash": self.cash,
-            "drawdown": drawdown
-        })
+        self.equity_curve.append({"date": date, "equity": self.total_equity, "cash": self.cash, "drawdown": drawdown})

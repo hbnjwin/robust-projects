@@ -11,6 +11,7 @@ services/auto_factor_explorer.py — 轻量版自动因子探索
     source .venv/bin/activate
     python services/auto_factor_explorer.py --rounds 5 --ic-threshold 0.05
 """
+
 from __future__ import annotations
 
 import os
@@ -36,16 +37,16 @@ sys.path.insert(0, str(_ROOT))
 FACTORS_PATH = _ROOT / "data" / "factors_latest.parquet"
 FACTORS_FULL = _ROOT / "data" / "factors_full.parquet"
 HISTORY_PATH = _ROOT / "data" / "factor_exploration_history.json"
-LOG_PATH     = _ROOT / "logs" / "auto_factor_explorer.log"
+LOG_PATH = _ROOT / "logs" / "auto_factor_explorer.log"
 
-LABEL_COL    = os.environ.get("LABEL_COL_OVERRIDE", "label_5d")
-SKIP_COLS    = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d"}
+LABEL_COL = os.environ.get("LABEL_COL_OVERRIDE", "label_5d")
+SKIP_COLS = {"ts_code", "trade_date", "label_3d", "label_5d", "label_10d"}
 IC_THRESHOLD = 0.05
-MAX_ROUNDS   = 5
+MAX_ROUNDS = 5
 
-API_KEY      = os.environ.get("OPENAI_API_KEY", "")
-API_BASE     = os.environ.get("OPENAI_API_BASE", "https://unifiedapi.cloud/v1")
-CHAT_MODEL   = os.environ.get("CHAT_MODEL", "claude-sonnet-4-6")
+API_KEY = os.environ.get("OPENAI_API_KEY", "")
+API_BASE = os.environ.get("OPENAI_API_BASE", "https://unifiedapi.cloud/v1")
+CHAT_MODEL = os.environ.get("CHAT_MODEL", "claude-sonnet-4-6")
 
 
 # ── 日志 ──────────────────────────────────────────────────────
@@ -155,10 +156,12 @@ def generate_hypothesis(history: list, feature_list: list) -> Optional[dict]:
     user = HYPOTHESIS_PROMPT.format(n=n, history_summary=history_summary)
 
     try:
-        response = llm_chat([
-            {"role": "system", "content": system},
-            {"role": "user", "content": user},
-        ])
+        response = llm_chat(
+            [
+                {"role": "system", "content": system},
+                {"role": "user", "content": user},
+            ]
+        )
         start = response.find("{")
         end = response.rfind("}") + 1
         if start == -1 or end == 0:
@@ -171,10 +174,11 @@ def generate_hypothesis(history: list, feature_list: list) -> Optional[dict]:
         except json.JSONDecodeError:
             # 尝试用 ast.literal_eval 或手动修复换行
             import re
+
             # 把 "code": "..." 里的裸换行替换成 \n
             fixed = re.sub(
                 r'("code"\s*:\s*")(.*?)("(?:\s*[,}]))',
-                lambda m: m.group(1) + m.group(2).replace('\n', '\\n').replace('\t', '\\t') + m.group(3),
+                lambda m: m.group(1) + m.group(2).replace("\n", "\\n").replace("\t", "\\t") + m.group(3),
                 raw,
                 flags=re.DOTALL,
             )
@@ -262,7 +266,9 @@ def add_factor_to_parquet(
     )
     df_target.to_parquet(parquet_path, index=False)
     filled = df_target[factor_name].notna().sum()
-    log(f"[写入] {factor_name} 已加入 {parquet_path.name}，填充 {filled}/{len(df_target)} 行，列数: {len(df_target.columns)}")
+    log(
+        f"[写入] {factor_name} 已加入 {parquet_path.name}，填充 {filled}/{len(df_target)} 行，列数: {len(df_target.columns)}"
+    )
 
 
 # ── 主循环 ────────────────────────────────────────────────────
@@ -291,9 +297,9 @@ def run_exploration(
     accepted_count = 0
 
     for round_i in range(1, n_rounds + 1):
-        log(f"\n{'='*50}")
+        log(f"\n{'=' * 50}")
         log(f"Round {round_i}/{n_rounds}")
-        log(f"{'='*50}")
+        log(f"{'=' * 50}")
 
         hypothesis = generate_hypothesis(history, feature_cols)
         if hypothesis is None:
@@ -305,12 +311,15 @@ def run_exploration(
         existing_names = {h["factor_name"] for h in history}
         if factor_name in existing_names or factor_name in df.columns:
             log(f"[Round {round_i}] {factor_name} 已存在，跳过")
-            history.append({
-                **hypothesis,
-                "ic": None, "accepted": False,
-                "reason": "duplicate",
-                "timestamp": datetime.now().isoformat(),
-            })
+            history.append(
+                {
+                    **hypothesis,
+                    "ic": None,
+                    "accepted": False,
+                    "reason": "duplicate",
+                    "timestamp": datetime.now().isoformat(),
+                }
+            )
             save_history(history)
             continue
 

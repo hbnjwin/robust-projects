@@ -10,6 +10,7 @@ Monte Carlo 参数鲁棒区间扫描
     source .venv/bin/activate
     python testing/montecarlo_param_scan.py
 """
+
 import sys, os, json, time
 from pathlib import Path
 from datetime import date
@@ -23,51 +24,52 @@ sys.path.insert(0, str(_ROOT))
 
 # ── 配置 ──────────────────────────────────────────────────────
 BACKTEST_START = "2024-07-01"
-BACKTEST_END   = "2025-12-31"
-INITIAL_CAP    = 1_000_000.0
-COST_RATE      = 0.002
-MMAP_DIR       = "/vol1/mmap_cache/hist_bt"
-OUT_PATH       = _ROOT / "data/backtest_compare/param_scan_results.json"
+BACKTEST_END = "2025-12-31"
+INITIAL_CAP = 1_000_000.0
+COST_RATE = 0.002
+MMAP_DIR = "/vol1/mmap_cache/hist_bt"
+OUT_PATH = _ROOT / "data/backtest_compare/param_scan_results.json"
 os.makedirs(OUT_PATH.parent, exist_ok=True)
 
 # ── 参数扫描范围 ──────────────────────────────────────────────
 PARAM_GRID = {
-    "top_n":          [5, 10, 15, 20, 30],
+    "top_n": [5, 10, 15, 20, 30],
     "rebalance_days": [5, 10, 15, 20, 30],
-    "hist_weight":    [0.0, 0.3, 0.5, 0.6, 0.8],
+    "hist_weight": [0.0, 0.3, 0.5, 0.6, 0.8],
 }
 
 # ── 加载预计算信号 ────────────────────────────────────────────
 print("加载预计算信号矩阵 ...")
-bt_dates     = np.load(f"{MMAP_DIR}/bt_dates.npy", allow_pickle=True)
-hist_mat     = np.load(f"{MMAP_DIR}/hist_signals.npy")
-factor_mat   = np.load(f"{MMAP_DIR}/factor_signals.npy")
+bt_dates = np.load(f"{MMAP_DIR}/bt_dates.npy", allow_pickle=True)
+hist_mat = np.load(f"{MMAP_DIR}/hist_signals.npy")
+factor_mat = np.load(f"{MMAP_DIR}/factor_signals.npy")
 
 # 加载股票列表
-df_meta = pd.read_parquet(str(_ROOT / "data/factors_full.parquet"),
-    filters=[("trade_date", ">=", date(2024, 3, 1)),
-             ("trade_date", "<=", date(2025, 12, 31))],
-    columns=["ts_code"])
+df_meta = pd.read_parquet(
+    str(_ROOT / "data/factors_full.parquet"),
+    filters=[("trade_date", ">=", date(2024, 3, 1)), ("trade_date", "<=", date(2025, 12, 31))],
+    columns=["ts_code"],
+)
 all_stocks = sorted(df_meta["ts_code"].unique())
-N_STOCKS   = len(all_stocks)
+N_STOCKS = len(all_stocks)
 
 # 过滤回测区间
-trade_dates = [pd.Timestamp(str(d)) for d in bt_dates
-               if BACKTEST_START <= str(d) <= BACKTEST_END]
+trade_dates = [pd.Timestamp(str(d)) for d in bt_dates if BACKTEST_START <= str(d) <= BACKTEST_END]
 N_DATES = len(trade_dates)
 date2di = {str(d): i for i, d in enumerate(bt_dates)}
 date_strs = [d.strftime("%Y-%m-%d") for d in trade_dates]
 
 # 截取回测区间的信号矩阵
-hist_bt   = np.array([hist_mat[date2di[d]]   for d in date_strs])
+hist_bt = np.array([hist_mat[date2di[d]] for d in date_strs])
 factor_bt = np.array([factor_mat[date2di[d]] for d in date_strs])
 
 # 加载价格数据
 print("加载价格数据 ...")
-price_df = pd.read_parquet(str(_ROOT / "data/daily_price_full.parquet"),
-    filters=[("trade_date", ">=", date(2024, 7, 1)),
-             ("trade_date", "<=", date(2025, 12, 31))],
-    columns=["ts_code", "trade_date", "close"])
+price_df = pd.read_parquet(
+    str(_ROOT / "data/daily_price_full.parquet"),
+    filters=[("trade_date", ">=", date(2024, 7, 1)), ("trade_date", "<=", date(2025, 12, 31))],
+    columns=["ts_code", "trade_date", "close"],
+)
 price_df["trade_date"] = pd.to_datetime(price_df["trade_date"])
 price_pivot = price_df.pivot(index="trade_date", columns="ts_code", values="close")
 print(f"  价格: {price_pivot.shape}")
@@ -86,8 +88,9 @@ def rank_normalize(mat):
         result[di, np.where(valid)[0]] = ranks / (valid.sum() - 1)
     return result
 
+
 print("预计算 Rank 标准化信号 ...")
-hist_rank   = rank_normalize(hist_bt)
+hist_rank = rank_normalize(hist_bt)
 factor_rank = rank_normalize(factor_bt)
 print("  完成")
 
@@ -122,7 +125,7 @@ def run_backtest(signals, top_n, rebalance_days):
         # 再平衡
         if di % rebalance_days == 0 and valid.sum() > 0:
             valid_idxs = np.where(valid)[0]
-            top_local  = np.argsort(sig[valid_idxs])[::-1][:top_n]
+            top_local = np.argsort(sig[valid_idxs])[::-1][:top_n]
             top_global = set(valid_idxs[top_local].tolist())
 
             for si in list(positions.keys()):
@@ -172,9 +175,9 @@ def run_backtest(signals, top_n, rebalance_days):
 
 
 # ── 参数扫描主循环 ────────────────────────────────────────────
-top_ns    = PARAM_GRID["top_n"]
-reb_days  = PARAM_GRID["rebalance_days"]
-hist_wts  = PARAM_GRID["hist_weight"]
+top_ns = PARAM_GRID["top_n"]
+reb_days = PARAM_GRID["rebalance_days"]
+hist_wts = PARAM_GRID["hist_weight"]
 
 total_runs = len(top_ns) * len(reb_days) * len(hist_wts)
 print(f"\n开始参数扫描: {total_runs} 种组合 ...")
@@ -193,17 +196,16 @@ for i, (top_n, rebal, hw) in enumerate(product(top_ns, reb_days, hist_wts)):
         signals = np.where(
             ~np.isnan(factor_rank) & ~np.isnan(hist_rank),
             fw * factor_rank + hw * hist_rank,
-            np.where(~np.isnan(hist_rank), hist_rank, factor_rank)
+            np.where(~np.isnan(hist_rank), hist_rank, factor_rank),
         )
 
     r = run_backtest(signals, top_n, rebal)
-    r.update({"top_n": top_n, "rebalance_days": rebal, "hist_weight": hw,
-               "factor_weight": round(fw, 1)})
+    r.update({"top_n": top_n, "rebalance_days": rebal, "hist_weight": hw, "factor_weight": round(fw, 1)})
     results.append(r)
 
     if (i + 1) % 25 == 0:
         elapsed = time.time() - t0
-        print(f"  [{i+1}/{total_runs}] elapsed={elapsed:.0f}s", flush=True)
+        print(f"  [{i + 1}/{total_runs}] elapsed={elapsed:.0f}s", flush=True)
 
 elapsed = time.time() - t0
 print(f"\n扫描完成，耗时 {elapsed:.0f}s")
@@ -211,23 +213,25 @@ print(f"\n扫描完成，耗时 {elapsed:.0f}s")
 # ── 排序输出 Top 20 ───────────────────────────────────────────
 results_sorted = sorted(results, key=lambda x: x["sharpe"], reverse=True)
 
-print(f"\n{'='*80}")
+print(f"\n{'=' * 80}")
 print(f"Top 20 参数组合（按 Sharpe 排序）")
 print(f"{'top_n':>6} {'rebal':>6} {'hist_w':>7} {'总收益':>8} {'Sharpe':>8} {'MDD':>8} {'Calmar':>8}")
-print(f"{'-'*80}")
+print(f"{'-' * 80}")
 for r in results_sorted[:20]:
-    print(f"{r['top_n']:>6} {r['rebalance_days']:>6} {r['hist_weight']:>7.1f} "
-          f"{r['total_return']*100:>7.2f}% {r['sharpe']:>8.3f} "
-          f"{r['max_drawdown']*100:>7.2f}% {r['calmar']:>8.3f}")
+    print(
+        f"{r['top_n']:>6} {r['rebalance_days']:>6} {r['hist_weight']:>7.1f} "
+        f"{r['total_return'] * 100:>7.2f}% {r['sharpe']:>8.3f} "
+        f"{r['max_drawdown'] * 100:>7.2f}% {r['calmar']:>8.3f}"
+    )
 
 # 当前参数基线
 baseline = next(r for r in results if r["top_n"] == 10 and r["rebalance_days"] == 20 and r["hist_weight"] == 0.0)
 print(f"\n当前参数基线 (top_n=10, rebal=20, hist_w=0.0):")
-print(f"  Sharpe={baseline['sharpe']:.3f}, MDD={baseline['max_drawdown']*100:.2f}%, Calmar={baseline['calmar']:.3f}")
+print(f"  Sharpe={baseline['sharpe']:.3f}, MDD={baseline['max_drawdown'] * 100:.2f}%, Calmar={baseline['calmar']:.3f}")
 
 best = results_sorted[0]
 print(f"\n最优参数 (top_n={best['top_n']}, rebal={best['rebalance_days']}, hist_w={best['hist_weight']}):")
-print(f"  Sharpe={best['sharpe']:.3f}, MDD={best['max_drawdown']*100:.2f}%, Calmar={best['calmar']:.3f}")
+print(f"  Sharpe={best['sharpe']:.3f}, MDD={best['max_drawdown'] * 100:.2f}%, Calmar={best['calmar']:.3f}")
 
 # 保存结果
 output = {

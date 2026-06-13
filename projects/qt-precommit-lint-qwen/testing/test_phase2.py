@@ -2,8 +2,10 @@
 Phase 2 集成测试
 验证 OMS 订单状态机 + 撤单能力 + DailyMatcher 撮合
 """
+
 import sys
 from pathlib import Path
+
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 
@@ -14,23 +16,20 @@ def test_order_lifecycle():
     oms = OmsEngine()
 
     # 提交订单
-    order = oms.submit_order("Trend", "000001.SZ", OrderSide.BUY,
-                              price=10.0, volume=1000, date="2024-01-02")
+    order = oms.submit_order("Trend", "000001.SZ", OrderSide.BUY, price=10.0, volume=1000, date="2024-01-02")
     assert order.status == OrderStatus.SUBMITTING
     assert order.is_active
     print(f"  提交: {order.order_id} status={order.status.value} ✓")
 
     # 部分成交
-    trade = oms.fill_order(order.order_id, fill_price=10.01, fill_volume=500,
-                           fee=1.5, trade_time="2024-01-02")
+    trade = oms.fill_order(order.order_id, fill_price=10.01, fill_volume=500, fee=1.5, trade_time="2024-01-02")
     assert order.status == OrderStatus.PARTTRADED
     assert order.traded == 500
     assert order.remaining == 500
     print(f"  部分成交: traded={order.traded} remaining={order.remaining} ✓")
 
     # 全部成交
-    oms.fill_order(order.order_id, fill_price=10.01, fill_volume=500,
-                   fee=1.5, trade_time="2024-01-02")
+    oms.fill_order(order.order_id, fill_price=10.01, fill_volume=500, fee=1.5, trade_time="2024-01-02")
     assert order.status == OrderStatus.ALLTRADED
     assert not order.is_active
     assert order.order_id not in [o.order_id for o in oms.get_active_orders()]
@@ -46,8 +45,7 @@ def test_cancel_order():
     oms = OmsEngine()
 
     # 未成交撤单
-    o1 = oms.submit_order("LowVol", "000002.SZ", OrderSide.BUY,
-                           price=20.0, volume=500, date="2024-01-02")
+    o1 = oms.submit_order("LowVol", "000002.SZ", OrderSide.BUY, price=20.0, volume=500, date="2024-01-02")
     result = oms.cancel_order(o1.order_id, reason="手动撤单")
     assert result is True
     assert o1.status == OrderStatus.CANCELLED
@@ -55,8 +53,7 @@ def test_cancel_order():
     print(f"  未成交撤单: status={o1.status.value} ✓")
 
     # 部分成交后撤剩余
-    o2 = oms.submit_order("Trend", "000003.SZ", OrderSide.BUY,
-                           price=15.0, volume=1000, date="2024-01-02")
+    o2 = oms.submit_order("Trend", "000003.SZ", OrderSide.BUY, price=15.0, volume=1000, date="2024-01-02")
     oms.fill_order(o2.order_id, 15.01, 300, 1.0, "2024-01-02")
     assert o2.status == OrderStatus.PARTTRADED
     oms.cancel_order(o2.order_id, reason="部分撤单")
@@ -65,8 +62,7 @@ def test_cancel_order():
 
     # 批量撤单
     for i in range(3):
-        oms.submit_order("Factor", f"00000{i}.SZ", OrderSide.SELL,
-                         price=10.0, volume=100, date="2024-01-02")
+        oms.submit_order("Factor", f"00000{i}.SZ", OrderSide.SELL, price=10.0, volume=100, date="2024-01-02")
     n = oms.cancel_all(strategy="Factor")
     assert n == 3
     assert len(oms.get_active_orders("Factor")) == 0
@@ -85,8 +81,7 @@ def test_reject_order():
     from core.oms import OmsEngine, OrderSide, OrderStatus
 
     oms = OmsEngine()
-    o = oms.submit_order("Trend", "000001.SZ", OrderSide.BUY,
-                          price=10.0, volume=100, date="2024-01-02")
+    o = oms.submit_order("Trend", "000001.SZ", OrderSide.BUY, price=10.0, volume=100, date="2024-01-02")
     oms.reject_order(o.order_id, reason="涨停无法买入")
     assert o.status == OrderStatus.REJECTED
     assert o.reject_reason == "涨停无法买入"
@@ -115,12 +110,17 @@ def test_daily_matcher():
     }
 
     # 正常买入
-    o1 = oms.submit_order("Trend", "000001.SZ", OrderSide.BUY,
-                           price=10.0, volume=1000, date="2024-01-02",
-                           raw_signal={"reason": "trend_signal"})
+    o1 = oms.submit_order(
+        "Trend",
+        "000001.SZ",
+        OrderSide.BUY,
+        price=10.0,
+        volume=1000,
+        date="2024-01-02",
+        raw_signal={"reason": "trend_signal"},
+    )
     # 涨停买入（应被拒）
-    o2 = oms.submit_order("Trend", "000003.SZ", OrderSide.BUY,
-                           price=11.0, volume=500, date="2024-01-02")
+    o2 = oms.submit_order("Trend", "000003.SZ", OrderSide.BUY, price=11.0, volume=500, date="2024-01-02")
 
     matcher.match("2024-01-02", prices, accounts)
 
@@ -133,16 +133,14 @@ def test_daily_matcher():
     print(f"  涨停拒单: status={o2.status.value} reason={o2.reject_reason} ✓")
 
     # T+1 卖出（当天买当天卖 → 拒）
-    o3 = oms.submit_order("Trend", "000001.SZ", OrderSide.SELL,
-                           price=10.0, volume=1000, date="2024-01-02")
+    o3 = oms.submit_order("Trend", "000001.SZ", OrderSide.SELL, price=10.0, volume=1000, date="2024-01-02")
     matcher.match("2024-01-02", prices, accounts)
     assert o3.status == OrderStatus.REJECTED
     assert o3.reject_reason == "T+1限制"
     print(f"  T+1拒单: status={o3.status.value} ✓")
 
     # 次日卖出（正常）
-    o4 = oms.submit_order("Trend", "000001.SZ", OrderSide.SELL,
-                           price=10.0, volume=1000, date="2024-01-03")
+    o4 = oms.submit_order("Trend", "000001.SZ", OrderSide.SELL, price=10.0, volume=1000, date="2024-01-03")
     matcher.match("2024-01-03", prices, accounts)
     assert o4.status == OrderStatus.ALLTRADED
     assert "000001.SZ" not in acc.positions
@@ -170,8 +168,7 @@ def test_oms_callbacks():
     oms.on_order_update = lambda o: order_events.append(o.status.value)
     oms.on_trade = lambda t: trade_events.append(t.trade_id)
 
-    o = oms.submit_order("Trend", "000001.SZ", OrderSide.BUY,
-                          price=10.0, volume=100, date="2024-01-02")
+    o = oms.submit_order("Trend", "000001.SZ", OrderSide.BUY, price=10.0, volume=100, date="2024-01-02")
     oms.fill_order(o.order_id, 10.01, 100, 0.3, "2024-01-02")
 
     assert "提交中" in order_events
@@ -187,8 +184,7 @@ def test_oms_callbacks():
     engine.register(EVENT_TRADE, lambda e: ev_trades.append(e.data["trade_id"]))
 
     oms2 = OmsEngine(event_engine=engine)
-    o2 = oms2.submit_order("LowVol", "000002.SZ", OrderSide.BUY,
-                            price=20.0, volume=200, date="2024-01-02")
+    o2 = oms2.submit_order("LowVol", "000002.SZ", OrderSide.BUY, price=20.0, volume=200, date="2024-01-02")
     oms2.fill_order(o2.order_id, 20.02, 200, 0.6, "2024-01-02")
 
     # 手动 drain 事件队列
@@ -210,11 +206,14 @@ if __name__ == "__main__":
         test_reject_order()
         test_daily_matcher()
         test_oms_callbacks()
-        print("\n" + "="*50)
+        print("\n" + "=" * 50)
         print("  Phase 2 ALL TESTS PASSED ✓")
-        print("="*50)
+        print("=" * 50)
     except Exception as e:
         import traceback
+
         print(f"\n[FAIL] {e}")
         traceback.print_exc()
-        import sys; sys.exit(1)
+        import sys
+
+        sys.exit(1)

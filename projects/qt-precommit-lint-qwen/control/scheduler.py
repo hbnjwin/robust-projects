@@ -26,16 +26,9 @@ def run_task(task):
 
     try:
         subprocess.run([PYTHON, script_path], check=True)
-        state = {
-            "last_run": str(datetime.now()),
-            "status": "success"
-        }
+        state = {"last_run": str(datetime.now()), "status": "success"}
     except Exception as e:
-        state = {
-            "last_run": str(datetime.now()),
-            "status": "failed",
-            "error": str(e)
-        }
+        state = {"last_run": str(datetime.now()), "status": "failed", "error": str(e)}
 
     with open(state_path, "w") as f:
         json.dump(state, f, indent=4)

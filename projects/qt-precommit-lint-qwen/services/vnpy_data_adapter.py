@@ -10,6 +10,7 @@ ts_code 格式转换:
 VNPy BarData Parquet 格式:
   datetime, open, high, low, close, volume, turnover, open_interest
 """
+
 import json
 import os
 import sys
@@ -37,10 +38,10 @@ EXCHANGE_MAP = {
 
 # A股默认合约参数
 DEFAULT_CONTRACT = {
-    "long_rate": 0.0003,    # 买入手续费 0.03%
-    "short_rate": 0.0013,   # 卖出手续费 0.13% (含印花税0.1%)
-    "size": 1,              # 合约乘数 (股票=1)
-    "pricetick": 0.01,      # 最小变动价位
+    "long_rate": 0.0003,  # 买入手续费 0.03%
+    "short_rate": 0.0013,  # 卖出手续费 0.13% (含印花税0.1%)
+    "size": 1,  # 合约乘数 (股票=1)
+    "pricetick": 0.01,  # 最小变动价位
 }
 
 
@@ -70,12 +71,15 @@ def export_all_stocks():
         vt_symbol = ts_to_vnpy(ts_code)
 
         # 查询该股票全部日线
-        cur.execute("""
+        cur.execute(
+            """
             SELECT trade_date, open, high, low, close, vol
             FROM daily_price
             WHERE ts_code = %s
             ORDER BY trade_date
-        """, (ts_code,))
+        """,
+            (ts_code,),
+        )
         rows = cur.fetchall()
 
         if len(rows) < 10:
@@ -90,8 +94,8 @@ def export_all_stocks():
             "low": [float(r[3] or 0) for r in rows],
             "close": [float(r[4] or 0) for r in rows],
             "volume": [float(r[5] or 0) for r in rows],
-            "turnover": [0.0] * len(rows),          # PG 没有 turnover, 填 0
-            "open_interest": [0.0] * len(rows),      # 股票无持仓量
+            "turnover": [0.0] * len(rows),  # PG 没有 turnover, 填 0
+            "open_interest": [0.0] * len(rows),  # 股票无持仓量
         }
 
         df = pl.DataFrame(data)
@@ -106,7 +110,7 @@ def export_all_stocks():
         exported += 1
         if (i + 1) % 500 == 0:
             elapsed = time.time() - start_time
-            print(f"  [{i+1}/{len(all_codes)}] exported={exported} skipped={skipped} ({elapsed:.1f}s)")
+            print(f"  [{i + 1}/{len(all_codes)}] exported={exported} skipped={skipped} ({elapsed:.1f}s)")
 
     conn.close()
 
@@ -152,7 +156,9 @@ def verify_export():
         print(f"\n  AlphaLab.load_bar_data('000001.SZSE'): {len(bars)} bars")
         if bars:
             b = bars[-1]
-            print(f"    Last bar: {b.datetime} O={b.open_price} H={b.high_price} L={b.low_price} C={b.close_price} V={b.volume}")
+            print(
+                f"    Last bar: {b.datetime} O={b.open_price} H={b.high_price} L={b.low_price} C={b.close_price} V={b.volume}"
+            )
         print("  ✅ AlphaLab verification PASSED")
     except Exception as e:
         print(f"  ❌ AlphaLab verification FAILED: {e}")

@@ -10,7 +10,7 @@ from strategies.ma_trend_risk import MATrendRiskStrategy
 from analytics.metrics import max_drawdown, annual_return
 
 DB_PATH = "data/market.db"
-CODES = ['603019.SH','000977.SZ','002230.SZ','688256.SH']
+CODES = ["603019.SH", "000977.SZ", "002230.SZ", "688256.SH"]
 
 
 def load_full(ts_code):
@@ -51,22 +51,22 @@ def main():
 
     # 每20个交易日再平衡一次等权
     portfolio = []
-    total = np.sum(aligned[:,0])
-    weights = np.array([0.25]*4)
+    total = np.sum(aligned[:, 0])
+    weights = np.array([0.25] * 4)
 
     for i in range(min_len):
         if i % 20 == 0 and i != 0:
-            total = np.sum(aligned[:,i])
-            weights = np.array([0.25]*4)
-        value = np.sum(aligned[:,i] * weights)
+            total = np.sum(aligned[:, i])
+            weights = np.array([0.25] * 4)
+        value = np.sum(aligned[:, i] * weights)
         portfolio.append(value)
 
     portfolio = np.array(portfolio)
 
     print("=== Monthly Rebalance Portfolio ===")
-    print("Final Equity:", round(portfolio[-1],2))
-    print("Annual Return:", round(annual_return(portfolio),4))
-    print("Max Drawdown:", round(max_drawdown(portfolio),4))
+    print("Final Equity:", round(portfolio[-1], 2))
+    print("Annual Return:", round(annual_return(portfolio), 4))
+    print("Max Drawdown:", round(max_drawdown(portfolio), 4))
 
 
 if __name__ == "__main__":

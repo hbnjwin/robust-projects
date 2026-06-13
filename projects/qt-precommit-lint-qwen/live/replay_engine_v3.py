@@ -21,8 +21,8 @@ def _load_precomputed_signals():
     返回 (hist_dict, factor_dict) 各为 {date_str: {ts_code: score}}
     如果缓存不存在则返回 (None, None)
     """
-    dates_path  = os.path.join(_MMAP_DIR, "bt_dates.npy")
-    hist_path   = os.path.join(_MMAP_DIR, "hist_signals.npy")
+    dates_path = os.path.join(_MMAP_DIR, "bt_dates.npy")
+    hist_path = os.path.join(_MMAP_DIR, "hist_signals.npy")
     factor_path = os.path.join(_MMAP_DIR, "factor_signals.npy")
 
     if not all(os.path.exists(p) for p in [dates_path, hist_path, factor_path]):
@@ -32,9 +32,9 @@ def _load_precomputed_signals():
         import pandas as pd
         from pathlib import Path
 
-        bt_dates     = np.load(dates_path, allow_pickle=True)
-        hist_mat     = np.load(hist_path)
-        factor_mat   = np.load(factor_path)
+        bt_dates = np.load(dates_path, allow_pickle=True)
+        hist_mat = np.load(hist_path)
+        factor_mat = np.load(factor_path)
 
         # 加载股票列表（与预计算时一致）
         factors_full = Path("/home/tulin/quant/data/factors_full.parquet")
@@ -42,12 +42,13 @@ def _load_precomputed_signals():
             return None, None
 
         from datetime import date as _date
-        df_meta = pd.read_parquet(str(factors_full),
-            filters=[("trade_date", ">=", _date(2024, 3, 1))],
-            columns=["ts_code"])
+
+        df_meta = pd.read_parquet(
+            str(factors_full), filters=[("trade_date", ">=", _date(2024, 3, 1))], columns=["ts_code"]
+        )
         all_stocks = sorted(df_meta["ts_code"].unique())
 
-        hist_dict   = {}
+        hist_dict = {}
         factor_dict = {}
 
         for di, d_str in enumerate(bt_dates):
@@ -60,15 +61,11 @@ def _load_precomputed_signals():
 
             if h_valid.any():
                 hist_dict[d_str] = {
-                    all_stocks[si]: float(h_row[si])
-                    for si in np.where(h_valid)[0]
-                    if si < len(all_stocks)
+                    all_stocks[si]: float(h_row[si]) for si in np.where(h_valid)[0] if si < len(all_stocks)
                 }
             if f_valid.any():
                 factor_dict[d_str] = {
-                    all_stocks[si]: float(f_row[si])
-                    for si in np.where(f_valid)[0]
-                    if si < len(all_stocks)
+                    all_stocks[si]: float(f_row[si]) for si in np.where(f_valid)[0] if si < len(all_stocks)
                 }
 
         print(f"[ReplayV3] 预计算信号加载完成: HIST {len(hist_dict)}天, Factor {len(factor_dict)}天")
@@ -80,7 +77,6 @@ def _load_precomputed_signals():
 
 
 class ReplayEngineV3:
-
     def __init__(self, market_data, start_date, end_date, initial_capital=1_000_000):
         self.market_data = market_data
         self.start_date = start_date
@@ -109,7 +105,7 @@ class ReplayEngineV3:
 
         # Phase 5: 加载预计算 HIST + Factor 信号（用于融合回测）
         self._hist_cache, self._factor_cache = _load_precomputed_signals()
-        self._use_fusion = (self._hist_cache is not None and self._factor_cache is not None)
+        self._use_fusion = self._hist_cache is not None and self._factor_cache is not None
         # Phase 8: Regime 动态权重开关（默认开启）
         self.use_regime_weights = True
 
@@ -122,7 +118,6 @@ class ReplayEngineV3:
 
     def run(self):
         for date, prices in self.market_data.items():
-
             # 1. 更新指数数据 & 检测 regime
             if date in self.index_data and "000300.SH" in self.index_data[date]:
                 index_close = self.index_data[date]["000300.SH"]["close"]
@@ -156,23 +151,24 @@ class ReplayEngineV3:
                 # Phase 6/8: 融合权重（Regime 动态 or 固定）
                 if self.use_regime_weights:
                     _regime_weights = {
-                        "BULL":    (0.1, 0.9),
+                        "BULL": (0.1, 0.9),
                         "NEUTRAL": (0.6, 0.4),
-                        "CRISIS":  (0.5, 0.5),
+                        "CRISIS": (0.5, 0.5),
                     }
                     fw, hw = _regime_weights.get(regime, (0.4, 0.6))
                 else:
                     fw, hw = 0.4, 0.6  # 固定权重
 
                 factor_scores = self._factor_cache.get(date, {})
-                hist_scores   = self._hist_cache.get(date, {})
+                hist_scores = self._hist_cache.get(date, {})
 
                 if factor_scores and hist_scores:
                     from alpha.alpha_manager import AlphaManager
                     from alpha.adapters.factor_alpha import FactorAlpha
+
                     manager = AlphaManager(standardize="rank")
                     manager.register(FactorAlpha({date: factor_scores}), weight=fw)
-                    manager.register(FactorAlpha({date: hist_scores}),   weight=hw)
+                    manager.register(FactorAlpha({date: hist_scores}), weight=hw)
                     wrapped_scores = manager.generate(date)
                 elif factor_scores:
                     wrapped_scores = factor_scores
