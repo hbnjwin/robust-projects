@@ -2,21 +2,30 @@ import numpy as np
 
 def max_drawdown(equity):
     """最大回撤"""
+    if not equity:
+        return 0.0
     peak = equity[0]
-    max_dd = 0
+    max_dd = 0.0
     for v in equity:
         peak = max(peak, v)
+        if peak <= 0:
+            continue
         dd = (peak - v) / peak
         max_dd = max(max_dd, dd)
     return max_dd
 
 def annual_return(equity, days=252):
     """年化收益率"""
+    if not equity or equity[0] == 0:
+        return 0.0
     total_return = equity[-1] / equity[0] - 1
     n = len(equity)
     if n <= 1:
         return 0.0
-    return (1 + total_return) ** (days / n) - 1
+    try:
+        return (1 + total_return) ** (days / n) - 1
+    except (OverflowError, ValueError):
+        return float('inf') if total_return > 0 else -1.0
 
 def sharpe_ratio(equity, risk_free=0.03, days=252):
     """夏普比率"""
