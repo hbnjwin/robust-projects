@@ -1,6 +1,7 @@
 package com.linkyoyo.reportaudit.service.impl;
 
 import com.linkyoyo.reportaudit.entity.ExtractionTasks;
+import com.linkyoyo.reportaudit.exception.EntityNotFoundException;
 import com.linkyoyo.reportaudit.info.ExtractionTasksInfo;
 import com.linkyoyo.reportaudit.info.PageInfo;
 import com.linkyoyo.reportaudit.query.ExtractionTasksQuery;
@@ -26,7 +27,6 @@ import org.springframework.stereotype.Service;
 import javax.persistence.EntityManager;
 import java.util.Objects;
 import java.util.UUID;
-import java.util.Optional;
 import java.time.LocalDateTime;
 import java.time.LocalDateTime;
 
@@ -103,10 +103,9 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
             return extractionTasks;
         } else {
             entityManager.clear();
-            Optional<ExtractionTasks> optionalExtractionTasks = extractionTasksRepository.findById(extractionTasksInfo.getId());
-            if (optionalExtractionTasks.isPresent()) {
-                ExtractionTasks extractionTasks = optionalExtractionTasks.get();
-                BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
+            ExtractionTasks extractionTasks = extractionTasksRepository.findById(extractionTasksInfo.getId())
+                    .orElseThrow(() -> new EntityNotFoundException("抽取任务", extractionTasksInfo.getId()));
+            BeanUtils.copyProperties(extractionTasksInfo, extractionTasks);
                 // 更新时间
                 extractionTasks.setUpdatedAt(LocalDateTime.now());
                 extractionTasks = extractionTasksRepository.save(extractionTasks);
@@ -150,25 +149,20 @@ public class ExtractionTasksServiceImpl implements ExtractionTasksService {
                     }
                 }
                 return extractionTasks;
-            }
-            return null;
         }
     }
 
     @Override
     public ExtractionTasks getExtractionTasksDetail(String id) {
         entityManager.clear();
-        Optional<ExtractionTasks> optionalExtractionTasks = extractionTasksRepository.findById(id);
-        if (optionalExtractionTasks.isPresent()) {
-            return optionalExtractionTasks.get();
-        }
-        return null;
+        return extractionTasksRepository.findById(id)
+                .orElseThrow(() -> new EntityNotFoundException("抽取任务", id));
     }
 
     @Override
     public void markDeleted(String id) {
         ExtractionTasks extractionTasks = extractionTasksRepository.findById(id)
-                .orElseThrow(() -> new RuntimeException("未找到ID为 " + id + " 的抽取任务"));
+                .orElseThrow(() -> new EntityNotFoundException("抽取任务", id));
         extractionTasks.setDelFlag(Boolean.TRUE);
         extractionTasks.setUpdatedAt(LocalDateTime.now());
         extractionTasksRepository.save(extractionTasks);
