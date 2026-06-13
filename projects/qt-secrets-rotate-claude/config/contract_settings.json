@@ -1,0 +1,12 @@
+{
+  "_comment": "合约配置文件 — 手工维护",
+  "_comment2": "字段说明: pricetick=最小价格变动, size=每手股数, long_rate=买入费率, short_rate=卖出费率(含印花税), min_volume=最小下单手数",
+
+  "_market_688": {"pricetick": 0.01, "size": 100, "long_rate": 0.0003, "short_rate": 0.0013, "min_volume": 1},
+  "_market_689": {"pricetick": 0.01, "size": 100, "long_rate": 0.0003, "short_rate": 0.0013, "min_volume": 1},
+  "_market_300": {"pricetick": 0.01, "size": 100, "long_rate": 0.0003, "short_rate": 0.0013, "min_volume": 1},
+  "_market_301": {"pricetick": 0.01, "size": 100, "long_rate": 0.0003, "short_rate": 0.0013, "min_volume": 1},
+
+  "_comment_individual": "以下为个股特殊配置示例，按需添加",
+  "600519.SH": {"pricetick": 0.01, "size": 100, "long_rate": 0.0003, "short_rate": 0.0013, "min_volume": 1}
+}

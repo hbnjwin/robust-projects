@@ -1,0 +1,33 @@
+# Data
+*.csv
+*.parquet
+*.feather
+*.pkl
+*.log
+
+logs/
+
+# Runtime / Generated Data
+data/
+reports/
+testing/sim_reports/
+control/task_state/*.json
+mlruns/
+
+
+# Python
+__pycache__/
+*.pyc
+.ipynb_checkpoints/
+
+# Virtualenv
+.venv/
+venv/
+
+# External frameworks
+qlib/
+vnpy/
+
+
+# Env
+.env
