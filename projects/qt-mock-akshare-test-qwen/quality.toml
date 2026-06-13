@@ -1,0 +1,44 @@
+[[criterion]]
+name = "COPY写入与列映射测试"
+description = "[Explicit] 是否mock akshare.stock_zh_a_hist()返回预制DataFrame，验证PostgreSQL COPY写入逻辑和列映射正确性。1: 未mock AKShare API；2: mock了但未验证列映射；3: 验证了列映射但未检查COPY写入的SQL正确性；4: mock返回中文列名DataFrame，验证映射为标准列名后COPY语句正确；5: 额外测试了英文列名和混合列名的兼容映射。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "mock了akshare.stock_zh_a_hist返回预制DataFrame，验证了中文列名到标准列名的映射，但对COPY INTO语句的列顺序验证不够严格。"
+
+[[criterion]]
+name = "异常路径重试机制"
+description = "[Explicit] 是否mock API超时和空返回，验证retry_count和cooldown_seconds的重试行为。1: 未测试异常路径；2: 仅测试了空返回；3: 测试了超时但未验证重试次数和间隔；4: 验证API超时触发retry_count次重试，cooldown_seconds间隔正确，最终失败的错误处理合理；5: 额外测试了重试成功（第N次恢复正常）的场景。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了API超时和空返回的异常路径，但对retry_count的实际重试次数计数验证使用了mock.call_count，cooldown_seconds的间隔验证缺失。"
+
+[[criterion]]
+name = "多线程安全性测试"
+description = "[Explicit] 是否mock ThreadPoolExecutor(max_workers=4)并发场景，验证共享pg_conn的线程安全。1: 未测试多线程；2: 测试了并发但未验证线程安全；3: 验证了并发执行但未检查pg_conn的加锁或独立创建；4: 验证4线程并发导入时pg_conn被正确加锁或每线程独立创建连接；5: 额外验证了并发写入同一表时的数据完整性。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "测试了ThreadPoolExecutor的并发执行但对pg_conn的线程安全验证不充分，未明确检查连接是否被加锁或独立创建。"
+
+[[criterion]]
+name = "智能日期增量检测"
+description = "[Explicit] 是否验证从数据库查最新日期只拉增量数据的SQL查询正确性。1: 未测试日期检测；2: mock了查询但未验证SQL语义；3: 验证了增量起始日期但未检查已有数据不被重复拉取；4: mock数据库返回最新日期2024-01-15，验证API调用的start_date为2024-01-16且不重复拉取历史；5: 额外测试了空表（首次全量拉取）和日期格式异常的处理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "测试了日期检测SQL查询返回最新日期后计算增量起始日期，但对空表场景（首次全量导入）的处理验证不够充分。"
+
+[[criterion]]
+name = "测试运行与覆盖统计"
+description = "[Implicit] 是否实际运行全部测试用例并确认通过。1: 未运行测试；2: 运行了但有失败；3: 全部通过但用例数少于20；4: 全部40+用例通过；5: 附带覆盖率统计证明import_full_market_akshare.py被充分覆盖。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "运行51个测试全部通过，耗时1.39秒，覆盖了4大需求的全部场景。"
