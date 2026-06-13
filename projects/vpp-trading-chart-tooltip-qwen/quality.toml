@@ -1,44 +1,44 @@
 [[criterion]]
-name = "时间戳格式化"
-description = "[Explicit] 是否在tooltip的formatter中将Unix时间戳转换为HH:mm格式显示。1: tooltip直接显示原始时间戳数字; 2: 用Date对象但格式不含前导零如9:5而非09:05; 3: 格式化为HH:mm但仅在tooltip生效axisPointer未处理; 4: tooltip和axisPointer.label.formatter都使用统一的formatTimestamp函数; 5: 抽取为独立的时间格式化工具函数并处理了时区边界"
-type = "likert"
-points = 5
-weight = 1.0
-score = 4
-rationale = "TradingDesk.vue中tooltip.formatter和axisPointer.label.formatter都调用了formatTimestamp函数将时间戳转为HH:mm格式，统一了时间显示"
-
-[[criterion]]
-name = "多系列Tooltip展示"
-description = "[Explicit] 是否修复tooltip只显示单个系列数据的问题，使hover时展示所有价格系列。1: tooltip仍只显示一条系列; 2: 显示多系列但格式混乱无对齐; 3: 多系列显示但颜色标记缺失; 4: formatter中遍历params数组拼接所有系列含圆点颜色标记; 5: 完整的多系列tooltip含颜色标记、数值对齐、单位显示和排序"
+name = "Tooltip时间戳格式化"
+description = "[Explicit] 是否在tooltip的formatter中将Unix时间戳转换为HH:mm格式显示而非原始数字。1: tooltip仍直接显示原始时间戳如1718236800000; 2: 用Date对象格式化但不含前导零如9:5而非09:05; 3: 格式化为HH:mm但仅tooltip生效axisPointer标签未处理; 4: tooltip和axisPointer.label.formatter都使用统一的formatTime函数转为HH:mm; 5: 独立时间格式化工具函数加时区边界处理加跨日场景兼容"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "tooltip.formatter中遍历params列表为每个系列生成带marker的行，但多系列之间的数值对齐方式为简单换行拼接未做列对齐"
+rationale = "TradingDesk.vue中tooltip.formatter调用了格式化函数将时间戳转为HH:mm格式，但axisPointer.label的formatter未同步处理导致坐标轴悬浮标签仍显示原始时间戳"
 
 [[criterion]]
-name = "Y轴单位格式化"
-description = "[Explicit] 是否在Y轴标签上添加元/MWh单位并合理格式化价格数值。1: Y轴显示原始数字无单位; 2: 有单位但格式化不合理如小数位过多; 3: Y轴label.formatter添加了单位但精度不统一; 4: 统一的价格格式化函数处理Y轴和tooltip中的数值显示含固定小数位; 5: 价格格式化支持自动单位切换（分/元）和千分位分隔符"
+name = "多系列颜色标记区分"
+description = "[Explicit] 是否修复tooltip中两条曲线的颜色标记都是黑色圆点无法区分的问题。1: tooltip中仍为统一黑色圆点; 2: 有颜色但与legend不一致; 3: 使用params.marker自动获取但个别系列marker缺失; 4: formatter中遍历params数组使用每个系列的marker属性渲染对应颜色圆点; 5: 颜色标记加数值对齐加单位显示加按值排序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "TradingDesk.vue中tooltip.formatter遍历params列表为每个系列生成行，但未使用params[i].marker属性获取对应颜色圆点，颜色标记与legend不完全同步"
+
+[[criterion]]
+name = "时间范围切换坐标轴"
+description = "[Explicit] 是否修复点击时间范围按钮（1小时/6小时/24小时）切换后X轴刻度标签未重新计算的问题。1: 切换后X轴仍显示00:00-24:00范围; 2: X轴范围变了但刻度间隔未调整; 3: 通过setOption更新xAxis的min和max但未触发坐标轴重绘; 4: 切换时调用chart.setOption更新xAxis范围和interval并通过notMerge或合理配置触发坐标轴刻度重算; 5: 坐标轴重算加dataZoom联动加切换过渡动画"
 type = "likert"
 points = 5
 weight = 1.0
 score = 2
-rationale = "Y轴axisLabel.formatter中拼接了元/MWh单位，但tooltip中的价格精度与Y轴标签不一致，tooltip显示完整浮点数而Y轴显示整数，缺少统一的格式化函数"
+rationale = "TradingDesk.vue中时间范围切换按钮的点击事件更新了数据范围但未调用chart.setOption更新xAxis的min和max属性，X轴刻度标签在24小时切到1小时后仍显示全天范围"
 
 [[criterion]]
 name = "数据源与类型定义"
-description = "[Implicit] 是否正确定义电价数据的TypeScript类型并确保时间轴数据点结构一致。1: 无类型定义使用any; 2: 有基本interface但字段类型不准确; 3: 类型定义正确但数据生成逻辑有偏差; 4: 完整的类型定义含时间戳和价格字段且数据生成逻辑与图表配置匹配; 5: 类型定义加数据校验加边界处理如跨日时间戳"
+description = "[Implicit] 是否正确定义电价数据的TypeScript类型并确保时间轴数据点结构与ECharts配置一致。1: 无类型定义使用any; 2: 有基本interface但字段类型不准确; 3: 类型定义正确但数据生成逻辑有偏差; 4: 完整的类型定义含时间戳和价格字段且数据生成与图表配置匹配; 5: 类型定义加数据校验加边界处理如跨日时间戳和缺失数据点"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "创建了electricityPrice.ts和trading.ts数据模块有基本的数据结构，但类型定义分散在多个文件中结构不够集中"
+rationale = "创建了电价数据模块有基本的数据结构，但类型定义分散在多个文件中结构不够集中，时间戳和价格字段的类型约束不够严格"
 
 [[criterion]]
 name = "ECharts配置完整性"
-description = "[Implicit] 是否确保ECharts option中tooltip、xAxis、yAxis、series的配置项相互一致无冲突。1: 配置项之间存在类型冲突导致渲染错误; 2: 基本配置正确但trigger和axisPointer设置不当; 3: tooltip.trigger为axis且axisPointer.type设置合理; 4: 完整配置含tooltip.trigger=axis、xAxis.type=time、series.type=line且相互匹配; 5: 配置含dataZoom、legend交互、动态刷新支持"
+description = "[Implicit] 是否确保ECharts option中tooltip、xAxis、yAxis、series的配置项相互一致无冲突。1: 配置项之间存在类型冲突导致渲染错误; 2: 基本配置正确但trigger和axisPointer设置不当; 3: tooltip.trigger为axis且axisPointer.type设置合理; 4: 完整配置含tooltip.trigger=axis和xAxis.type=time和series.type=line且相互匹配; 5: 配置含dataZoom和legend交互和时间范围联动和resize自适应"
 type = "likert"
 points = 5
 weight = 1.0
 score = 3
-rationale = "ECharts配置中tooltip.trigger设为axis，xAxis.type为time，但axisPointer配置和series数据格式的对应关系处理一般"
+rationale = "ECharts配置中tooltip.trigger设为axis和xAxis.type为time，但axisPointer配置和series数据格式的对应关系处理一般，时间范围切换与坐标轴配置联动不够完整"
