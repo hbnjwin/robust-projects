@@ -1,8 +1,53 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "渲染循环取消"
+description = "[Explicit] 是否在组件卸载时取消requestAnimationFrame渲染循环，防止已销毁renderer继续被回调引用。1: 未保存animationFrameId无法取消; 2: 保存了id但cancelAnimationFrame调用位置不对; 3: onUnmounted中调用cancelAnimationFrame但未置空回调引用; 4: 正确取消动画帧且置空renderer引用防止回调执行; 5: 取消动画帧+设置disposed标志位在回调入口处做守卫判断"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "VppScene.vue的onUnmounted中保存animationFrameId并调用cancelAnimationFrame()，同时在animate函数入口检查isDisposed标志避免竞态"
+
+[[criterion]]
+name = "GPU资源递归释放"
+description = "[Explicit] 是否递归遍历scene中所有mesh释放geometry、material和texture的GPU资源。1: 仅调用renderer.dispose()未处理scene子对象; 2: 手动dispose个别已知mesh但遗漏动态添加的; 3: scene.traverse遍历但仅处理geometry未处理material; 4: traverse中完整dispose geometry+material+material.map等texture; 5: 通用disposeThree工具函数处理所有BufferGeometry、Material子类、Texture及其引用链"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "VppScene.vue的cleanup函数中scene.traverse遍历所有子对象，对mesh.geometry.dispose()和mesh.material处理map/normalMap/roughnessMap等texture后dispose material，覆盖了主要GPU资源类型"
+
+[[criterion]]
+name = "OrbitControls事件清理"
+description = "[Explicit] 是否调用controls.dispose()移除OrbitControls绑定在DOM上的鼠标和触摸事件监听器。1: 未调用controls.dispose(); 2: 调用了但在renderer.dispose()之后导致canvas已移除时报错; 3: 在renderer.dispose()之前正确调用controls.dispose(); 4: dispose顺序正确且移除了额外的resize/wheel事件监听; 5: 完整的反向初始化顺序销毁（controls->scene->renderer->canvas）"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "cleanup函数中按controls.dispose()到scene遍历再到renderer.dispose()的反向初始化顺序执行，OrbitControls事件正确清理"
+
+[[criterion]]
+name = "WebGLRenderer销毁"
+description = "[Explicit] 是否正确调用renderer.dispose()释放WebGL上下文并从DOM移除canvas元素。1: 未调用renderer.dispose(); 2: 调用dispose但未从DOM移除canvas; 3: dispose加removeChild canvas但未处理forceContextLoss; 4: dispose加removeChild加renderer.forceContextLoss()强制释放WebGL上下文; 5: 完整销毁含forceContextLoss加置空引用加domElement移除"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "cleanup中调用renderer.dispose()释放WebGL资源，但未显式调用forceContextLoss()也未从DOM移除canvas元素"
+
+[[criterion]]
+name = "内存泄漏验证完整性"
+description = "[Implicit] 是否验证修复后反复切换页面时内存不再持续增长。1: 未做任何内存验证; 2: 仅代码审查未实际测试; 3: 提到了内存问题但未给出验证步骤; 4: 列出了泄漏点对照表并逐项确认修复; 5: 实际运行验证或提供DevTools Memory面板操作步骤证明修复有效"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "列出了泄漏原因和修复方式的对照表，包含4个泄漏点的修复确认，但未实际运行浏览器验证内存变化"
+
+[[criterion]]
+name = "改动精准度"
+description = "[Implicit] 是否将修复集中在VppScene.vue及必要的工具文件中，避免改动无关模块。1: 改动超过8个文件包含大量无关变更; 2: 改动5-8个文件部分无关; 3: 改动3-4个文件基本相关; 4: 改动1-2个核心文件精准定位; 5: 仅改动VppScene.vue一个文件内联所有修复逻辑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "仅编辑VppScene.vue一个文件，所有内存泄漏修复逻辑内联在组件的cleanup函数和onUnmounted中，改动极为精准"
