@@ -1,0 +1,44 @@
+[[criterion]]
+name = "状态转换图梳理"
+description = "[Explicit] 是否完整梳理了订单状态机的所有合法状态和转换路径并绘制状态图。1: 未提供状态转换图；2: 列出了部分状态但缺少转换边和触发条件；3: 覆盖主要正向流程但退款和异常路径不完整；4: 覆盖正向、退款、取消路径并标注触发条件；5: 14个状态25条边全部覆盖且标注了每条转换的前置条件和副作用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "列出了CREATED→PAID→SHIPPED→DELIVERED→COMPLETED的正向流程和CANCELLED/REFUNDED等退款状态，但未能精确枚举所有25条转换边，部分异常路径如SHIPPED→PARTIAL_REFUND→REFUNDING的中间态缺失"
+
+[[criterion]]
+name = "并发竞态分析"
+description = "[Explicit] 是否识别出发货与取消同时触发时的竞态窗口及其导致非法状态的根因。1: 未提及并发问题；2: 提到了并发但未定位具体竞态窗口；3: 定位到transition方法的check-then-act非原子性但未给出时序分析；4: 给出了具体的竞态时序图并解释了非法状态的产生机制；5: 时序分析完整且提出了分布式锁或CAS等具体修复方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "提到了并发安全问题但仅笼统指出transition方法没有加锁，未对发货和取消操作的具体竞态时序做拆解分析，没有解释为什么会出现不在状态定义里的非法状态"
+
+[[criterion]]
+name = "退款流程设计缺陷"
+description = "[Explicit] 是否指出退款回调和手动取消之间的重复退款问题及全额与部分退款路径的不一致。1: 未分析退款流程；2: 仅描述了退款的正常流程；3: 识别出重复退款风险但未分析部分退款路径差异；4: 同时分析了重复退款根因和全额/部分退款路径差异；5: 提出了幂等性方案并对比了两种退款路径的状态机完整性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "识别了退款回调和手动取消可能导致重复退款的问题，但对部分退款后状态流转与全额退款的差异分析不够深入，未指出部分退款后订单应进入PARTIAL_REFUNDED状态而代码中缺少该状态定义"
+
+[[criterion]]
+name = "锁机制评估"
+description = "[Implicit] 是否评估了当前状态机的并发控制方案的充分性并给出改进建议。1: 未提及并发控制；2: 仅建议加锁但未分析现有方案；3: 分析了现有方案的不足但改进建议不具体；4: 对比了乐观锁和悲观锁方案并推荐适合的策略；5: 给出完整的并发控制方案含分布式场景下的锁策略和降级处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "建议对transition方法加锁，但未分析现有代码是否已有version字段或状态校验等乐观锁机制，改进建议停留在笼统的加锁层面"
+
+[[criterion]]
+name = "分析深度与结构"
+description = "[Implicit] 是否系统化地组织分析结果并在关键结论处引用具体代码位置。1: 分析零散无结构；2: 有分节但引用不具体；3: 结构清晰但部分结论缺少代码依据；4: 结构完整且关键结论有具体行号或方法引用；5: 分析报告结构专业，所有结论有代码引用且附带修复方案优先级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析按四个维度分节组织，引用了order_state_machine.py中的状态定义和transition方法，但部分结论如竞态分析缺少具体行号引用"
