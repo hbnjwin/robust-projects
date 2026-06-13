@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "发放规则与到账延迟"
+description = "[Explicit] 是否完整解读了积分发放规则包括类目比例和冻结到账机制。1: 未分析发放规则；2: 仅描述了积分比例；3: 分析了比例和冻结期但未解读到账触发条件；4: 完整分析了类目比例映射、7天冻结期和评价确认触发到账的逻辑；5: 发放规则分析完整且指出了退款和取消评价对冻结积分的影响"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "在points_ledger.py中分析了POINTS_RATE字典的类目比例映射，但对earn_points方法中冻结状态的具体实现和评价确认触发到账的联动逻辑描述不够精确"
+
+[[criterion]]
+name = "FIFO消耗策略"
+description = "[Explicit] 是否解读了积分消耗时的批次选择策略（先进先出）。1: 未分析消耗策略；2: 提到了FIFO但未分析实现；3: 分析了FIFO排序但未处理单批次不足的跨批次消耗；4: 完整分析了FIFO批次选择和跨批次消耗的拆分逻辑；5: FIFO分析完整且指出了并发消耗可能导致的超扣问题"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "分析了consume_points方法的FIFO排序逻辑，但对跨批次消耗时剩余积分的更新操作未做原子性分析，并发消耗的竞态问题也未展开"
+
+[[criterion]]
+name = "过期清理机制"
+description = "[Explicit] 是否分析了积分过期清理定时任务的实现逻辑和边界处理。1: 未分析过期；2: 提到12个月有效期但未分析清理逻辑；3: 分析了定时任务但未考虑边界场景；4: 分析了扫描条件和执行频率并指出了部分消耗批次的过期处理；5: 过期清理分析完整含幂等性保证和过期通知机制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "分析了expire_points定时任务的存在和12个月有效期规则，但对扫描条件的具体SQL、执行频率、幂等性保证以及已部分消耗批次的过期处理方式均未做深入分析"
+
+[[criterion]]
+name = "退款积分回收"
+description = "[Explicit] 是否分析了退款时积分扣回的计算方式。1: 未分析退款回收；2: 提到了回收但计算方式错误；3: 分析了回收但未区分全额退款和部分退款的差异；4: 准确分析了按使用比例回收的计算逻辑；5: 回收分析完整且考虑了已过期积分和跨批次消耗的回收复杂性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了退款时需要扣回对应订单赠送的积分，但对部分退款场景下积分回收的计算方式（按退款金额比例还是按商品粒度）分析不够明确"
+
+[[criterion]]
+name = "积分套取漏洞根因"
+description = "[Explicit] 是否准确定位了下单获积分→抵扣→退款→积分未扣回的套取漏洞根因。1: 未分析漏洞；2: 描述了套取路径但未定位根因；3: 定位到退款时积分回收逻辑但根因不精确；4: 准确定位到积分抵扣的退款回收逻辑缺失——退款只回收赠送积分不回收抵扣积分的金额；5: 漏洞根因定位精确并给出了完整的防套取方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在points_ledger.py的refund_handler中定位到漏洞根因：退款时revoke_points只回收了earn类型的积分（赠送的），但用户用积分抵扣支付的部分在退款时全额退还了现金——相当于用积分换了等额现金。并创建了exploit_demo.py复现了套取流程"

@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "规则引擎架构"
+description = "[Explicit] 是否解读了风控规则引擎的整体架构和三层规则的组织方式。1: 未分析架构；2: 列出了三层但未分析组织方式；3: 描述了三层规则但架构模式不明确；4: 分析了责任链或决策树架构模式和三层规则的串联方式；5: 架构分析完整且包含规则引擎的可扩展性和热更新机制评估"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 5
+rationale = "在risk_engine.py中分析了RiskEngine类采用Pipeline架构——基础规则层、行为规则层、模型规则层按顺序串联执行，每层通过BaseRuleGroup抽象基类实现。配置通过config.py的YAML驱动，规则参数可热更新无需重启"
+
+[[criterion]]
+name = "评估顺序与短路逻辑"
+description = "[Explicit] 是否分析了三层规则的评估顺序和短路条件——基础规则拦截后是否跳过模型规则。1: 未分析评估顺序；2: 描述了顺序但未分析短路条件；3: 分析了短路条件但行为规则必须全跑的要求未说明；4: 准确分析了基础规则短路和行为规则全跑的逻辑及其原因；5: 评估顺序分析完整且解释了行为规则不短路的业务原因（需要收集完整行为画像）"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在RiskEngine.evaluate方法中分析了执行顺序：基础规则层任何一条触发BLOCK则短路返回，行为规则层全部执行后汇总risk_score（因为单条行为规则的风险信号需要交叉关联才有意义），模型规则层调用ML服务获取综合评分。解释了行为规则不短路的原因是需要收集完整的行为特征向量"
+
+[[criterion]]
+name = "规则配置数据结构"
+description = "[Explicit] 是否解读了风控规则的配置方式包含条件表达式和动作定义。1: 未分析配置；2: 列出了部分规则参数；3: 描述了配置结构但条件表达式的解析方式不清楚；4: 完整解读了规则配置的JSON/YAML结构含条件字段和动作定义；5: 配置分析完整且指出了条件表达式的灵活性和局限性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在config.py中解读了YAML配置结构——每条规则包含name、conditions（列表式条件表达式）、action（BLOCK/VERIFY/FLAG）和priority字段。条件表达式用field/operator/value三元组定义如{field:'amount', operator:'gt', value:50000}。指出了条件之间默认AND组合但不支持OR和嵌套条件的局限性"
+
+[[criterion]]
+name = "新绑卡漏过分析"
+description = "[Explicit] 是否分析了新绑定银行卡小额测试后大额交易绕过风控的盲区原因。1: 未分析该案例；2: 提到了漏洞但未定位规则盲区；3: 定位到冷静期规则只看注册时间不看绑卡时间的问题；4: 准确分析了规则覆盖盲区并指出了小额试探行为未被行为规则捕获的原因；5: 盲区分析完整且给出了规则增补方案覆盖新绑卡场景"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了两层盲区：一是base_rules.py的NewUserRule只检查user.registered_at距今天数，新绑卡不触发冷静期；二是behavior_rules.py的FrequencyRule只看同卡的累计金额不看频次模式（5笔小额测试后1笔大额的异常模式未被检测）。建议增加NewCardRule和AmountEscalationRule"
+
+[[criterion]]
+name = "风控动作联动"
+description = "[Implicit] 是否分析了不同风控动作（拦截、二次验证、标记）的执行方式和用户体验影响。1: 未分析动作执行；2: 列出了动作类型但未分析执行方式；3: 描述了动作但未分析多条规则触发不同动作时的优先级；4: 分析了动作优先级（BLOCK>VERIFY>FLAG）和用户体验降级策略；5: 动作分析完整且指出了二次验证失败后的降级处理和审计日志记录"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了多条规则同时触发时的动作合并策略：BLOCK优先级最高直接拦截，多个VERIFY取验证强度最高的（人脸>短信），FLAG只记录不阻断。在evaluate方法中确认了优先级排序逻辑，BLOCK时记录触发的具体规则名称到risk_log表用于审计"

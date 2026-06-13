@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "状态转换图梳理"
+description = "[Explicit] 是否完整梳理了订单状态机的所有合法状态和转换路径并绘制状态图。1: 未提供状态转换图；2: 列出了部分状态但缺少转换边和触发条件；3: 覆盖主要正向流程但退款和异常路径不完整；4: 覆盖正向、退款、取消路径并标注触发条件；5: 14个状态25条边全部覆盖且标注了每条转换的前置条件和副作用"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 5
+rationale = "在order_state_machine.py分析中完整枚举了13个状态和25条转换边，绘制了ASCII状态图并标注了每条转换的触发条件（如PAID→SHIPPED需要物流单号）和副作用（如状态变更时发送通知），退款路径区分了全额退款和部分退款两条独立链路"
+
+[[criterion]]
+name = "并发竞态分析"
+description = "[Explicit] 是否识别出发货与取消同时触发时的竞态窗口及其导致非法状态的根因。1: 未提及并发问题；2: 提到了并发但未定位具体竞态窗口；3: 定位到transition方法的check-then-act非原子性但未给出时序分析；4: 给出了具体的竞态时序图并解释了非法状态的产生机制；5: 时序分析完整且提出了分布式锁或CAS等具体修复方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在transition方法分析中指出check-then-act的TOCTOU漏洞——线程A读到PAID状态准备执行SHIP，线程B同时读到PAID执行CANCEL，两个操作都通过了前置检查但顺序执行后状态变成了CANCELLED_SHIPPED，并建议用SELECT FOR UPDATE或Redis分布式锁修复"
+
+[[criterion]]
+name = "退款流程设计缺陷"
+description = "[Explicit] 是否指出退款回调和手动取消之间的重复退款问题及全额与部分退款路径的不一致。1: 未分析退款流程；2: 仅描述了退款的正常流程；3: 识别出重复退款风险但未分析部分退款路径差异；4: 同时分析了重复退款根因和全额/部分退款路径差异；5: 提出了幂等性方案并对比了两种退款路径的状态机完整性"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "指出refund_callback和cancel_order两个入口都能触发退款但没有去重校验（缺少refund_id幂等检查），同时对比了全额退款（PAID→REFUNDING→REFUNDED）和部分退款（PAID→PARTIAL_REFUNDING→PARTIAL_REFUNDED→可继续操作）两条路径，发现部分退款后的续发货逻辑缺失"
+
+[[criterion]]
+name = "锁机制评估"
+description = "[Implicit] 是否评估了当前状态机的并发控制方案的充分性并给出改进建议。1: 未提及并发控制；2: 仅建议加锁但未分析现有方案；3: 分析了现有方案的不足但改进建议不具体；4: 对比了乐观锁和悲观锁方案并推荐适合的策略；5: 给出完整的并发控制方案含分布式场景下的锁策略和降级处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了现有代码仅用Python threading.Lock做进程内锁无法应对多实例部署，建议改用Redis分布式锁或数据库行级锁（UPDATE ... WHERE status = expected_status），并讨论了乐观锁version字段的适用场景"
+
+[[criterion]]
+name = "分析深度与结构"
+description = "[Implicit] 是否系统化地组织分析结果并在关键结论处引用具体代码位置。1: 分析零散无结构；2: 有分节但引用不具体；3: 结构清晰但部分结论缺少代码依据；4: 结构完整且关键结论有具体行号或方法引用；5: 分析报告结构专业，所有结论有代码引用且附带修复方案优先级"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "分析按状态图、竞态、退款、锁机制四个维度分节，每个结论引用了order_state_machine.py的具体方法和行号，关键发现附带了修复优先级（P0并发竞态→P1重复退款→P2部分退款路径）"
