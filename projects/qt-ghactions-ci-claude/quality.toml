@@ -1,0 +1,53 @@
+[[criterion]]
+name = "CI三阶段pipeline设计"
+description = "[Explicit] 是否创建ci.yml实现lint→test→type-check三阶段pipeline。1: 未创建ci.yml；2: 创建了但仅有单个job；3: 三个阶段存在但未设置依赖关系；4: lint阶段失败阻断test，type-check独立运行不阻断，依赖关系正确；5: 额外配置了concurrency取消旧运行避免资源浪费。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ci.yml三阶段pipeline：lint失败阻断test（needs: lint），type-check独立运行且continue-on-error: true不阻断，依赖关系正确。"
+
+[[criterion]]
+name = "lint阶段ruff检查"
+description = "[Explicit] 是否在lint阶段运行ruff check和ruff format --check，失败即阻断。1: 未配置lint阶段；2: 仅有ruff check缺少format检查；3: 两者都有但exit code处理不正确；4: ruff check和ruff format --check均配置，任一失败即阻断后续阶段；5: 附带了ruff版本固定避免CI非确定性。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "lint阶段依次运行ruff check .和ruff format --check .，任一失败返回非零退出码阻断test阶段。"
+
+[[criterion]]
+name = "test阶段覆盖率与artifact"
+description = "[Explicit] 是否在test阶段用Python 3.11运行pytest，排除PG集成测试，覆盖率报告上传为artifact。1: 未配置test阶段；2: 配置了pytest但未排除集成测试；3: 排除了集成测试但无覆盖率上传；4: pytest -m \"not integration\"运行，覆盖率HTML报告通过upload-artifact上传；5: artifact设置了retention-days和覆盖率xml用于PR comment。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "test阶段Python 3.11运行pytest -m \"not integration\"，--cov-report=html和xml双报告，HTML通过upload-artifact上传保留30天。"
+
+[[criterion]]
+name = "pip缓存加速"
+description = "[Explicit] 是否缓存pip依赖加速构建。1: 未配置任何缓存；2: 使用了cache但key设计不合理；3: 缓存了pip但cache key未包含requirements文件hash；4: actions/setup-python的cache=pip或actions/cache缓存~/.cache/pip，key含requirements hash；5: 使用setup-python内置cache=pip最简方案。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "actions/setup-python配置cache: pip自动缓存依赖，key基于requirements文件hash，构建加速。"
+
+[[criterion]]
+name = "README构建状态badge"
+description = "[Explicit] 是否在README顶部添加GitHub Actions构建状态badge。1: 未添加badge；2: badge语法错误或链接不正确；3: badge正确但未放在README顶部；4: README顶部添加了正确的CI状态badge，链接到workflow页面；5: 额外添加了覆盖率badge。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "README.md顶部添加GitHub Actions CI状态badge，markdown语法正确，链接指向正确的workflow页面。"
+
+[[criterion]]
+name = "Makefile统一命令"
+description = "[Explicit] 是否定义make lint、make test、make typecheck命令，本地和CI使用同一套。1: 未创建Makefile；2: 仅定义了部分命令；3: 三个命令都有但与CI中的命令不一致；4: make lint/test/typecheck三个命令与ci.yml中的步骤命令一致；5: 额外提供make ci一键运行全部三阶段。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Makefile中lint/test/typecheck三个目标的命令与ci.yml中的步骤完全一致，本地开发和CI使用同一套命令。"
