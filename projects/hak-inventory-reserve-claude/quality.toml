@@ -1,0 +1,44 @@
+[[criterion]]
+name = "预占扣减释放事务分析"
+description = "[Explicit] 是否准确分析了reserve/deduct/release三步操作各自的事务边界和原子性问题。1: 未分析事务边界；2: 描述了三步流程但未涉及事务；3: 分析了事务但未识别TOCTOU竞态；4: 识别了reserve的check-then-act竞态和缺少行级锁的问题；5: 三步操作的事务边界和原子性问题全部定位并给出SELECT FOR UPDATE等修复建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "在inventory_service.py分析中精确定位了reserve_inventory方法的TOCTOU竞态——先SELECT available_qty再UPDATE，中间窗口内并发请求可能同时通过库存检查导致超卖。同时指出release和deduct之间存在竞态窗口，支付确认和超时释放可能同时执行导致reserve_records状态不一致"
+
+[[criterion]]
+name = "超卖根因定位"
+description = "[Explicit] 是否准确定位了超卖发生的具体代码位置和并发场景。1: 未分析超卖；2: 笼统说是并发问题；3: 定位到reserve方法但未说清竞态时序；4: 给出了具体的并发时序导致available_qty变为负数的场景；5: 时序分析完整并解释了为什么库存显示0还能下单"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "通过时序图展示了两个并发请求同时读到available_qty=1，都通过了检查，各自扣减后available_qty变成-1的完整过程，并指出补救方案是在UPDATE语句中加WHERE available_qty >= requested_qty条件做原子校验"
+
+[[criterion]]
+name = "定时释放任务边界"
+description = "[Explicit] 是否分析了预占释放定时任务的扫描条件和可能的遗漏场景。1: 未分析定时任务；2: 仅描述了定时任务的存在；3: 分析了超时阈值但未考虑边界场景；4: 指出了定时任务与支付确认的竞态和扫描遗漏问题；5: 完整分析含幂等性、扫描间隔导致的延迟释放和误释放已支付订单的风险"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "分析了定时任务的扫描SQL条件和执行频率，指出了两个边界问题：一是扫描间隔5分钟导致最长延迟35分钟才释放，二是支付确认和释放任务之间存在竞态——释放任务扫描到记录时用户刚完成支付，可能误释放已支付订单的库存"
+
+[[criterion]]
+name = "多仓库分配策略"
+description = "[Explicit] 是否解读了多仓库场景下的库存分配算法及其对库存一致性的影响。1: 未涉及多仓库；2: 提到多仓库但未分析分配逻辑；3: 解读了分配算法但未分析跨仓调拨场景；4: 分配算法和就近优先策略分析清晰；5: 完整分析含分仓库存同步、调拨锁定和分配失败回退"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "分析了warehouse_allocation方法的就近优先分配策略（按距离排序逐仓库尝试预占），指出了分配失败时没有跨仓调拨的回退机制，但对多仓库间库存同步的一致性保证分析不够深入"
+
+[[criterion]]
+name = "分布式事务一致性"
+description = "[Implicit] 是否评估了库存服务与订单服务之间的分布式事务一致性保证机制。1: 未提及分布式事务；2: 提到了一致性但未分析具体机制；3: 指出了缺少分布式事务但未给出方案；4: 分析了现有一致性问题并对比了Saga和TCC等方案；5: 给出了适合当前架构的分布式事务方案含补偿和回滚策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "指出了现有实现依赖HTTP同步调用没有分布式事务保证，订单创建成功但库存预占失败时没有回滚机制。建议采用Saga模式——预占成功发消息到MQ，订单服务消费成功后确认，失败时发补偿消息释放预占"
