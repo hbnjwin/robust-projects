@@ -312,20 +312,11 @@ const getActionText = (status) => {
 
 // 查看任务详情
 const handleViewTask = async (row) => {
-	console.log('查看任务详情:', row)
-
 	try {
-		// 调用任务详情接口
 		const response = await AI_REPORT_REVIEW.getTaskDetail(row.id)
-		console.log('API响应完整结构:', response)
-		console.log('response.data:', response.data)
-		console.log('response.data.data:', response.data?.data)
 
-		// 显示详情弹窗 - 检查数据是否在response.data.data中
 		if (response && response.data) {
-			// 如果数据在response.data.data中，使用那个；否则使用response.data
 			const taskData = response.data.data || response.data
-			console.log('传递给对话框的数据:', taskData)
 			taskDetailDialogRef.value.show(taskData)
 		}
 
