@@ -1,0 +1,53 @@
+[[criterion]]
+name = "sample_ohlcv fixture构造"
+description = "[Explicit] 是否在conftest.py中提供sample_ohlcv fixture，构造10只股票30个交易日的测试数据。1: 未创建fixture；2: fixture数据量不符合要求（非10只×30天）；3: 数据量正确但OHLCV字段不完整（缺少volume或close等）；4: 完整的10×30 OHLCV DataFrame，固定seed可复现；5: fixture额外包含了异常值（零成交量、停牌日）的可选参数。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在conftest.py中创建了sample_ohlcv fixture，数据包含OHLCV列和stock_code，但固定seed的可复现性设置不够显式。"
+
+[[criterion]]
+name = "mock PostgreSQL连接"
+description = "[Explicit] 是否mock掉PostgreSQL连接，将测试数据直接灌入内存DuckDB。1: 测试仍依赖真实PG连接；2: mock了PG但数据灌入DuckDB失败；3: 成功灌入DuckDB但表结构与生产不一致；4: 完全绕过PG，数据通过DataFrame直接注册为DuckDB表，表结构匹配生产schema；5: 额外验证了DuckDB与PG的SQL方言差异不影响因子计算。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "mock了PostgreSQL连接并将数据灌入DuckDB，但pipeline.py中部分PG特有语法（如COPY命令）的mock处理不够干净。"
+
+[[criterion]]
+name = "robust_zscore标准化验证"
+description = "[Explicit] 是否验证robust_zscore标准化后每个截面的均值接近0、标准差接近1。1: 未验证标准化结果；2: 仅检查了均值接近0；3: 检查了均值和标准差但容差设置不合理；4: 使用pytest.approx验证每个截面均值接近0、标准差接近1，容差合理；5: 额外验证了极端离群值被zscore正确压缩且不产生inf。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "验证了标准化后的均值接近0，但标准差接近1的验证仅抽查了部分截面，未覆盖所有交易日的截面。"
+
+[[criterion]]
+name = "因子完整性检查"
+description = "[Explicit] 是否验证输入OHLCV后产出至少30个因子列且NaN比例不超过预期。1: 未检查因子产出数量；2: 检查了因子数量但未验证NaN；3: 验证了因子数量和NaN比例但阈值不合理；4: 确认产出>=30个因子列，NaN比例不超过前期窗口造成的预期值；5: 额外验证了每个因子列的值域合理性（无inf，数值范围正常）。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "检查了因子列数量达到30以上，但NaN比例的阈值设置较宽松，未区分前期窗口期造成的合理NaN和计算错误导致的异常NaN。"
+
+[[criterion]]
+name = "CLI参数解析验证"
+description = "[Explicit] 是否验证--start、--end、--norm、--output这四个CLI参数的正确解析。1: 未测试CLI参数；2: 仅测试了1-2个参数；3: 测试了全部参数但未验证默认值；4: 验证全部四个参数的正确解析和默认值；5: 额外测试了无效参数输入的错误处理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "测试了--start和--end参数的解析，但--norm和--output参数的验证缺失。"
+
+[[criterion]]
+name = "alpha_factors.sql因子定义"
+description = "[Implicit] 是否补充了缺失的alpha_factors.sql文件以支持因子计算pipeline完整运行。1: 未处理缺失的SQL文件；2: 创建了SQL但因子数量不足；3: SQL包含30个以上因子但部分DuckDB语法有误；4: SQL包含35+个Alpha158风格因子，DuckDB语法正确，覆盖动量/均线/波动率等类别；5: 因子SQL附带注释说明每个因子的计算逻辑和金融含义。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了alpha_factors.sql包含37个因子SQL，覆盖K线、ROC、MA、波动率等类别，但部分SQL窗口函数的DuckDB兼容性未充分验证。"

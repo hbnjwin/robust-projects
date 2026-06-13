@@ -303,15 +303,20 @@ class FactorPipeline:
 
 # ── CLI 入口 ──
 
-if __name__ == "__main__":
+def build_parser():
+    """构建 CLI 参数解析器"""
     import argparse
-
     parser = argparse.ArgumentParser(description="Factor Pipeline")
     parser.add_argument("--start", default="2016-01-01")
     parser.add_argument("--end", default="2025-12-31")
     parser.add_argument("--norm", default="robust_zscore", choices=["robust_zscore", "cs_rank"])
     parser.add_argument("--output", default=None)
     parser.add_argument("--raw", action="store_true", help="Only compute raw factors (no normalization)")
+    return parser
+
+
+if __name__ == "__main__":
+    parser = build_parser()
     args = parser.parse_args()
 
     pipe = FactorPipeline()
