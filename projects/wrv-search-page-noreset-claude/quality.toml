@@ -1,0 +1,62 @@
+[[criterion]]
+name = "筛选后分页重置定位"
+description = "[Explicit] 是否准确识别切换筛选条件后未重置 page 为 1 导致请求空数据的根因。1: 未找到分页相关代码或完全误判问题；2: 找到分页逻辑但未意识到 page 未重置；3: 识别出 page 未重置但仅修复了一个页面；4: 准确定位 getTableList 使用当前 page 的根因并在两个页面的筛选回调中重置；5: 完整理解分页与筛选的交互流程并给出系统性的重置方案。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "快速定位 getTableList 直接使用 table.pagination.page 的根因，在筛选回调中添加 page=1 重置逻辑，两个页面均一次修复完成。"
+
+[[criterion]]
+name = "AI报告页筛选修复"
+description = "[Explicit] 是否修复AI质检报告列表页面切换状态筛选后表格显示暂无数据的问题。1: 未修改AI报告页面代码；2: 修改了筛选逻辑但 page 重置位置错误导致仍有问题；3: 在 change 回调中添加了重置但遗漏了部分筛选控件；4: 所有筛选控件的 change 回调均正确添加 page=1 重置逻辑；5: 筛选重置完整且同时处理了 pageSize 变更和关键词搜索的分页重置。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "在 index.vue 中为所有筛选控件的 change 回调统一添加了 table.pagination.page=1 的重置逻辑，修复完整且代码风格一致。"
+
+[[criterion]]
+name = "专家库页筛选修复"
+description = "[Explicit] 是否同时修复专家库列表页面切换文档类型筛选后的相同分页问题。1: 未涉及专家库页面；2: 尝试修改但文件路径错误或修改位置不正确；3: 找到专家库页面并修改但遗漏了部分筛选控件；4: 专家库页面所有筛选控件均正确添加分页重置；5: 两个页面采用完全一致的修复模式且代码改动对称。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "直接定位专家库页面并应用与AI报告页相同的修复模式，代码改动对称一致。"
+
+[[criterion]]
+name = "分页状态管理理解"
+description = "[Implicit] 是否理解 table.pagination 对象在组件中的状态管理方式和 getTableList 的调用链路。1: 未理解分页状态的数据流；2: 理解了 pagination 对象但不清楚 getTableList 如何消费它；3: 理解调用链路但对 pagination 响应式更新的时序有偏差；4: 正确理解 pagination 状态管理并在合适的时机进行重置；5: 完整掌握 pagination 与表格组件的双向绑定机制并确保重置不影响其他分页交互。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "清晰理解 pagination 状态在 change 回调和 getTableList 之间的传递关系，重置时机选择准确。"
+
+[[criterion]]
+name = "修复一致性与代码风格"
+description = "[Implicit] 是否两个页面采用相同的修复模式且代码风格与现有代码库一致。1: 两个页面修复方式完全不同；2: 修复模式相似但代码风格与项目规范不一致；3: 修复模式一致但新增代码的缩进或命名与周围代码不统一；4: 两个页面修复模式对称且代码风格与现有代码一致；5: 修复模式统一且对筛选回调做了合理的函数抽取避免重复代码。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "两个页面均采用在 change 回调中直接设置 table.pagination.page=1 的统一模式，代码风格与现有代码一致。"
+
+[[criterion]]
+name = "修改范围控制"
+description = "[Implicit] 是否保持最小改动范围且不引入与分页重置无关的代码变更。1: 大范围修改了分页组件或表格组件的核心逻辑；2: 改动涉及非必要文件或添加了无关的功能代码；3: 改动基本集中但包含了多余的调试语句或注释；4: 仅在筛选回调中添加一行重置代码且无任何多余改动；5: 改动精确到最小行数且通过代码审查可快速确认无副作用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "仅通过 4 次 Edit 完成两个页面的修复，每次修改精确到筛选回调中的一行代码，无任何多余改动。"
+
+[[criterion]]
+name = "问题复现与验证思路"
+description = "[Implicit] 是否在修复前理解问题复现路径并在修复后给出可验证的测试方案。1: 未描述问题复现路径直接修改代码；2: 描述了复现路径但修复后未提供任何验证建议；3: 给出了基本的验证步骤但未覆盖边界场景；4: 清晰描述复现步骤且给出包含翻页后切筛选的验证方案；5: 验证方案覆盖多种筛选组合和分页边界且说明了如何确认修复不影响正常翻页。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "最终回复清晰说明了根因分析和修复内容，给出了从第3页切换筛选验证回到第1页的具体操作路径。"
