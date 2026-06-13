@@ -1,0 +1,53 @@
+[[criterion]]
+name = "executeCheckTask业务逻辑提取"
+description = "[Explicit] 是否将TasksController.executeCheckTask方法中约100行的业务逻辑（QueryDSL查询、Markdown读取、工作流处理器调用、结果组装）提取到TasksService层。1: 业务逻辑仍在Controller中；2: 提取了部分但主要逻辑仍在Controller；3: 主要逻辑提取到Service但Controller仍有30行以上业务代码；4: 业务逻辑完全提取到TasksServiceImpl，Controller只负责参数接收和响应返回；5: 完全提取且Service方法签名设计合理，Controller精简为委托调用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将executeCheckTask方法的业务逻辑完全提取到TasksServiceImpl，包括QueryDSL查询、Markdown内容读取、工作流处理器调用和结果组装，Controller精简为委托调用。"
+
+[[criterion]]
+name = "convertWorkflowResultToJson迁移"
+description = "[Explicit] 是否将TasksController中的convertWorkflowResultToJson私有方法（517-567行）迁移到Service层。1: 仍在Controller中；2: 复制到Service但Controller中未删除；3: 迁移到Service层；4: 迁移到Service层且方法签名优化；5: 迁移到Service层并与相关业务逻辑整合。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将convertWorkflowResultToJson方法迁移到TasksServiceImpl中，但迁移后的方法是否与其他业务逻辑进行了整合优化未在总结中明确。"
+
+[[criterion]]
+name = "AiController重复代码消除"
+description = "[Explicit] 是否将AiController中四个端点方法里完全复制的JSONObject转Map代码（含JSONNull判断）提取为共享方法或迁移到Service层。1: 四处重复保持原样；2: 只提取了其中一处；3: 提取了共享方法但仍在Controller中；4: 提取到AiService/AiServiceImpl中；5: 提取到Service层且四个端点方法都精简为委托调用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "对AiController中四处重复的JSONObject转Map代码进行了处理，创建了AiService和AiServiceImpl，但转换逻辑的提取方式可能将辅助方法保留在Controller中。"
+
+[[criterion]]
+name = "Service接口设计"
+description = "[Implicit] 是否为提取的业务逻辑设计了合理的Service接口方法签名，使同一逻辑可被定时任务、批量处理API或WebSocket入口复用。1: 未创建Service接口；2: 创建了接口但方法签名耦合HTTP请求对象；3: 方法签名使用业务对象但参数过多；4: 方法签名合理，参数为业务对象；5: 接口设计清晰，方法可被多种入口复用且参数命名语义明确。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "创建了AiService接口和扩展了TasksService接口，但方法签名的设计上是否完全解耦了HTTP请求对象在总结中未明确。"
+
+[[criterion]]
+name = "Controller行数缩减"
+description = "[Explicit] 是否有效减少了Controller层的代码行数（TasksController原568行，AiController原265行）。1: 行数未减少；2: 减少不到20%；3: 减少20-40%；4: 减少40-55%；5: 两个Controller都减少50%以上。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "将TasksController从568行减至约245行（减少57%），AiController从265行减至157行（减少41%），两个Controller的业务逻辑大幅精简。"
+
+[[criterion]]
+name = "可测试性改善"
+description = "[Implicit] 是否通过将业务逻辑迁移到Service层使其可以被单独单元测试，不再依赖Controller的HTTP上下文。1: 业务逻辑仍在Controller中无法独立测试；2: 部分逻辑迁移但关键方法仍在Controller；3: 主要逻辑在Service但Service依赖注入过多；4: Service层方法可独立测试，依赖通过构造器注入；5: Service层设计完整，各方法职责单一可独立测试。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "将业务逻辑迁移到TasksServiceImpl和AiServiceImpl，理论上可独立测试，但TasksServiceImpl新增了5个依赖注入，方法间的职责划分可能不够细粒度。"

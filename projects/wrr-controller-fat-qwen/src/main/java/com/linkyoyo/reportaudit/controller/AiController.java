@@ -1,13 +1,10 @@
 package com.linkyoyo.reportaudit.controller;
 
-import cn.hutool.core.util.StrUtil;
-import cn.hutool.json.JSONObject;
 import com.linkyoyo.reportaudit.config.AiConfig;
-import com.linkyoyo.reportaudit.support.CommonFunc;
+import com.linkyoyo.reportaudit.service.AiService;
 import com.linkyoyo.reportaudit.result.R;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.beans.factory.annotation.Value;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -28,10 +25,7 @@ public class AiController {
     private AiConfig aiConfig;
 
     @Autowired
-    private CommonFunc commonFunc;
-
-    @Value("${paraSet.tempPath:temp}")
-    private String tempPath;
+    private AiService aiService;
 
     /**
      * 调用Azure OpenAI服务解析内容
@@ -41,37 +35,13 @@ public class AiController {
      */
     @PostMapping("/azure")
     public R callAzureAi(@RequestBody String content) {
-        log.info("接收到Azure AI请求，内容长度: {}", content.length());
-        log.info("当前Azure配置 - URL: {}, Model: {}, Version: {}", aiConfig.getUrl(), aiConfig.getModel(), aiConfig.getVersion());
-
-        // 处理内容中的特殊字符
-        // 删除控制字符
-        content = content.replaceAll("[\\p{Cntrl}&&[^\\r\\n\\t]]", "");
-        // 转义反斜杠和引号
-        content = content.replace("\\", "\\\\").replace("\"", "\\\"");
-
-        log.info("处理后的内容长度: {}", content.length());
-
-        JSONObject result = CommonFunc.callAiWithOkHttp(content);
-
-        if (result.containsKey("error")) {
-            log.error("调用Azure AI失败: {}", result.getStr("error"));
-            return R.warning(result.getStr("error"));
+        try {
+            Map<String, Object> resultMap = aiService.callAzureAi(content);
+            return R.ok(resultMap);
+        } catch (RuntimeException e) {
+            log.error("调用Azure AI失败: {}", e.getMessage());
+            return R.warning(e.getMessage());
         }
-
-        // 将Hutool JSONObject转换为Java Map对象，解决序列化问题
-        Map<String, Object> resultMap = new HashMap<>();
-        for (String key : result.keySet()) {
-            Object value = result.get(key);
-            // 处理JSONNull类型
-            if (value instanceof cn.hutool.json.JSONNull) {
-                resultMap.put(key, null);
-            } else {
-                resultMap.put(key, value);
-            }
-        }
-
-        return R.ok(resultMap);
     }
 
     /**
@@ -82,37 +52,13 @@ public class AiController {
      */
     @PostMapping("/deepseek")
     public R callDeepSeekAi(@RequestBody String content) {
-        log.info("接收到DeepSeek AI请求，内容长度: {}", content.length());
-        log.info("当前DeepSeek配置 - URL: {}, Model: {}", aiConfig.getDeepseekUrl(), aiConfig.getDeepseekModel());
-
-        // 处理内容中的特殊字符
-        // 删除控制字符
-        content = content.replaceAll("[\\p{Cntrl}&&[^\\r\\n\\t]]", "");
-        // 转义反斜杠和引号
-        content = content.replace("\\", "\\\\").replace("\"", "\\\"");
-
-        log.info("处理后的内容长度: {}", content.length());
-
-        JSONObject result = CommonFunc.callDeepSeekAi(content);
-
-        if (result.containsKey("error")) {
-            log.error("调用DeepSeek AI失败: {}", result.getStr("error"));
-            return R.warning(result.getStr("error"));
+        try {
+            Map<String, Object> resultMap = aiService.callDeepSeekAi(content);
+            return R.ok(resultMap);
+        } catch (RuntimeException e) {
+            log.error("调用DeepSeek AI失败: {}", e.getMessage());
+            return R.warning(e.getMessage());
         }
-
-        // 将Hutool JSONObject转换为Java Map对象，解决序列化问题
-        Map<String, Object> resultMap = new HashMap<>();
-        for (String key : result.keySet()) {
-            Object value = result.get(key);
-            // 处理JSONNull类型
-            if (value instanceof cn.hutool.json.JSONNull) {
-                resultMap.put(key, null);
-            } else {
-                resultMap.put(key, value);
-            }
-        }
-
-        return R.ok(resultMap);
     }
 
     /**
@@ -159,48 +105,18 @@ public class AiController {
             return R.warning("上传的文件为空");
         }
 
-        // 检查文件类型
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || (!originalFilename.endsWith(".md") && !originalFilename.endsWith(".markdown"))) {
             return R.warning("只支持上传Markdown文件(.md或.markdown)");
         }
 
         try {
-            // 直接从MultipartFile获取文件内容
             String markdownContent = new String(file.getBytes());
-            log.info("读取上传的Markdown文件内容: {}, 大小: {} 字节", originalFilename, markdownContent.length());
-
-            // 根据参数选择使用哪个AI服务
-            JSONObject result;
-            if (useDeepSeek) {
-                log.info("使用DeepSeek AI解析Markdown文件: {}", originalFilename);
-                result = CommonFunc.callDeepSeekAi(markdownContent);
-            } else {
-                log.info("使用Azure AI解析Markdown文件: {}", originalFilename);
-                result = CommonFunc.callAiWithOkHttp(markdownContent);
-            }
-
-            if (result.containsKey("error")) {
-                log.error("AI解析失败: {}", result.getStr("error"));
-                return R.warning(result.getStr("error"));
-            }
-
-            // 将Hutool JSONObject转换为Java Map对象，解决序列化问题
-            Map<String, Object> resultMap = new HashMap<>();
-            for (String key : result.keySet()) {
-                Object value = result.get(key);
-                // 处理JSONNull类型
-                if (value instanceof cn.hutool.json.JSONNull) {
-                    resultMap.put(key, null);
-                } else {
-                    resultMap.put(key, value);
-                }
-            }
-
-            // 添加原始文件名到结果中
-            resultMap.put("originalFilename", originalFilename);
-
+            Map<String, Object> resultMap = aiService.uploadAndAnalyzeMd(markdownContent, originalFilename, useDeepSeek);
             return R.ok(resultMap);
+        } catch (RuntimeException e) {
+            log.error("AI解析失败: {}", e.getMessage());
+            return R.warning(e.getMessage());
         } catch (IOException e) {
             log.error("处理上传文件失败: {}", originalFilename, e);
             return R.warning("处理上传文件失败: " + e.getMessage());
@@ -219,44 +135,18 @@ public class AiController {
             return R.warning("上传的文件为空");
         }
 
-        // 检查文件类型
         String originalFilename = file.getOriginalFilename();
         if (originalFilename == null || (!originalFilename.endsWith(".md") && !originalFilename.endsWith(".markdown"))) {
             return R.warning("只支持上传Markdown文件(.md或.markdown)");
         }
 
         try {
-            // 读取文件内容
             String markdownContent = new String(file.getBytes());
-            log.info("读取上传的Markdown文件内容: {}, 大小: {} 字节", originalFilename, markdownContent.length());
-
-            if (StrUtil.isEmpty(markdownContent)) {
-                return R.warning("文件内容为空");
-            }
-
-            // 调用callAi方法解析内容
-            JSONObject result = commonFunc.callAi(markdownContent);
-
-            if (result == null) {
-                return R.warning("AI解析失败，未能获取结果");
-            }
-
-            // 将Hutool JSONObject转换为Java Map对象，解决序列化问题
-            Map<String, Object> resultMap = new HashMap<>();
-            for (String key : result.keySet()) {
-                Object value = result.get(key);
-                // 处理JSONNull类型
-                if (value instanceof cn.hutool.json.JSONNull) {
-                    resultMap.put(key, null);
-                } else {
-                    resultMap.put(key, value);
-                }
-            }
-
-            // 添加原始文件名到结果中
-            resultMap.put("originalFilename", originalFilename);
-
+            Map<String, Object> resultMap = aiService.uploadMdToCallAi(markdownContent, originalFilename);
             return R.ok(resultMap);
+        } catch (RuntimeException e) {
+            log.error("AI解析失败: {}", e.getMessage());
+            return R.warning(e.getMessage());
         } catch (IOException e) {
             log.error("处理上传文件失败: {}", originalFilename, e);
             return R.warning("处理上传文件失败: " + e.getMessage());
