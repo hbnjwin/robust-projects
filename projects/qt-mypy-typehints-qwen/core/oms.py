@@ -20,7 +20,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Callable
+from typing import Any, Callable
 
 
 # ── 订单状态枚举 ─────────────────────────────────────────────
@@ -67,7 +67,7 @@ class Order:
     def remaining(self) -> int:
         return self.volume - self.traded
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "order_id":     self.order_id,
             "strategy":     self.strategy,
@@ -96,7 +96,7 @@ class Trade:
     fee:        float
     trade_time: str
 
-    def to_dict(self) -> dict:
+    def to_dict(self) -> dict[str, Any]:
         return {
             "trade_id":   self.trade_id,
             "order_id":   self.order_id,
@@ -124,7 +124,7 @@ class OmsEngine:
         # 自动推送 EVENT_ORDER / EVENT_TRADE
     """
 
-    def __init__(self, event_engine=None):
+    def __init__(self, event_engine: Any | None = None):
         self._event_engine = event_engine
         self._seq: int = 0
 
@@ -287,7 +287,7 @@ class OmsEngine:
             return list(self._trades.values())
         return [t for t in self._trades.values() if t.strategy == strategy]
 
-    def get_stats(self) -> dict:
+    def get_stats(self) -> dict[str, int]:
         """统计摘要"""
         total = len(self._orders)
         active = len(self._active)

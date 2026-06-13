@@ -1,0 +1,53 @@
+[[criterion]]
+name = "Order和Trade类型注解"
+description = "[Explicit] 是否给core/oms.py的Order和Trade dataclass加完整字段类型注解，包括Optional和Enum。1: 未修改oms.py；2: 仅添加了部分字段类型；3: 大部分字段有类型但缺少Optional标注；4: 全部字段完整类型注解，包含Optional和Enum，添加了from __future__ import annotations；5: 额外为to_dict等方法添加了返回值类型。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "给Order和Trade的大部分字段添加了类型注解，添加了from __future__ import annotations，但raw_signal等复杂字段仅标注为dict未给出泛型参数。"
+
+[[criterion]]
+name = "metrics_v2函数签名类型"
+description = "[Explicit] 是否给analytics/metrics_v2.py的所有公开函数加参数和返回值类型注解。1: 未修改metrics_v2.py；2: 仅标注了1-2个函数；3: 标注了大部分但缺少pd.Series/np.ndarray的精确类型；4: 全部公开函数标注参数类型（pd.Series/np.ndarray/list）和返回值float；5: 使用Union类型支持多种输入形式。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "给metrics_v2.py的大部分函数添加了参数和返回值类型，但部分函数的输入类型过于宽泛（如用Any替代pd.Series）。"
+
+[[criterion]]
+name = "BaseStrategy ABC方法签名"
+description = "[Explicit] 是否给core/strategy.py的BaseStrategy ABC加方法签名类型注解。1: 未修改strategy.py；2: 仅标注了init方法；3: 标注了主要方法但抽象方法缺少类型；4: 全部方法包括抽象方法的参数和返回值都有类型注解；5: 使用Protocol或TypeVar实现泛型策略类型。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "给BaseStrategy的主要方法添加了类型注解，但on_bar和on_tick等回调方法的参数类型仅标注为Any未使用具体数据类型。"
+
+[[criterion]]
+name = "mypy pyproject.toml配置"
+description = "[Explicit] 是否配置[tool.mypy]设python_version=3.11、warn_return_any=true，对core/和analytics/启用disallow_untyped_defs。1: 未配置mypy；2: 配置了但缺少关键选项；3: 全局配置了但未做per-module override；4: 全局python_version=3.11和warn_return_any=true，[[tool.mypy.overrides]]对core和analytics启用disallow_untyped_defs；5: 额外配置了strict模式和ignore_missing_imports。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "配置了[tool.mypy]的python_version和warn_return_any，但disallow_untyped_defs未通过per-module override限定到core/和analytics/而是全局启用导致其他模块报错。"
+
+[[criterion]]
+name = "mypy检查通过"
+description = "[Implicit] 是否运行mypy验证core/和analytics/目录无类型错误。1: 未运行mypy；2: 运行了但有大量错误未修复；3: 修复了部分错误但仍有残留；4: mypy检查core/和analytics/目录无错误（Success: no issues found）；5: 零错误且零警告。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "运行mypy检查core/和analytics/目录，修复了部分错误但由于修改了过多文件（11个），引入了新的类型冲突，最终仍有残留错误。"
+
+[[criterion]]
+name = "修改范围控制"
+description = "[Implicit] 是否将修改限定在题目要求的文件范围内（oms.py、metrics_v2.py、strategy.py、pyproject.toml），不过度扩展到其他文件。1: 修改了大量无关文件；2: 修改了5个以上题目未要求的文件；3: 主要修改了要求文件但额外修改了1-2个相关文件；4: 修改严格限定在oms.py、metrics_v2.py、strategy.py、pyproject.toml四个文件；5: 仅修改要求文件且每个文件的改动行数最小化。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "除了要求的4个文件外，还修改了core/event.py、core/gateway.py、core/matcher.py、core/datafeed.py、core/risk.py、core/portfolio_optimizer.py、analytics/metrics.py共7个额外文件，修改范围远超要求。"
