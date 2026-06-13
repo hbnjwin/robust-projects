@@ -1,165 +1,167 @@
 """
-测试 P0-1: T+1 规则 + P1-4: 100股整手约束
+测试 P0-1: T+1 规则 + P1-4: 100股整手约束（pytest 版）
 """
-import sys
-sys.path.insert(0, "/home/tulin/quant")
+import pytest
 
 from live.strategy_account import StrategyAccount
 from live.execution_engine_v2 import ExecutionEngine
 
 
-def test_t_plus_1():
-    print("=== 测试 T+1 规则 ===")
+# ---------------------------------------------------------------------------
+# Fixtures
+# ---------------------------------------------------------------------------
 
-    account = StrategyAccount("Test", 1_000_000)
-    engine = ExecutionEngine(account)
-
-    prices = {
+@pytest.fixture
+def prices():
+    """标准行情：600000.SH 收盘价 10.0"""
+    return {
         "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
     }
 
-    # Day1: 买入
-    engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 1000}])
-    engine.execute(prices, date="2026-03-10")
 
-    assert "600000.SH" in account.positions, "FAIL: 买入未成功"
-    shares_after_buy = account.positions["600000.SH"]["shares"]
-    print(f"  Day1 买入: {shares_after_buy} 股 OK")
+@pytest.fixture
+def make_engine():
+    """
+    工厂 fixture：每次调用返回全新的 (account, engine) 对。
 
-    # Day1: 同日尝试卖出（应被 T+1 拦截）
-    engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
-    engine.execute(prices, date="2026-03-10")
-
-    assert "600000.SH" in account.positions, "FAIL: T+1 未生效，持仓被卖出"
-    assert account.positions["600000.SH"]["shares"] == shares_after_buy, "FAIL: T+1 未生效，股数变化"
-    print(f"  Day1 卖出被拦截: 持仓仍为 {account.positions['600000.SH']['shares']} 股 OK")
-
-    # Day2: 次日卖出（应成功）
-    engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
-    engine.execute(prices, date="2026-03-11")
-
-    sold = "600000.SH" not in account.positions
-    assert sold, "FAIL: 次日卖出未成功"
-    print("  Day2 卖出成功: 持仓已清空 OK")
-    print("  T+1 测试通过\n")
+    Usage:
+        account, engine = make_engine("Test", 1_000_000)
+    """
+    def _factory(name: str = "Test", cash: float = 1_000_000):
+        account = StrategyAccount(name, cash)
+        engine = ExecutionEngine(account)
+        return account, engine
+    return _factory
 
 
-def test_t1_add_position():
-    """测试加仓后 T+1 以最后一次买入日期为准"""
-    print("=== 测试 T+1 加仓场景 ===")
+# ---------------------------------------------------------------------------
+# T+1 tests
+# ---------------------------------------------------------------------------
 
-    account = StrategyAccount("Test", 1_000_000)
-    engine = ExecutionEngine(account)
+class TestTPlus1:
+    """T+1 交易规则测试"""
 
-    prices = {
-        "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
-    }
+    def test_same_day_sell_blocked(self, make_engine, prices):
+        """同日买入后卖出，应被 T+1 拦截"""
+        account, engine = make_engine("Test", 1_000_000)
 
-    # Day1: 买入
-    engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 500}])
-    engine.execute(prices, date="2026-03-10")
-    assert "600000.SH" in account.positions
-    print(f"  Day1 买入 500 股 OK")
+        # Day1: 买入
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 1000}])
+        engine.execute(prices, date="2026-03-10")
+        assert "600000.SH" in account.positions
 
-    # Day2: 加仓
-    engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 500}])
-    engine.execute(prices, date="2026-03-11")
-    assert account.positions["600000.SH"]["shares"] == 1000
-    print(f"  Day2 加仓 500 股，总计 1000 股 OK")
+        shares_after_buy = account.positions["600000.SH"]["shares"]
 
-    # Day2: 尝试卖出（加仓当天，T+1 应拦截）
-    engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
-    engine.execute(prices, date="2026-03-11")
-    assert "600000.SH" in account.positions, "FAIL: 加仓当天卖出未被拦截"
-    assert account.positions["600000.SH"]["shares"] == 1000
-    print("  Day2 卖出被拦截 OK")
+        # Day1: 同日尝试卖出（应被 T+1 拦截）
+        engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
+        engine.execute(prices, date="2026-03-10")
 
-    # Day3: 卖出成功
-    engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
-    engine.execute(prices, date="2026-03-12")
-    assert "600000.SH" not in account.positions, "FAIL: Day3 卖出未成功"
-    print("  Day3 卖出成功 OK")
-    print("  T+1 加仓场景测试通过\n")
+        assert "600000.SH" in account.positions
+        assert account.positions["600000.SH"]["shares"] == shares_after_buy
 
+    def test_next_day_sell_succeeds(self, make_engine, prices):
+        """次日卖出应成功"""
+        account, engine = make_engine("Test", 1_000_000)
 
-def test_lot_size():
-    print("=== 测试 100 股整手约束 ===")
+        # Day1: 买入
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 1000}])
+        engine.execute(prices, date="2026-03-10")
+        assert "600000.SH" in account.positions
 
-    account = StrategyAccount("Test", 1_000_000)
-    engine = ExecutionEngine(account)
+        # Day2: 次日卖出
+        engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
+        engine.execute(prices, date="2026-03-11")
+        assert "600000.SH" not in account.positions
 
-    prices = {
-        "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
-    }
+    def test_add_position_resets_t1(self, make_engine, prices):
+        """加仓后 T+1 以最后一次买入日期为准"""
+        account, engine = make_engine("Test", 1_000_000)
 
-    # target_cash=1550, 价格约10.01(含滑点), 应买100股
-    engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "target_cash": 1550}])
-    engine.execute(prices, date="2026-03-10")
+        # Day1: 买入 500 股
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 500}])
+        engine.execute(prices, date="2026-03-10")
+        assert "600000.SH" in account.positions
 
-    if "600000.SH" in account.positions:
-        shares = account.positions["600000.SH"]["shares"]
-        assert shares % 100 == 0, f"FAIL: {shares} 不是100整数倍"
-        print(f"  target_cash=1550 -> {shares} 股 OK")
-    else:
-        print("  target_cash=1550 -> 不足100股未买入 OK")
+        # Day2: 加仓 500 股
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 500}])
+        engine.execute(prices, date="2026-03-11")
+        assert account.positions["600000.SH"]["shares"] == 1000
 
-    # 测试 weight 模式
-    account2 = StrategyAccount("Test2", 100_000)
-    engine2 = ExecutionEngine(account2)
-    engine2.queue_orders([{"action": "buy", "ts_code": "600000.SH", "weight": 0.1}])
-    engine2.execute(prices, date="2026-03-10")
+        # Day2: 加仓当天尝试卖出（T+1 应拦截）
+        engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
+        engine.execute(prices, date="2026-03-11")
+        assert "600000.SH" in account.positions
+        assert account.positions["600000.SH"]["shares"] == 1000
 
-    if "600000.SH" in account2.positions:
-        shares = account2.positions["600000.SH"]["shares"]
-        assert shares % 100 == 0, f"FAIL: {shares} 不是100整数倍"
-        print(f"  weight=0.1 -> {shares} 股 OK")
-
-    # 测试全仓模式也是整手
-    account3 = StrategyAccount("Test3", 5_550)
-    engine3 = ExecutionEngine(account3)
-    engine3.queue_orders([{"action": "buy", "ts_code": "600000.SH"}])
-    engine3.execute(prices, date="2026-03-10")
-
-    if "600000.SH" in account3.positions:
-        shares = account3.positions["600000.SH"]["shares"]
-        assert shares % 100 == 0, f"FAIL: 全仓 {shares} 不是100整数倍"
-        print(f"  全仓模式 -> {shares} 股 OK")
-
-    # 测试金额不足100股时不买入
-    account4 = StrategyAccount("Test4", 500)
-    engine4 = ExecutionEngine(account4)
-    engine4.queue_orders([{"action": "buy", "ts_code": "600000.SH"}])
-    engine4.execute(prices, date="2026-03-10")
-    assert "600000.SH" not in account4.positions, "FAIL: 不足100股但仍买入"
-    print("  资金不足100股 -> 未买入 OK")
-
-    print("  整手约束测试通过\n")
+        # Day3: 卖出成功
+        engine.queue_orders([{"action": "sell", "ts_code": "600000.SH"}])
+        engine.execute(prices, date="2026-03-12")
+        assert "600000.SH" not in account.positions
 
 
-def test_buy_date_recorded():
-    print("=== 测试 buy_date 记录 ===")
+# ---------------------------------------------------------------------------
+# Lot-size (整手约束) tests
+# ---------------------------------------------------------------------------
 
-    account = StrategyAccount("Test", 1_000_000)
-    engine = ExecutionEngine(account)
+class TestLotSize:
+    """100 股整手约束测试"""
 
-    prices = {
-        "600000.SH": {"close": 10.0, "volume": 1_000_000, "prev_close": 9.8}
-    }
+    def test_target_cash_lot_alignment(self, make_engine, prices):
+        """target_cash 模式：买入股数应为 100 整数倍"""
+        account, engine = make_engine("Test", 1_000_000)
 
-    engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 1000}])
-    engine.execute(prices, date="2026-03-10")
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "target_cash": 1550}])
+        engine.execute(prices, date="2026-03-10")
 
-    assert "600000.SH" in account.positions
-    buy_date = account.positions["600000.SH"].get("buy_date")
-    assert buy_date == "2026-03-10", f"FAIL: buy_date={buy_date}"
-    print(f"  buy_date={buy_date} OK")
-    print("  buy_date 测试通过\n")
+        if "600000.SH" in account.positions:
+            shares = account.positions["600000.SH"]["shares"]
+            assert shares % 100 == 0
+
+    def test_weight_mode_lot_alignment(self, make_engine, prices):
+        """weight 模式：买入股数应为 100 整数倍"""
+        account, engine = make_engine("Test2", 100_000)
+
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "weight": 0.1}])
+        engine.execute(prices, date="2026-03-10")
+
+        if "600000.SH" in account.positions:
+            shares = account.positions["600000.SH"]["shares"]
+            assert shares % 100 == 0
+
+    def test_all_in_lot_alignment(self, make_engine, prices):
+        """全仓模式：买入股数应为 100 整数倍"""
+        account, engine = make_engine("Test3", 5_550)
+
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH"}])
+        engine.execute(prices, date="2026-03-10")
+
+        if "600000.SH" in account.positions:
+            shares = account.positions["600000.SH"]["shares"]
+            assert shares % 100 == 0
+
+    def test_insufficient_cash_no_buy(self, make_engine, prices):
+        """资金不足 100 股时不应买入"""
+        account, engine = make_engine("Test4", 500)
+
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH"}])
+        engine.execute(prices, date="2026-03-10")
+
+        assert "600000.SH" not in account.positions
 
 
-if __name__ == "__main__":
-    test_t_plus_1()
-    test_t1_add_position()
-    test_lot_size()
-    test_buy_date_recorded()
-    print("=" * 50)
-    print("P0-1 (T+1) + P1-4 (整手约束) 全部测试通过 ✅")
+# ---------------------------------------------------------------------------
+# buy_date recording test
+# ---------------------------------------------------------------------------
+
+class TestBuyDate:
+    """买入日期记录测试"""
+
+    def test_buy_date_recorded(self, make_engine, prices):
+        """买入后 buy_date 应正确记录"""
+        account, engine = make_engine("Test", 1_000_000)
+
+        engine.queue_orders([{"action": "buy", "ts_code": "600000.SH", "shares": 1000}])
+        engine.execute(prices, date="2026-03-10")
+
+        assert "600000.SH" in account.positions
+        assert account.positions["600000.SH"]["buy_date"] == "2026-03-10"
