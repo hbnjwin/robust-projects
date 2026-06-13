@@ -1,0 +1,62 @@
+[[criterion]]
+name = "上传弹窗表单残留定位"
+description = "[Explicit] 是否准确识别报告上传弹窗关闭后表单状态未重置导致再次打开时显示残留数据的根因。1: 未找到上传弹窗组件或误判为缓存问题；2: 找到弹窗组件但未意识到 handleClose 缺少重置逻辑；3: 识别出关闭时未重置但仅清除了部分字段；4: 准确定位 handleClose 未重置 filesList 和 docType 的根因并补全重置逻辑；5: 完整理解弹窗生命周期与表单状态管理并确保所有字段均被重置。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "定位了 handleClose 中缺少表单重置的问题，但修复过程中进入了 Plan 模式编写了无关的计划文件，过程效率较低。"
+
+[[criterion]]
+name = "AI报告弹窗重置修复"
+description = "[Explicit] 是否在AI质检报告的上传弹窗关闭时正确清空已选文件和文档类型。1: 未修改弹窗关闭逻辑；2: 清空了文件列表但未重置文档类型下拉框；3: 两个字段都重置了但重置时机不在 handleClose 而在 open 中导致闪烁；4: 在 handleClose 中同时重置 filesList 和 docType 且不影响其他表单状态；5: 重置逻辑完整且处理了文件上传组件内部状态的同步清理。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在 handleClose 中添加了 filesList 和 docType 的重置，但在修复前花费大量操作进行代码浏览和计划编写，效率不高。"
+
+[[criterion]]
+name = "专家库弹窗状态同步修复"
+description = "[Explicit] 是否同时修复专家库上传弹窗的文件状态残留和显示异常问题。1: 未涉及专家库弹窗；2: 尝试修复但修改了错误的组件文件；3: 找到专家库弹窗但仅重置了部分状态；4: 专家库弹窗的 handleClose 也正确添加了完整的状态重置；5: 两个弹窗采用一致的重置模式且专家库的文件上传组件异常也被修复。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修改了专家库弹窗的关闭逻辑但过程中创建了与修复无关的 markdown 文件（binary-bouncing-dolphin.md），引入了不必要的文件。"
+
+[[criterion]]
+name = "Vue响应式表单状态理解"
+description = "[Implicit] 是否理解 Vue 响应式数据在弹窗组件中的状态持久化行为和正确的重置方式。1: 不理解为何关闭弹窗后数据仍保留；2: 知道需要重置但使用了错误的方式如直接赋值新对象破坏响应式；3: 使用了正确的重置方式但对 ref 和 reactive 的区别理解不够；4: 正确理解弹窗隐藏不销毁组件因此状态保留的机制并使用属性赋值方式重置；5: 深入理解 Vue3 响应式系统中 reactive 对象的属性重置方式并避免破坏代理引用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "理解了弹窗关闭后状态保留的原因，但在修复过程中使用了 EnterPlanMode 和 Bash 等非必要操作，对 Vue 表单重置的最佳实践执行不够直接。"
+
+[[criterion]]
+name = "文件上传组件内部状态处理"
+description = "[Implicit] 是否处理了文件上传组件内部的已选文件列表和上传进度等内部状态的清理。1: 未考虑上传组件的内部状态；2: 仅重置了外部 form 数据但上传组件内部仍显示已选文件；3: 通过 ref 调用了上传组件的清除方法但未验证效果；4: 正确重置了外层 filesList 且上传组件通过数据绑定同步清空；5: 同时处理了上传组件的内部文件列表和上传进度状态确保完全干净。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "仅重置了 dialog.form 中的字段，未确认文件上传组件内部的已选文件列表是否通过数据绑定自动清空，可能存在上传组件显示不一致。"
+
+[[criterion]]
+name = "改动范围与无关文件"
+description = "[Implicit] 是否保持最小改动范围且不生成与修复无关的文件或代码。1: 生成了多个无关文件或大范围重构了弹窗组件；2: 生成了无关文件且修改范围偏大；3: 改动集中在目标文件但过程中有多余的操作步骤；4: 仅修改弹窗组件的 handleClose 方法无任何多余改动；5: 改动精确到 handleClose 中的两三行代码且无任何副作用。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "修复过程中通过 Write 操作创建了 binary-bouncing-dolphin.md 计划文件，引入了与修复完全无关的文件到项目中。"
+
+[[criterion]]
+name = "弹窗交互完整性验证"
+description = "[Explicit] 是否修复后每次打开上传弹窗都呈现干净的空表单且不影响正常上传流程。1: 修复后弹窗无法正常打开；2: 表单被重置但影响了正常的文件上传提交流程；3: 大部分场景正常但快速连续开关弹窗时偶有残留；4: 每次打开弹窗表单均为空白且正常上传提交不受影响；5: 完整验证了开关弹窗循环和上传提交流程均正常工作。"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "修复逻辑正确可保证每次打开弹窗表单为空，但未通过实际运行验证快速连续开关弹窗的场景。"
