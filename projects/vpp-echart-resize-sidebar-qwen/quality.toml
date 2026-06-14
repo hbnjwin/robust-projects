@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "侧边栏收起图表resize"
+description = "[Explicit] 是否修复侧边栏收起展开后ECharts实例未调用resize导致空白的问题。1: 未处理侧边栏变化时的图表resize; 2: 监听了侧边栏状态但resize时机不对未等CSS过渡完成; 3: 监听sidebar状态变化后调用resize但未考虑动画时长; 4: 用ResizeObserver监听容器尺寸变化或在sidebar过渡结束后触发chart.resize; 5: ResizeObserver正确绑定且在组件销毁时disconnect"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useECharts.ts中使用ResizeObserver但侧边栏CSS过渡期间多次触发resize未做过渡结束判断导致中间帧渲染不完整"
+
+[[criterion]]
+name = "resize防抖处理"
+description = "[Explicit] 是否修复窗口resize高频触发导致图表闪烁的问题。1: resize事件无任何节流或防抖; 2: 添加了debounce但延迟过长影响体验; 3: debounce合理但未在组件销毁时清除定时器; 4: resize回调使用合理时长的debounce且组件卸载时清除; 5: debounce配合requestAnimationFrame确保流畅且无内存泄漏"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "resize回调有debounce但延迟参数与侧边栏CSS过渡时长不匹配导致过渡期间仍有可见的图表尺寸跳变"
+
+[[criterion]]
+name = "多图表Observer冲突"
+description = "[Explicit] 是否修复同一容器多个ResizeObserver只有最后一个回调生效的问题。1: 多个图表仍使用独立Observer观察同一父容器; 2: 合并为单个Observer但回调中未遍历所有图表实例; 3: 单个Observer通知但部分图表实例未被resize; 4: 每个图表组件观察自己的容器元素而非共同父容器避免冲突; 5: 通过统一的composable管理所有图表实例注册和resize派发"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "各图表组件Observer绑定在自身容器上避免了冲突但未统一管理导致多个Observer实例各自debounce不同步"
+
+[[criterion]]
+name = "composable封装复用"
+description = "[Implicit] 是否将ECharts的初始化resize和销毁逻辑封装为可复用的composable。1: resize逻辑散落在各组件中; 2: 抽取了函数但未管理生命周期; 3: composable基本可用但缺少cleanup; 4: useECharts封装init和resize和dispose且在onUnmounted自动清理; 5: composable接口清晰支持配置项且多组件复用无冲突"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useECharts.ts封装了基本逻辑但init和dispose的生命周期管理不够紧凑，存在短暂的resize后实例已销毁的竞态窗口"
+
+[[criterion]]
+name = "构建验证与交付"
+description = "[Implicit] 是否确保TypeScript检查和构建通过。1: 未验证; 2: 有类型错误; 3: 类型检查通过; 4: tsc和build通过; 5: 通过且总结清晰"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "TypeScript类型检查通过Vite构建成功并总结了三个bug的修复方案"
