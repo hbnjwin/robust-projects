@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "时区偏移修复"
+description = "[Explicit] 是否修复本地时间与UTC的8小时时差导致查询范围错误的问题。1: 仍传本地时间给后端; 2: 转换了但方向错误或计算有误; 3: UTC转换正确但未处理跨日边界; 4: date.ts中将本地时间戳转为UTC的ISO字符串确保与后端时区一致; 5: 转换逻辑封装为工具函数且处理了夏令时和跨日场景"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useDateRange.ts中对时间戳做了时区转换但转换逻辑与NDatePicker返回的时间戳格式匹配不够严谨"
+
+[[criterion]]
+name = "时间戳转ISO格式"
+description = "[Explicit] 是否修复传数字时间戳给API导致400错误的问题。1: 仍传数字时间戳; 2: 转了字符串但格式不对; 3: 格式正确但精度丢失; 4: NDatePicker的毫秒时间戳通过new Date和toISOString转为标准ISO字符串; 5: 格式化函数含输入校验防止NaN和Invalid Date"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "useDateRange.ts中时间戳转换为字符串但格式化方式与后端期望的ISO格式存在细微差异"
+
+[[criterion]]
+name = "清空日期触发查询"
+description = "[Explicit] 是否修复清空日期筛选后不触发重新查询的问题。1: 清空后不查询需手动刷新; 2: 触发了但传了undefined导致错误; 3: 清空触发但分页未重置; 4: NDatePicker的onUpdateValue处理null值时调用查询API传空参数获取全量数据; 5: 清空后重置分页并显示全量数据且筛选组件恢复默认placeholder"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "TradingView.vue中NDatePicker清空事件未被正确捕获或处理为null时未触发API查询"
+
+[[criterion]]
+name = "日期工具函数"
+description = "[Implicit] 是否将日期转换逻辑封装为可复用的工具函数。1: 转换逻辑内联在组件中; 2: 有工具函数但接口不清晰; 3: 函数正确但未处理边界; 4: date.ts导出格式化和时区转换函数供多页面复用; 5: 工具函数含完整的输入验证和边界处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "日期处理逻辑分散在useDateRange.ts和组件中未充分集中到工具函数"
+
+[[criterion]]
+name = "构建验证"
+description = "[Implicit] 是否确保构建通过。1: 未验证; 2: 有错误; 3: 通过; 4: tsc和build通过; 5: 通过且总结清晰"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "项目构建通过但回复对三个bug修复的说明不够详尽"

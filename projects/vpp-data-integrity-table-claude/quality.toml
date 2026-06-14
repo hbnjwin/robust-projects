@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "虚拟滚动行高适配"
+description = "[Explicit] 是否修复向上滚动时行间白色间隙问题。1: 未处理行高不一致问题; 2: 设置了固定行高但实际内容仍溢出; 3: 限制了描述文本长度减少行高差异但未根本解决; 4: 通过固定行高加文本截断或min-height确保虚拟滚动估算一致; 5: 行高方案稳定且长文本有tooltip展示完整内容"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "DataIntegrity.vue设置固定行高配合CSS文本截断确保每行高度一致消除虚拟滚动间隙，长文本通过tooltip展示"
+
+[[criterion]]
+name = "筛选排序联动"
+description = "[Explicit] 是否修复先筛选再排序时筛选条件被覆盖的问题。1: 筛选和排序相互覆盖; 2: 两者独立但顺序依赖; 3: 链式应用但computed依赖关系有误; 4: filteredData先应用筛选条件再对结果排序两者互不覆盖; 5: 筛选排序正确联动且支持多列排序和筛选条件组合"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "DataIntegrity.vue通过computed链先filter后sort确保筛选排序正确联动不互相覆盖"
+
+[[criterion]]
+name = "滚动位置恢复"
+description = "[Explicit] 是否修复从详情返回列表时滚动位置跳回顶部的问题。1: 未保存滚动位置; 2: 保存了但恢复时机不对; 3: 保存和恢复逻辑有但在虚拟滚动模式下scrollTo不准; 4: 进入详情前保存scrollTop返回后调用scrollTo恢复位置; 5: 恢复准确且考虑了数据变化后位置偏移的补偿"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "DataIntegrity.vue进入详情前记录scrollTop并在store中持久化，返回后通过表格ref.scrollTo恢复位置"
+
+[[criterion]]
+name = "大数据量性能"
+description = "[Implicit] 是否确保几万条数据下筛选排序和滚动的性能。1: 无性能考虑直接操作全量DOM; 2: 使用虚拟滚动但筛选未优化; 3: 虚拟滚动正确配置; 4: 虚拟滚动加筛选排序使用computed缓存避免重复计算; 5: 添加了防抖搜索和分页加载减少computed频繁重算"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "DataIntegrity.vue正确配置virtual-scroll并使用computed缓存筛选排序结果避免每帧重算"
+
+[[criterion]]
+name = "Pinia状态管理"
+description = "[Implicit] 是否使用Pinia store管理表格数据和UI状态。1: 数据全在组件内; 2: 有store但职责不清; 3: store管理数据但滚动位置等UI状态未纳入; 4: store管理数据和筛选条件以及滚动位置; 5: store结构清晰且支持详情返回后的完整状态恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "dataIntegrity.ts Pinia store管理校验记录数据和筛选条件以及滚动位置供详情返回时恢复"
