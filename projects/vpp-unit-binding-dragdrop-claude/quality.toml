@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "拖拽源列表移除"
+description = "[Explicit] 是否修复拖拽资源到右侧后左侧列表未移除该项的问题。1: 拖拽后源列表未变化; 2: 移除了但索引错误导致删错项; 3: splice正确但UI更新有延迟; 4: transferResource中push到目标后splice从源列表移除正确索引的项; 5: 移除动画流畅且支持拖回撤销操作"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "UnitBindingPanel.vue中拖拽完成后目标列表push新项且源列表splice删除拖拽项"
+
+[[criterion]]
+name = "拖拽占位提示稳定"
+description = "[Explicit] 是否修复drop zone占位提示在dragover时闪烁的问题。1: 提示仍闪烁; 2: 减少了闪烁但偶尔触发; 3: 子元素添加了pointer-events=none但提示动画不稳定; 4: drop zone及子元素正确preventDefault且用CSS pointer-events=none防止子元素触发dragleave; 5: 提示稳定且有视觉反馈如边框高亮和背景变色"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "UnitBindingPanel.vue通过CSS pointer-events none阻止drop zone子元素触发dragleave保持提示稳定显示"
+
+[[criterion]]
+name = "触摸设备拖拽兼容"
+description = "[Explicit] 是否修复手机平板上拖拽功能不工作的问题。1: 仍仅支持HTML5 DnD无touch处理; 2: 添加了touch事件但坐标计算有误; 3: touch事件基本可用但缺少视觉反馈; 4: touchstart和touchmove和touchend事件模拟拖拽且有触摸位置计算和drop判定; 5: 触摸拖拽有拖动元素影子和振动反馈且支持长按激活"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "UnitBindingPanel.vue添加touchstart和touchmove和touchend事件处理实现触摸拖拽兼容"
+
+[[criterion]]
+name = "拖拽数据类型安全"
+description = "[Implicit] 是否为拖拽的资源数据定义TypeScript类型。1: 无类型使用any; 2: 有类型但不完整; 3: 类型正确; 4: Resource接口定义且拖拽函数参数有类型约束; 5: 类型含拖拽状态枚举和绑定关系定义"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "types.ts定义完整Resource接口UnitBindingPanel.vue中拖拽函数参数均有类型注解"
+
+[[criterion]]
+name = "构建验证"
+description = "[Implicit] 是否确保项目构建通过。1: 未验证; 2: 有错误; 3: 通过; 4: tsc和build通过; 5: 通过且总结清晰"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "项目构建通过且回复总结了三个拖拽bug的修复文件和方案"
