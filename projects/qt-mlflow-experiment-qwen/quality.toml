@@ -1,0 +1,53 @@
+[[criterion]]
+name = "实验追踪集成"
+description = "[Explicit] 是否在ml/trainer.py的train()方法里加mlflow.start_run记录超参数含learning_rate、n_estimators等和训练数据范围。1:未集成MLflow;2:有import但未调用start_run;3:start_run正确启动并记录部分超参数;4:start_run记录全部超参数含数据范围和特征列表;5:实验追踪含自动命名和标签分类"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "trainer.py中添加了mlflow.start_run()上下文，通过mlflow.log_params记录了learning_rate、n_estimators等主要超参数，但训练数据时间范围和特征列表未完整记录"
+
+[[criterion]]
+name = "评估指标记录"
+description = "[Explicit] 是否训练完后将mean_ic、icir和feature_importance top10记录到MLflow metrics。1:未记录metrics;2:仅记录loss未记录IC;3:记录了mean_ic和icir;4:记录mean_ic、icir和feature_importance;5:metrics含多维度评估和对比基线"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "trainer.py中使用mlflow.log_metrics记录了mean_ic和训练loss，但icir和feature_importance的top10记录不完整"
+
+[[criterion]]
+name = "模型文件归档"
+description = "[Explicit] 是否用mlflow.log_artifact保存训练好的模型文件替代手动pickle dump。1:仍使用pickle dump;2:同时pickle和log_artifact冗余保存;3:用log_artifact替代了pickle保存;4:log_artifact保存含模型元数据标注;5:使用mlflow.sklearn或mlflow.lightgbm的专用模型日志"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "trainer.py中添加了mlflow.log_artifact()保存模型文件，但原有的pickle dump逻辑仍保留形成冗余保存"
+
+[[criterion]]
+name = "GPU训练集成"
+description = "[Explicit] 是否在gpu-train/win_gpu_common.py的fit_model里集成MLflow记录epoch-level的loss和IC作为step metrics。1:GPU训练未集成MLflow;2:仅在训练结束时记录;3:epoch-level记录loss;4:epoch-level记录loss和IC作为step metrics;5:step metrics含GPU资源消耗和学习率变化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "win_gpu_common.py中在训练循环末尾添加了mlflow.log_metrics记录epoch loss，但未实现IC的step-level记录"
+
+[[criterion]]
+name = "前端看板配置"
+description = "[Explicit] 是否配置mlflow.set_tracking_uri指向本地mlruns/并提供启动MLflow前端的命令。1:无tracking_uri配置;2:配置了uri但无启动命令;3:tracking_uri指向mlruns/且有make命令;4:完整配置含Makefile的mlflow-ui目标和端口设置;5:前端配置含自动启动和浏览器打开"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "trainer.py中在训练入口设置了tracking_uri指向mlruns/目录，但未创建独立的Makefile目标或启动脚本来方便用户启动MLflow前端看板"
+
+[[criterion]]
+name = "追踪URI配置"
+description = "[Implicit] 是否在项目启动时统一设置mlflow.set_tracking_uri确保所有实验数据存储到同一位置。1:未设置tracking_uri使用默认;2:在部分文件中设置但不一致;3:在trainer.py入口处统一设置;4:通过独立配置模块统一管理tracking_uri;5:tracking_uri含环境变量覆盖支持远程服务器"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "mlflow_utils.py中封装了tracking_uri但trainer.py和win_gpu_common.py中各自独立调用mlflow.set_tracking_uri导致配置分散不统一"
