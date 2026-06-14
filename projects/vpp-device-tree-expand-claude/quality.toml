@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "懒加载子节点去重"
+description = "[Explicit] 是否修复NTree收起再展开后子节点数量翻倍的问题。1: 未处理重复追加逻辑; 2: 每次展开清空children再加载但导致闪烁; 3: 加载前检查但检查条件不完整; 4: loadDeviceNodes中展开前检查loaded标记或children长度避免重复push; 5: 去重逻辑正确且保留了已有子节点的选中展开状态"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "deviceTree.ts中loadDeviceNodes加载前判断loaded状态防止重复push子节点"
+
+[[criterion]]
+name = "搜索过滤父节点展开"
+description = "[Explicit] 是否修复搜索关键字匹配的设备节点因父节点未展开而不可见的问题。1: 搜索后仍需手动展开父节点; 2: 展开了部分父节点但层级不完整; 3: 搜索时展开匹配节点的父级但expandedKeys未同步; 4: 搜索命中时自动将匹配节点所有祖先加入expandedKeys使设备可见; 5: 展开逻辑正确且搜索清空后恢复原展开状态"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ResourceView.vue搜索时遍历匹配节点的parentKeys链路加入expandedKeys确保设备节点可见"
+
+[[criterion]]
+name = "选中状态Pinia持久化"
+description = "[Explicit] 是否修复页面切换后NTree选中状态丢失的问题。1: 未做任何状态持久化; 2: 存到store但恢复时未绑定selectedKeys; 3: store保存了selectedKeys但组件重新mount时未从store恢复; 4: selectedKeys保存到Pinia且组件onMounted时从store恢复绑定; 5: 持久化覆盖selectedKeys和expandedKeys且切换后滚动位置也恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "deviceTree.ts store持久化selectedKeys，ResourceView.vue通过v-model绑定从store恢复选中状态"
+
+[[criterion]]
+name = "树形数据类型定义"
+description = "[Implicit] 是否为NTree的节点数据定义正确的TypeScript接口。1: 节点数据无类型使用any; 2: 有类型但缺少key和children等必要字段; 3: 类型基本正确但与NTree的TreeOption类型不兼容; 4: 定义TreeNodeData接口兼容NaiveUI的TreeOption且含业务字段; 5: 类型定义覆盖懒加载标记和层级关系且导出供其他组件使用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "tree.ts定义的DeviceTreeNode接口继承NaiveUI的TreeOption确保类型兼容且包含loaded标记字段"
+
+[[criterion]]
+name = "构建验证"
+description = "[Implicit] 是否执行TypeScript检查和项目构建验证。1: 未执行验证; 2: 执行了但有错误未解决; 3: 类型检查通过但未构建; 4: tsc和vite build均通过; 5: 检查构建通过且回复清晰总结三个bug修复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "TypeScript类型检查和Vite构建均成功通过"
