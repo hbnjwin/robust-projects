@@ -1,0 +1,44 @@
+[[criterion]]
+name = "实时数据流写入"
+description = "[Explicit] 是否在replay_engine_v5.py的主循环里每处理完一个交易日就把净值、持仓和交易记录写入backtest_live.jsonl。1:未实现JSONL输出;2:仅在回测结束后批量写入;3:每日写入净值但缺少持仓和交易记录;4:每日写入净值、持仓和交易记录到backtest_live.jsonl;5:JSONL含增量写入和文件锁防止读写冲突"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "replay_engine_v5.py的主循环中每个交易日结束后将当日net_value、positions和trades以JSON Lines格式追加写入backtest_live.jsonl"
+
+[[criterion]]
+name = "图形化仪表盘"
+description = "[Explicit] 是否用matplotlib的FuncAnimation实时读取jsonl文件画净值曲线和回撤曲线。1:未实现图形化;2:静态图表无实时更新;3:FuncAnimation实时更新净值曲线;4:上下分屏显示净值曲线含基准对比和回撤曲线;5:仪表盘含右侧统计面板和自动缩放"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "replay_engine_v5.py中集成matplotlib FuncAnimation实时读取jsonl绘制上半部分净值曲线（含基准对比）和下半部分回撤曲线"
+
+[[criterion]]
+name = "终端展示模式"
+description = "[Explicit] 是否提供Rich终端实时展示含表格、进度条和统计面板且通过--dashboard参数切换。1:无终端展示;2:有基本print统计;3:Rich表格显示关键统计;4:Rich面板含表格、进度条和实时统计通过参数切换;5:GUI和终端双模式含--dashboard=gui|terminal切换"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "replay_engine_v5.py中实现了基本的终端统计输出含净值和持仓信息，但未使用Rich库做结构化面板展示"
+
+[[criterion]]
+name = "绩效报告HTML"
+description = "[Explicit] 是否回测结束后在reports/目录生成完整的绩效报告HTML文件含plotly可交互净值曲线。1:无HTML报告;2:生成了报告但为静态图片;3:HTML报告含plotly净值曲线;4:HTML报告含可交互净值曲线、回撤图和统计指标;5:完整HTML报告含多策略对比和月度收益热力图"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "replay_engine_v5.py中回测结束后生成HTML格式的绩效报告，但plotly可交互图表的实现不完整"
+
+[[criterion]]
+name = "引擎侵入性"
+description = "[Implicit] 是否以最小改动将仪表盘功能集成到replay_engine_v5.py中不影响原有回测逻辑。1:大幅重构了引擎核心;2:修改了回测循环的核心逻辑;3:在循环中添加了适量的数据采集代码;4:通过独立模块封装仅在循环末尾添加写入调用;5:完全无侵入通过事件钩子实现"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "replay_engine_v5.py中通过多次Edit在主循环的交易日结束处添加数据写入调用，对原有回测逻辑有一定侵入"
