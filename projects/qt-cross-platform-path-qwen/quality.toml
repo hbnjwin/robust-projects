@@ -1,0 +1,53 @@
+[[criterion]]
+name = "基准路径定义"
+description = "[Explicit] 是否在config.py中用pathlib.Path定义PROJECT_ROOT、DATA_DIR、LOG_DIR、MODEL_DIR等基准路径。1:未使用pathlib;2:仅定义了PROJECT_ROOT;3:定义了PROJECT_ROOT和DATA_DIR但缺少其他目录;4:PROJECT_ROOT从__file__推导并定义DATA_DIR、LOG_DIR、MODEL_DIR;5:完整路径定义含自动创建目录和权限检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "config.py中使用pathlib.Path从__file__推导PROJECT_ROOT，并定义了DATA_DIR、LOG_DIR、MODEL_DIR等基准路径变量"
+
+[[criterion]]
+name = "硬编码路径替换"
+description = "[Explicit] 是否全项目搜索替换了/home/tulin/quant和E:\quant_data等硬编码路径为config引用。1:未替换硬编码路径;2:替换了少于5处;3:替换了主要文件中的硬编码路径;4:系统性替换覆盖大部分文件;5:全项目无遗留硬编码路径"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过56次Edit对config.py、logger.py、scheduler.py等多个文件中的/home/tulin/quant路径进行了替换，但169次操作说明过程中有大量反复"
+
+[[criterion]]
+name = "测试路径注入修复"
+description = "[Explicit] 是否将testing/目录中的sys.path.insert全部去掉改为正确的项目安装方式。1:sys.path.insert仍保留;2:去掉了部分但不完整;3:全部去掉并添加了pyproject.toml配置;4:去掉sys.path.insert并配置了正确的包发现规则;5:完整修复含conftest.py路径配置和CI验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "testing/目录下的sys.path.insert语句被移除，pyproject.toml中添加了包配置但测试运行方式的说明不完整"
+
+[[criterion]]
+name = "自定义目录支持"
+description = "[Explicit] 是否通过QUANT_DATA_DIR环境变量支持用户自定义数据目录覆盖默认路径。1:不支持自定义;2:有环境变量但未正确回退到默认值;3:os.environ.get实现含正确的默认值回退;4:环境变量覆盖含路径存在性检查;5:自定义目录支持含自动创建和磁盘空间检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "config.py中通过os.environ.get(\"QUANT_DATA_DIR\")读取自定义数据目录，有默认值回退到PROJECT_ROOT下的data目录"
+
+[[criterion]]
+name = "路径扫描脚本"
+description = "[Explicit] 是否编写check_paths.py脚本扫描全项目检测剩余的硬编码绝对路径。1:未创建扫描脚本;2:脚本创建但检测逻辑过于简单;3:脚本能检测Linux和Windows绝对路径;4:脚本检测绝对路径并排除注释和文档;5:脚本含白名单机制和CI集成的exit code"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "未创建独立的check_paths.py扫描脚本，路径检测主要通过手动Grep完成"
+
+[[criterion]]
+name = "替换覆盖率"
+description = "[Implicit] 是否覆盖了项目中大部分硬编码路径而非仅修改少数文件。1:覆盖率低于30%;2:覆盖30到50%的硬编码路径;3:覆盖50到70%的硬编码路径;4:覆盖70到90%的主要文件;5:覆盖率超过90%基本无遗留"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "通过Grep发现大量硬编码路径后进行了56次Edit修改，覆盖了config.py、logger.py、scheduler.py等核心文件，但gpu-train/目录下的部分Windows路径可能遗漏"
