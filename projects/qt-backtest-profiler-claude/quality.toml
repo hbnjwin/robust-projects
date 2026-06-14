@@ -1,0 +1,53 @@
+[[criterion]]
+name = "性能剖析器封装"
+description = "[Explicit] 是否用cProfile和pstats封装了BacktestProfiler上下文管理器并输出top20热点函数。1:未创建性能剖析工具;2:创建了剖析文件但未封装为上下文管理器;3:上下文管理器封装正确但仅输出top10;4:BacktestProfiler上下文管理器含cumulative排序的top20输出;5:完整封装含可配置排序方式和过滤条件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "profiler.py中封装了BacktestProfiler上下文管理器，使用cProfile加pstats按cumulative time排序输出top20热点函数，支持with语句自动启停"
+
+[[criterion]]
+name = "阶段耗时统计"
+description = "[Explicit] 是否在ReplayEngineV5.run()中插入计时点分别统计data_load、signal_gen、order_match、portfolio_update四个阶段耗时占比。1:未插入计时点;2:仅统计总耗时无阶段拆分;3:统计了2到3个阶段的耗时;4:四个阶段均有计时且输出占比百分比;5:四阶段计时含每日粒度的耗时分布统计"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "replay_engine_v5.py的run()方法中为data_load_time、signal_gen_time、order_match_time、portfolio_update_time四个阶段分别插入计时点并输出各阶段占总耗时的百分比"
+
+[[criterion]]
+name = "火焰图文件导出"
+description = "[Explicit] 是否支持输出.prof文件供用户使用snakeviz交互式查看火焰图。1:无.prof文件输出;2:输出了profiling数据但非标准.prof格式;3:输出.prof文件到当前目录;4:输出.prof文件到reports/目录并提示snakeviz查看命令;5:.prof文件含时间戳命名和自动清理旧文件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "profiler.py中将cProfile结果dump_stats到reports/目录的.prof文件，并在终端输出snakeviz查看提示"
+
+[[criterion]]
+name = "CLI参数集成"
+description = "[Explicit] 是否在unified_backtest.py中添加--profile CLI参数来启用性能剖析。1:无CLI参数;2:有参数但未与BacktestProfiler关联;3:--profile参数正确触发剖析但无摘要输出;4:--profile开启后自动启用剖析并打印性能摘要;5:CLI参数含--profile-output指定输出路径"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "replay_engine_v5.py中集成了剖析逻辑但未在unified_backtest.py中添加独立的--profile CLI参数，剖析通过代码内部开关控制"
+
+[[criterion]]
+name = "性能摘要输出"
+description = "[Implicit] 是否在剖析结束后在终端打印易读的性能摘要包含各阶段耗时和热点函数。1:无终端输出;2:输出原始pstats格式不易读;3:格式化输出热点函数列表;4:摘要含阶段耗时百分比和top热点函数;5:摘要含性能瓶颈建议和优化方向"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "profiler.py中在剖析结束后格式化输出各阶段耗时占比和top20热点函数列表，终端可读性较好"
+
+[[criterion]]
+name = "代码侵入性"
+description = "[Implicit] 是否以最小改动将性能剖析工具集成到现有回测流程中而不破坏原有逻辑。1:大幅重构了replay_engine核心逻辑;2:修改了多处核心代码路径;3:主要通过装饰器或包装器集成改动较少;4:仅在入口处添加上下文管理器对原有逻辑零修改;5:完全无侵入通过外部包装实现"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "replay_engine_v5.py中通过在run()关键位置插入计时标记实现阶段统计，profiler.py独立封装剖析逻辑，对原有流程侵入性较低"
