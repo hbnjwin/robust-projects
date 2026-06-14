@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "HMR定时器清理"
+description = "[Explicit] 是否修复HMR热更新导致定时器泄漏叠加的问题。1: setInterval仍无清理; 2: onUnmounted清理但HMR重挂载后泄漏; 3: 清理了但start未先stop存在多实例; 4: useDemoTimer composable中start前先调用stop确保单实例且onBeforeUnmount清除; 5: composable支持HMR模块级清理import.meta.hot.dispose"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "useDemoTimer.ts中start方法会清除旧interval但在HMR触发onBeforeUnmount时清除逻辑依赖组件实例，极端快速连续HMR时存在短暂泄漏窗口"
+
+[[criterion]]
+name = "Pinia action规范"
+description = "[Explicit] 是否修复定时器回调直接修改store状态而非通过action的问题。1: 仍直接修改state; 2: 定义了action但未在回调中使用; 3: 使用action但参数传递不完整; 4: powerStore定义updatePowerData action在定时器回调中通过action修改state; 5: action内含数据校验且DevTools可追踪每次状态变化来源"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "powerStore.ts定义了action方法但定时器回调中部分数据更新仍通过直接赋值而非调用action，DevTools追踪覆盖不完整"
+
+[[criterion]]
+name = "数据放大系数隔离"
+description = "[Explicit] 是否修复normalizeDemoScale在真实数据接入后仍错误放大数据的问题。1: 放大系数始终生效无条件判断; 2: 有isDemoMode判断但位置不对; 3: 判断有效但真实数据切入时未清除残余放大数据; 4: demoScale.ts的normalize函数检查isDemoMode为true才放大否则透传原值; 5: 模式切换时清空store中的放大数据且有环境变量控制demo模式"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "demoScale.ts的normalizeDemoScale函数添加了模式判断但真实数据切入时未清除已被放大的历史数据"
+
+[[criterion]]
+name = "Composable生命周期"
+description = "[Implicit] 是否将定时器逻辑正确封装为composable并管理生命周期。1: 逻辑仍在App.vue中; 2: 抽取了但未管理生命周期; 3: composable基本可用但API不清晰; 4: useDemoTimer提供start和stop和interval配置且自动绑定组件生命周期; 5: composable支持暂停恢复且可配置更新频率"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useDemoTimer.ts composable提供start/stop接口并在App.vue中通过onMounted/onBeforeUnmount管理生命周期"
+
+[[criterion]]
+name = "构建验证与交付"
+description = "[Implicit] 是否确保修复后构建通过并清晰说明方案。1: 未验证; 2: 有错误; 3: 通过; 4: tsc和build通过; 5: 通过且总结详细"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "项目构建通过但最终说明对三个bug的修复方案描述不够详尽"
