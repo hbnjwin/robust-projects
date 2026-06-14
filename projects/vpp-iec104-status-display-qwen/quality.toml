@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "状态图标响应式绑定"
+description = "[Explicit] 是否修复连接状态变化后NTag颜色不更新的问题。1: NTag type仍为一次性赋值; 2: 用了ref但未watch状态变化; 3: computed正确但映射表不完整; 4: NTag的type属性绑定computed根据store.connectionStatus实时映射对应颜色; 5: 映射覆盖所有状态且颜色与业务语义一致"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "Iec104StatusPanel.vue中NTag的type通过映射对象获取但绑定方式未完全使用computed导致部分状态切换时颜色延迟更新"
+
+[[criterion]]
+name = "相对时间自动刷新"
+description = "[Explicit] 是否修复相对时间显示不自动更新的问题。1: 相对时间始终显示初始值不更新; 2: 有定时器但更新间隔过长; 3: 定时器更新但ref依赖关系有误; 4: useRelativeTime composable用setInterval定时刷新相对时间显示从3秒前变为1分钟前; 5: 定时器间隔根据时间差动态调整且组件卸载时清除"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Iec104StatusPanel.vue中相对时间有更新逻辑但刷新机制不够可靠存在computed未被触发重算的场景"
+
+[[criterion]]
+name = "暗色主题文字可见性"
+description = "[Explicit] 是否修复disabled NInputNumber在暗色主题下文字几乎看不见的问题。1: 暗色主题下仍不可见; 2: 修改了颜色但不够明显; 3: 颜色可见但与启用状态无区分; 4: 通过CSS覆盖NInputNumber disabled状态的文字颜色确保暗色主题下清晰可读; 5: 颜色同时适配亮色和暗色主题且使用CSS变量自动切换"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Iec104StatusPanel.vue对disabled NInputNumber添加了样式覆盖但颜色值硬编码未跟随NaiveUI暗色主题变量"
+
+[[criterion]]
+name = "IEC104类型定义"
+description = "[Implicit] 是否定义连接状态枚举和协议参数的TypeScript类型。1: 无类型; 2: 类型不完整; 3: 状态枚举正确但参数类型缺失; 4: iec104.ts定义连接状态联合类型和状态标签映射及协议参数接口; 5: 类型含状态转换约束和参数范围校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "iec104.ts定义了基本类型但状态与NTag type的映射关系类型约束不够严格"
+
+[[criterion]]
+name = "构建验证"
+description = "[Implicit] 是否确保项目构建通过。1: 未验证; 2: 有错误; 3: 通过; 4: tsc和build通过; 5: 通过且总结清晰"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "项目构建通过且修复方案有说明但不够详尽"
