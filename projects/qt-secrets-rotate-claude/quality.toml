@@ -1,0 +1,53 @@
+[[criterion]]
+name = "密钥扫描清单"
+description = "[Explicit] 是否用detect-secrets或trufflehog扫描全项目生成当前泄露的密钥清单含文件行号和类型。1:未执行密钥扫描;2:手动搜索仅发现部分密钥;3:使用工具扫描生成了基本清单;4:完整扫描清单含文件路径、行号和密钥类型分类;5:扫描含高熵字符串检测和已知密钥模式匹配"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "使用Grep系统性扫描全项目的密钥模式，完整列出了config.py的limit123、notification_bridge.py的飞书webhook、realtime_quotes.py的API参数等泄露点含文件路径和行号"
+
+[[criterion]]
+name = "环境变量迁移"
+description = "[Explicit] 是否将所有硬编码密钥迁移到os.environ读取且缺失时抛出EnvironmentError而非回退默认值。1:密钥仍硬编码;2:部分迁移但保留默认值回退;3:主要密钥迁移到environ但部分有默认值;4:全部密钥通过os.environ读取缺失抛出EnvironmentError;5:迁移含密钥分类和不同来源的读取策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "config.py中password通过os.environ[\"PG_PASSWORD\"]读取，notification_bridge.py的webhook和realtime_quotes.py的API密钥均改为环境变量，缺失时抛出EnvironmentError"
+
+[[criterion]]
+name = "基线文件生成"
+description = "[Explicit] 是否创建.secrets.baseline文件用于detect-secrets的后续增量检查。1:未创建baseline;2:创建了文件但格式不正确;3:正确格式的.secrets.baseline含当前已知密钥;4:baseline文件可被detect-secrets工具直接使用做增量扫描;5:baseline含版本号和更新策略说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了.secrets.baseline文件记录已知的密钥位置，但格式为自定义JSON而非detect-secrets标准格式"
+
+[[criterion]]
+name = "预提交钩子"
+description = "[Explicit] 是否在pre-commit配置中添加detect-secrets hook阻止新的密钥泄露被提交。1:无pre-commit配置;2:有pre-commit但未含密钥检测;3:pre-commit配置含detect-secrets hook;4:hook配置正确含baseline引用和排除规则;5:完整pre-commit含多个安全hook组合"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了pre-commit相关配置文件，包含detect-secrets hook的基本定义"
+
+[[criterion]]
+name = "CI扫描脚本"
+description = "[Explicit] 是否编写check_secrets.py可在CI中运行扫描代码中的高熵字符串和已知密钥模式。1:未创建CI脚本;2:脚本创建但检测能力弱;3:脚本能检测常见密钥模式;4:脚本含高熵字符串检测和密钥正则匹配;5:脚本含CI exit code和结构化报告输出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了check_secrets.py脚本包含基本的密钥模式正则匹配，能扫描常见的password和token模式"
+
+[[criterion]]
+name = "迁移完整性"
+description = "[Implicit] 是否覆盖了项目中全部硬编码密钥而非仅处理部分文件。1:仅处理了config.py;2:处理了2到3个文件;3:覆盖了主要文件但遗漏了部分;4:覆盖config.py、realtime_quotes.py、notification_bridge.py和paper_trading_run.py;5:全项目零遗留硬编码密钥"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过系统性Grep扫描后逐文件迁移，覆盖了config.py、risk_monitor.py、notification_bridge.py、realtime_quotes.py等全部密钥源文件"

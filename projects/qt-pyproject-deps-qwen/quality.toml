@@ -1,0 +1,53 @@
+[[criterion]]
+name = "依赖自动检测"
+description = "[Explicit] 是否从全项目.py文件的import语句中自动检测出实际使用的第三方库并区分core与optional依赖。1:未扫描import直接手写依赖列表;2:仅扫描部分目录遗漏大量依赖;3:扫描全项目但core与optional未区分;4:全面扫描并正确区分torch等为optional;5:完整检测含依赖来源标注和pypi名映射"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "pyproject.toml中列出了pandas、numpy等核心依赖和torch等可选依赖，但Bash操作主要依靠手动grep和pip freeze匹配，部分模块如akshare的依赖链未完全追踪"
+
+[[criterion]]
+name = "可选依赖分组"
+description = "[Explicit] 是否在pyproject.toml的optional-dependencies中按gpu/qlib/dev正确分组定义可选依赖。1:无optional-dependencies定义;2:有分组但内容错误或遗漏;3:gpu和dev分组正确但qlib缺失;4:三组均正确定义含版本约束;5:分组完整且含extras间的交叉依赖声明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "pyproject.toml中定义了gpu和dev分组，gpu含torch>=2.0，dev含pytest和ruff，但qlib分组未单独列出"
+
+[[criterion]]
+name = "版本锁定"
+description = "[Explicit] 是否用当前环境的实际安装版本锁定主要依赖的最低版本号。1:全部无版本号;2:仅少数包有版本号且不准确;3:主要包有版本号但部分用==而非>=;4:核心依赖均用>=锁定最低版本且版本号来自实际环境;5:完整版本锁定含python_requires和版本兼容性测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "pyproject.toml中pandas和numpy有>=版本约束，但psycopg、duckdb等部分依赖缺少版本号或版本号为手动填写非实际环境版本"
+
+[[criterion]]
+name = "入口点配置"
+description = "[Explicit] 是否在pyproject.toml的project.scripts中定义qt-backtest和qt-import等CLI入口点。1:无project.scripts定义;2:有定义但函数路径错误无法执行;3:定义了1个入口点且路径正确;4:定义了qt-backtest和qt-import两个入口点路径正确;5:多个入口点均可通过pip install后直接调用验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "pyproject.toml中未定义project.scripts入口点，import_full_market_akshare.py的编辑主要关注依赖导入修复而非入口封装"
+
+[[criterion]]
+name = "安装验证"
+description = "[Implicit] 是否执行pip install -e .验证pyproject.toml配置正确性并修复安装过程中的错误。1:未运行安装验证;2:运行但安装失败未修复;3:安装成功但未验证入口点可用性;4:安装成功并验证import正常;5:安装验证含入口点调用测试和依赖冲突检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "执行了pip install相关命令验证安装流程，安装过程基本成功但未逐一测试入口点可用性"
+
+[[criterion]]
+name = "依赖完整性"
+description = "[Implicit] 是否捕获了项目实际运行所需的全部第三方依赖不遗漏。1:遗漏超过5个实际依赖;2:遗漏3到5个依赖;3:遗漏1到2个非核心依赖;4:核心依赖完整仅遗漏极少工具类依赖;5:全部依赖完整覆盖含间接依赖声明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "pyproject.toml中列出了主要依赖但scipy、schedule、pyarrow等部分库未明确列出，依赖完整性存在少量遗漏"
