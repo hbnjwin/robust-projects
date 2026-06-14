@@ -1,0 +1,44 @@
+[[criterion]]
+name = "内存快照对比"
+description = "[Explicit] 是否用tracemalloc在pipeline关键节点打快照并对比相邻快照找出内存增长top10代码行。1:未使用tracemalloc;2:使用了tracemalloc但仅单次快照无对比;3:在2到3个关键节点打快照并对比;4:在数据加载后、因子计算后、标准化后、导出后四个节点打快照并输出top10增长;5:完整快照对比含增长趋势分析和泄漏源追踪"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "mem_snapshot.py中使用tracemalloc在pipeline关键节点记录内存快照，实现了相邻快照对比但仅覆盖数据加载和因子计算两个节点"
+
+[[criterion]]
+name = "逐行内存监控"
+description = "[Explicit] 是否用memory_profiler的@profile装饰器给FactorPipeline的关键方法加逐行内存监控。1:未使用memory_profiler;2:仅对一个方法加了@profile;3:对2到3个关键方法加了@profile装饰器;4:对FactorPipeline全部关键方法含数据加载、因子计算、标准化加了@profile;5:@profile集成含条件开关可通过环境变量控制是否启用"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "mem_snapshot.py中未直接使用memory_profiler的@profile装饰器，内存监控主要通过tracemalloc和手动RSS采集实现"
+
+[[criterion]]
+name = "内存时间线图"
+description = "[Explicit] 是否用matplotlib生成内存使用时间线图横轴为执行阶段纵轴为RSS内存MB。1:无可视化输出;2:有内存数据但未生成图表;3:生成了内存变化图但格式简单;4:matplotlib时间线图含阶段标注和RSS曲线;5:时间线图含峰值标注、泄漏区间高亮和自动保存"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "mem_snapshot.py中实现了matplotlib绘图功能，输出RSS内存随阶段变化的折线图但阶段标注不够清晰"
+
+[[criterion]]
+name = "泄漏修复建议"
+description = "[Implicit] 是否在发现内存增长异常时给出具体的修复建议如del中间DataFrame或gc.collect释放DuckDB缓存。1:无修复建议;2:仅泛泛提到释放内存;3:针对具体代码位置给出del建议;4:给出del DataFrame和gc.collect等具体修复方案含代码示例;5:修复建议含DuckDB缓存释放和分批处理策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "mem_snapshot.py中在内存报告末尾给出了通用的内存优化建议包括在循环中del中间结果和调用gc.collect()，但未针对pipeline.py中的具体代码行"
+
+[[criterion]]
+name = "工具集成侵入性"
+description = "[Implicit] 是否以低侵入方式将内存监控工具集成到pipeline.py中不影响正常执行流程。1:大幅修改了pipeline.py核心逻辑;2:在pipeline.py中添加了大量监控代码;3:pipeline.py改动适中主要是插入快照点;4:通过独立模块封装仅在pipeline.py中插入少量调用;5:完全无侵入通过装饰器或配置开关控制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "pipeline.py中插入了多处tracemalloc调用和RSS采集代码，对原有流程有中等程度的侵入"
