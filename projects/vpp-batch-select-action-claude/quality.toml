@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "跨页勾选持久化"
+description = "[Explicit] 是否修复全选checkbox翻页后勾选状态丢失的问题。1: 翻页后勾选仍丢失; 2: 保存了但全选逻辑不正确; 3: 当前页状态保持但跨页合并有遗漏; 4: checkedRowKeys在翻页时合并当前页选择而非覆盖保持跨页累积; 5: 跨页勾选正确且全选仅选当前页并有总计提示"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "BatchListView.vue中checkedRowKeys使用独立ref存储通过onUpdateCheckedRowKeys合并跨页选择而非覆盖"
+
+[[criterion]]
+name = "删除后列表同步"
+description = "[Explicit] 是否修复批量删除API成功后前端列表未刷新的问题。1: 删除后列表不变需手动刷新; 2: 刷新了但有延迟或闪烁; 3: store数据更新但组件未响应式刷新; 4: 删除API成功后调用store的remove action从列表移除已删项并清空checkedRowKeys; 5: 删除后列表无缝更新且分页总数正确调整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "批量删除后resourceStore从数组中移除对应项并清空checkedRowKeys触发NDataTable重新渲染"
+
+[[criterion]]
+name = "空选择按钮禁用"
+description = "[Explicit] 是否修复未选中任何行时批量操作按钮仍可点击的问题。1: 按钮始终可用; 2: 有disabled但条件不对; 3: disabled正确但样式无变化用户感知不到; 4: NButton的disabled绑定checkedRowKeys.length为0时禁用且样式灰显; 5: 禁用状态含tooltip提示请先选择记录"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "BatchListView.vue中批量操作NButton的disabled属性绑定checkedRowKeys.length===0未选中时灰显不可点击"
+
+[[criterion]]
+name = "多列表复用方案"
+description = "[Implicit] 是否将批量选择逻辑抽取为可复用方案供多个列表页使用。1: 每个列表独立实现无复用; 2: 有复用但接口不一致; 3: composable基本可用; 4: useBatchSelection composable封装跨页勾选和批量操作逻辑供三个列表复用; 5: composable支持配置rowKey和批量操作类型"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "批量选择逻辑在BatchListView.vue中统一实现三个列表tab共享一套勾选和操作机制"
+
+[[criterion]]
+name = "Store数据管理"
+description = "[Implicit] 是否使用Pinia store管理资源设备指令三个列表的数据和状态。1: 数据在组件内; 2: 有store但结构不清; 3: store管理数据但action不完整; 4: 三个列表各有独立store含CRUD action; 5: store含乐观更新和错误回滚"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "resourceStore.ts含完整的数据管理和batchDelete action删除后同步更新列表数据"
