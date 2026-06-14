@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "告警ID去重机制"
+description = "[Explicit] 是否修复WebSocket重发导致同一告警弹出多次的问题。1: 仍无去重机制; 2: 有去重但基于内容而非ID; 3: 按ID去重但Set未持久化重连后失效; 4: 在store的addAlarm中用Set按alarm.id去重已存在则跳过; 5: 去重覆盖store和通知两层且Set有容量上限防止内存泄漏"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "alarmStore.ts中addAlarm使用Set记录已处理的alarm.id重复消息直接跳过"
+
+[[criterion]]
+name = "角标已读清零"
+description = "[Explicit] 是否修复点击查看后角标数字未清零的问题。1: 角标始终显示累计数不清零; 2: 清零了但角标组件未响应式更新; 3: store更新了但组件用props旧值; 4: markAsRead更新store的unreadCount且NotificationBell组件响应式绑定store值; 5: 清零后角标有过渡动画且支持部分已读"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "AlarmBell.vue直接从alarmStore computed获取unreadCount实现响应式绑定，markAsRead后角标自动清零"
+
+[[criterion]]
+name = "批量告警合并通知"
+description = "[Explicit] 是否修复大量告警同时推送时浏览器被通知弹窗刷屏的问题。1: 每条告警仍独立弹窗; 2: 有数量限制但旧通知未关闭; 3: 超过阈值合并但合并提示文案不准确; 4: 超过阈值时合并显示为一条包含N条新告警的汇总通知; 5: 合并通知含告警摘要且点击可展开查看列表"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useAlarmNotification.ts中当待弹通知超过阈值时合并为单条汇总通知显示N条新告警"
+
+[[criterion]]
+name = "WebSocket连接管理"
+description = "[Implicit] 是否正确管理WebSocket连接的生命周期和重连。1: 无连接管理; 2: 有连接但不处理断开; 3: 有重连但无指数退避; 4: WebSocket封装含自动重连和心跳且组件卸载时关闭; 5: 重连含指数退避且重连后去重Set仍有效"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useAlarmWebSocket.ts封装WebSocket连接含自动重连逻辑且组件卸载时正确关闭连接"
+
+[[criterion]]
+name = "通知组件结构"
+description = "[Implicit] 是否合理组织告警通知相关的组件和store结构。1: 所有逻辑在单个组件中; 2: 有拆分但职责不清; 3: store和composable分离但通知面板缺失; 4: 告警store加通知composable加铃铛组件职责清晰; 5: 支持通知面板展示历史告警列表且可标记已读"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "拆分为alarmStore和useAlarmNotification和AlarmBell组件职责明确且增加了AlarmNotificationPanel展示告警列表"
