@@ -1,0 +1,44 @@
+[[criterion]]
+name = "质量门指标验证"
+description = "[Explicit] 是否在ModelQualityGate中实现IC大于0.02、ICIR大于0.5、时间衰减检测和特征集中度检测四项验证。1:未创建质量门;2:仅实现1到2项检查;3:实现3项检查;4:四项检查均实现且阈值可配置;5:四项检查含统计显著性测试和自适应阈值"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "evaluator.py的ModelQualityGate实现了IC>0.02、ICIR>0.5、线性回归斜率检测IC时间衰减（scipy.stats.linregress）、top1特征重要性占比不超过30%四项验证，阈值均通过构造函数参数可配置且含默认值"
+
+[[criterion]]
+name = "未来数据检测"
+description = "[Explicit] 是否实现了未来数据泄露检测通过检查训练窗口边界验证特征矩阵不含未来信息。1:未实现泄露检测;2:仅文档提及未提供实现;3:基本的时间戳检查;4:检查特征矩阵中t日特征是否包含t+1数据并输出违规详情;5:泄露检测含自相关分析和前瞻性特征识别"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "evaluator.py中实现了训练窗口边界验证检查特征日期范围，但逐特征的t日vs t+1数据交叉检测未完整实现"
+
+[[criterion]]
+name = "模型卡片生成"
+description = "[Explicit] 是否在质量门通过后生成model_card.json记录训练日期、数据范围、检查项结果和评估指标。1:未生成模型卡片;2:生成了但字段不完整;3:model_card.json含训练日期和指标;4:完整model_card含训练日期、数据范围、全部检查项结果和指标;5:模型卡片含版本号和可追溯的实验ID"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "evaluator.py中质量门通过后在模型文件旁生成model_card.json，记录training_date、data_range、gate_results（每项pass/fail）和evaluation_metrics"
+
+[[criterion]]
+name = "部署阻断机制"
+description = "[Explicit] 是否在质量门失败时阻止模型文件保存并输出详细的失败原因报告。1:失败时仍保存模型;2:失败时warning但不阻止;3:失败时抛出异常阻止保存;4:阻止保存并输出每项检查的失败原因;5:阻断含失败模型归档和人工审批流程"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "evaluator.py中质量门失败时抛出QualityGateError阻止模型文件写入，错误信息包含每项失败检查的具体原因和当前值vs阈值对比"
+
+[[criterion]]
+name = "训练流程集成"
+description = "[Implicit] 是否将ModelQualityGate正确集成到现有的训练流程中在模型保存前自动执行检查。1:质量门独立未集成;2:集成但调用位置不正确;3:在trainer.py的模型保存前调用质量门;4:在trainer.py和ml_model_retrain.py中均在保存前调用;5:质量门集成含配置开关和跳过选项"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "在evaluator.py中实现质量门逻辑，但仅在evaluator.py和__init__.py中配置了调用入口，trainer.py的集成需手动触发"
