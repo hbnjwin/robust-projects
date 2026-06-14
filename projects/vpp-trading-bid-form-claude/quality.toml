@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "竞价时间区间校验"
+description = "[Explicit] 是否修复开始时间晚于结束时间时表单仍可提交的问题。1: 未添加任何时间关系校验; 2: 有校验逻辑但仅在提交时才触发不是实时反馈; 3: 实时校验但提示信息不明确或不阻止提交; 4: 正确实现开始结束时间比较校验且阻止提交并给出清晰错误提示; 5: 校验覆盖边界场景如相同时间和跨日情况且同步禁用提交按钮"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "BidForm.vue中endTime字段的validator比较startTime和endTime值，选择时间后立即触发校验并显示错误提示阻止提交"
+
+[[criterion]]
+name = "功率精度配置修复"
+description = "[Explicit] 是否修复NInputNumber的precision配置导致小数被截断的问题。1: 未修改precision相关配置; 2: 设置了precision但值不正确如设为0; 3: precision设为合适位数但未处理快速输入时的异步更新; 4: 正确设置precision保证1.5等小数值完整提交; 5: precision配置正确且添加了值范围校验如功率必须大于零"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "BidForm.vue的功率输入配置precision=2并绑定到响应式表单数据，提交时获取的值为完整小数"
+
+[[criterion]]
+name = "防重复提交保护"
+description = "[Explicit] 是否实现防止连续双击导致重复提交的机制。1: 无任何防重复措施; 2: 提交后禁用按钮但存在竞态条件; 3: 用loading状态禁用按钮但未防止Promise期间的重复调用; 4: 提交时立即设置loading禁用按钮且在API返回后恢复; 5: 独立composable封装防抖逻辑且处理了请求失败后的按钮恢复"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "抽取useSubmitGuard.ts composable封装提交防护逻辑，BidForm.vue调用时自动管理loading状态且失败后恢复按钮可用"
+
+[[criterion]]
+name = "表单类型定义"
+description = "[Implicit] 是否为竞价表单数据定义完整的TypeScript类型约束。1: 无类型定义使用any; 2: 有基本interface但字段类型不准确; 3: 类型定义正确但分散在多处; 4: 集中定义BidFormData接口含时间功率报价字段类型; 5: 类型定义含校验规则类型和API请求响应类型"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "bid.ts中BidFormData接口明确定义各字段类型，时间为number时间戳格式与NDatePicker对应"
+
+[[criterion]]
+name = "构建验证与交付"
+description = "[Implicit] 是否确保修复后项目TypeScript检查和构建均通过。1: 未执行任何构建验证; 2: 执行了但存在类型错误未解决; 3: 类型检查通过但未执行构建; 4: TypeScript检查和Vite构建均通过; 5: 检查构建通过且最终回复清晰总结了三个bug的修复方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 5
+rationale = "执行tsc类型检查和vite build均通过且最终回复详细说明了三个bug各自的修复文件和方案"
