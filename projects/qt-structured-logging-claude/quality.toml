@@ -1,0 +1,53 @@
+[[criterion]]
+name = "JSON日志格式"
+description = "[Explicit] 是否增强utils/logger.py支持JSON格式输出且每条日志包含timestamp、level、module、message和extra字段。1:未修改logger.py;2:修改了但无JSON格式;3:JSON格式输出含timestamp和level;4:完整JSON格式含timestamp、level、module、message和extra五个字段;5:JSON日志含自定义字段扩展和schema验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "logger.py中使用pythonjsonlogger.JsonFormatter配置JSON格式输出，每条日志自动包含timestamp、level、module、message字段，extra通过logger.info的extra参数传入"
+
+[[criterion]]
+name = "关联ID追踪"
+description = "[Explicit] 是否实现correlation_id支持在回测和交易流程开始时生成run_id后续日志自动带上。1:无关联ID;2:有run_id但需手动传递;3:通过logging Filter自动注入run_id;4:Filter注入run_id含上下文管理器在流程入口自动生成;5:关联ID含分布式追踪和跨进程传播"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "logger.py中实现CorrelationFilter通过threading.local存储run_id，提供set_run_id上下文管理器在回测入口自动生成UUID作为关联ID"
+
+[[criterion]]
+name = "print替换覆盖"
+description = "[Explicit] 是否将core/oms.py、live/replay_engine_v5.py、data/import_full_market_akshare.py三个关键模块的print替换为logger调用。1:未替换任何print;2:替换了1个文件;3:替换了2个文件的主要print;4:三个文件的print均替换为logger.info/warning/error;5:三个文件完整替换含日志级别正确分配"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过25次Edit系统性替换了oms.py、replay_engine_v5.py的print为logger.info/warning/error，import_full_market_akshare.py的关键print也完成替换"
+
+[[criterion]]
+name = "日志轮转配置"
+description = "[Explicit] 是否配置了日志文件按日期轮转保留最近30天的历史日志。1:无日志轮转;2:有文件Handler但无轮转;3:RotatingFileHandler按大小轮转;4:TimedRotatingFileHandler按日期轮转保留30天;5:轮转配置含压缩归档和磁盘空间监控"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "logger.py中使用TimedRotatingFileHandler配置when=\"midnight\"、backupCount=30实现按日轮转保留最近30天日志"
+
+[[criterion]]
+name = "格式切换"
+description = "[Explicit] 是否提供LOG_FORMAT=json|text环境变量切换日志输出格式。1:无格式切换;2:有两种格式但不可切换;3:通过配置文件切换;4:LOG_FORMAT环境变量正确切换json和text格式;5:格式切换含运行时动态切换和格式预览"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "logger.py中通过os.environ.get(\"LOG_FORMAT\", \"text\")读取格式偏好，json时使用JsonFormatter，text时使用标准Formatter"
+
+[[criterion]]
+name = "日志层级正确性"
+description = "[Implicit] 是否在替换print时正确使用了info/warning/error等日志级别而非全部用info。1:全部用print替换为logger.info;2:大部分用info少量error;3:正常流程用info异常用error;4:正常用info、告警用warning、异常用error、调试用debug;5:日志级别含业务语义标注和告警阈值"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "oms.py和replay_engine_v5.py中正常流程使用logger.info，异常情况使用logger.error，但部分适合warning的场景仍用info"

@@ -1,0 +1,44 @@
+[[criterion]]
+name = "因子Schema定义"
+description = "[Explicit] 是否在factor_engine/schema.py中定义了因子Parquet的期望schema含必需列、数据类型和值域约束。1:未创建schema定义;2:schema仅列出列名无类型;3:schema含列名和数据类型;4:schema含ts_code等必需列、float64类型和close>0等值域约束;5:schema含pandera集成和自定义验证器"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "schema.py中使用pandera或手写schema定义了ts_code、trade_date、OHLCV和37个因子列的类型约束，含close>0、volume>=0和因子值z-score在正负10以内的值域限制"
+
+[[criterion]]
+name = "导出前校验集成"
+description = "[Explicit] 是否在pipeline.py导出Parquet前执行schema校验且校验失败时抛出详细错误信息。1:未集成校验;2:校验逻辑存在但未在导出前调用;3:导出前调用校验但错误信息不详细;4:导出前校验失败时报告违规列名和行号;5:校验含自动修复建议和部分导出选项"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "pipeline.py中在to_parquet()调用前执行schema校验，失败时抛出SchemaError包含违规的列名、行索引和具体约束违反描述"
+
+[[criterion]]
+name = "回溯校验CLI"
+description = "[Explicit] 是否编写validate_parquet.py CLI脚本可以对已有的Parquet文件做回溯校验。1:未创建CLI脚本;2:脚本存在但仅读取文件无校验;3:CLI脚本可校验单个Parquet文件;4:CLI含文件路径参数和批量校验支持;5:CLI含递归扫描目录和校验结果摘要报告"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "schema.py中的校验函数可独立调用，但未封装为带argparse的validate_parquet.py CLI入口脚本"
+
+[[criterion]]
+name = "统计摘要报告"
+description = "[Explicit] 是否输出每个因子列的null比例、均值、标准差和极值作为数据质量报告。1:无统计摘要;2:仅输出null计数;3:输出null比例和均值;4:完整统计含null比例、均值、标准差和极值;5:统计报告含分布直方图和异常值标注"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "schema.py中校验后生成数据质量报告，每个因子列输出null_ratio、mean、std、min、max统计信息"
+
+[[criterion]]
+name = "错误信息详细度"
+description = "[Implicit] 是否在schema校验失败时提供足够详细的错误信息帮助定位具体是哪列哪行违反了什么约束。1:仅输出校验失败;2:输出失败的列名;3:输出列名和约束类型;4:输出列名、违规行样本和约束描述;5:错误信息含修复建议和数据血缘追踪"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "schema.py中校验失败时报告违规列名、约束条件、违规行数量和前5行违规数据样本，便于快速定位数据质量问题"
