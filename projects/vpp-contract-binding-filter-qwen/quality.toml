@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "多条件AND筛选逻辑"
+description = "[Explicit] 是否修复第二个筛选条件覆盖第一个而非AND组合的问题。1: 各筛选仍独立在全量数据上过滤互相覆盖; 2: 链式过滤但顺序依赖导致部分组合失效; 3: computed中链式应用但未覆盖所有筛选字段; 4: 单一filteredData computed中三个条件以AND关系链式filter; 5: AND筛选正确且支持筛选条件变化时自动响应式更新"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "ContractBindingTable.vue中筛选逻辑改为链式应用但条件组合在部分边界情况下仍有遗漏"
+
+[[criterion]]
+name = "清空筛选恢复全量"
+description = "[Explicit] 是否修复清空所有筛选条件后表格数据不恢复的问题。1: 清空后仍显示筛选结果需刷新; 2: 部分条件清空恢复但全部清空不触发; 3: 清空时手动赋值全量但未走computed路径; 4: 筛选条件为null或空时computed自动跳过该条件返回全量数据; 5: 清空后自动恢复且筛选组件显示placeholder提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ContractBindingTable.vue清空筛选时需要额外的重置操作才能恢复全量显示"
+
+[[criterion]]
+name = "筛选后分页重置"
+description = "[Explicit] 是否修复筛选后分页停留在旧页码导致数据为空的问题。1: 筛选后仍显示原页码; 2: 页码重置但有延迟闪烁; 3: watch筛选条件重置页码但时机晚于数据更新; 4: 筛选条件变化时同步将page重置为1再更新数据; 5: 页码重置且分页总数正确更新且支持URL同步"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ContractBindingTable.vue筛选后分页页码未自动重置仍显示旧页码导致结果为空"
+
+[[criterion]]
+name = "筛选组件交互体验"
+description = "[Implicit] 是否确保筛选组件的选项数据和交互体验合理。1: 筛选选项硬编码; 2: 选项来自数据但不完整; 3: 选项正确但无清空按钮; 4: NSelect配置clearable且选项从数据动态生成; 5: 筛选有默认提示且支持多选和清空"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ContractBindingTable.vue筛选组件选项基本完整但交互细节如clearable配置不够完善"
+
+[[criterion]]
+name = "TypeScript类型与构建"
+description = "[Implicit] 是否定义筛选数据的类型并通过构建验证。1: 无类型; 2: 类型不完整; 3: 类型正确; 4: 类型完整且构建通过; 5: 类型含筛选枚举且构建通过并总结清晰"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "types.ts中定义了基本类型但筛选条件的类型约束不够严格"

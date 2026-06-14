@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "固定列分割阴影"
+description = "[Explicit] 是否修复操作列fixed right横向滚动时无分割阴影的问题。1: 仍无阴影; 2: 有阴影但位置不对; 3: 阴影出现但滚动到底时不消失; 4: 通过CSS为fixed列添加box-shadow在横向滚动时显示分割阴影; 5: 阴影仅在有滚动内容被遮挡时显示且过渡平滑"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 3
+rationale = "ResourceTable.vue为固定列添加了阴影样式但阴影在无滚动内容时仍显示缺少滚动状态判断"
+
+[[criterion]]
+name = "暗色主题背景适配"
+description = "[Explicit] 是否修复暗色主题下固定列背景透出滚动内容的问题。1: 暗色主题下仍透出内容; 2: 设了背景色但不匹配主题色; 3: 背景色正确但主题切换时不更新; 4: 固定列背景色使用CSS变量随NaiveUI主题切换自动适配暗色和亮色; 5: 背景色完全匹配主题且无色差包含hover和stripe行颜色"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ResourceTable.vue设置了固定列背景色但未使用NaiveUI的CSS变量导致暗色主题下颜色不完全匹配"
+
+[[criterion]]
+name = "Safari触摸滚动优化"
+description = "[Explicit] 是否修复iPad Safari上横向触摸滚动卡顿的问题。1: Safari上仍卡顿; 2: 添加了webkit-overflow-scrolling但与虚拟滚动冲突; 3: 减轻了卡顿但未完全流畅; 4: 添加CSS的-webkit-overflow-scrolling touch和will-change transform优化Safari滚动性能; 5: Safari滚动流畅且不影响position sticky的固定列行为"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ResourceTable.vue未添加Safari特定的触摸滚动优化CSS属性iPad上横向滚动仍然卡顿"
+
+[[criterion]]
+name = "表格列配置完整性"
+description = "[Implicit] 是否完整配置NDataTable的列定义包含所有必要字段。1: 列定义缺失多个字段; 2: 基本字段有但宽度配置不合理; 3: 列定义完整但操作列的fixed配置有问题; 4: 所有列含title和key和width且操作列正确设置fixed right; 5: 列配置含ellipsis和render函数和自适应宽度"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ResourceTable.vue列定义基本完整但部分列的宽度配置不够合理导致窄屏下挤压严重"
+
+[[criterion]]
+name = "构建验证"
+description = "[Implicit] 是否确保构建通过。1: 未验证; 2: 有错误; 3: 通过; 4: tsc和build通过; 5: 通过且总结清晰"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "项目构建通过"
