@@ -1,0 +1,53 @@
+[[criterion]]
+name = "SQL拼接模式检测"
+description = "[Explicit] 是否扩展了SQL注入检测覆盖f-string、.format()和字符串拼接三种SQL拼接模式。1:仅保留原有f-string检测;2:增加了一种新模式但正则不完整;3:覆盖两种模式且正则基本准确;4:三种模式均覆盖正则能匹配大多数变体;5:三种模式完整覆盖含AST级别的精确检测"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "test_p0_sql_injection.py中扩展了检测正则，覆盖f-string和.format()两种模式，但字符串加法拼接的正则匹配不够精确，经过29次Edit反复调整正则表达式"
+
+[[criterion]]
+name = "递归扫描范围"
+description = "[Explicit] 是否将扫描范围从固定文件列表扩展到全项目.py文件递归扫描。1:仍为固定文件列表;2:扩展了部分目录但未递归;3:全项目递归扫描但排除规则不完善;4:递归扫描含合理的排除规则排除venv和__pycache__;5:递归扫描含文件发现统计和排除日志"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "test_p0_sql_injection.py中实现了递归扫描但排除规则配置较为粗糙，部分无关目录未排除"
+
+[[criterion]]
+name = "DuckDB检测覆盖"
+description = "[Explicit] 是否增加了对DuckDB SQL调用（duckdb.execute和conn.sql）的注入检测。1:未覆盖DuckDB;2:仅检测duckdb.execute一种调用;3:覆盖duckdb.execute和conn.sql但检测规则简单;4:完整覆盖DuckDB调用模式含参数化检查;5:DuckDB检测含data/duckdb_engine.py专项扫描和修复建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "test_p0_sql_injection.py中DuckDB相关的检测规则较弱，仅添加了基础的duckdb关键词匹配，未针对conn.sql调用模式做专项检测"
+
+[[criterion]]
+name = "硬编码密码告警"
+description = "[Explicit] 是否对config.py中的硬编码密码limit123生成显式安全告警。1:未检测硬编码密码;2:有通用密码检测但未匹配到limit123;3:检测到config.py中的密码并生成告警;4:精确定位limit123并输出文件路径和行号;5:密码检测含密码强度评估和修复建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "test_p0_sql_injection.py中保留了原有的硬编码密码检测逻辑，能检测到config.py中password字段的赋值"
+
+[[criterion]]
+name = "结构化报告输出"
+description = "[Explicit] 是否输出包含文件路径、行号、风险等级和代码片段的JSON格式结构化报告。1:仅print输出无结构化;2:有基本JSON输出但字段不完整;3:JSON报告含文件路径和行号;4:完整JSON报告含路径、行号、风险等级和代码片段;5:报告含统计摘要和CI集成的exit code"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "test_p0_sql_injection.py中实现了JSON格式输出，包含文件路径和行号信息，但风险等级分类较粗"
+
+[[criterion]]
+name = "检测准确性"
+description = "[Implicit] 是否控制了检测的误报率避免将安全的参数化查询标记为注入风险。1:大量误报将正常字符串标记为风险;2:误报率较高但能识别真正的注入点;3:误报率可控核心注入点均能检出;4:低误报率且覆盖项目中的真实注入风险点;5:精确检测含白名单机制和误报抑制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "test_p0_sql_injection.py经过29次Edit反复调整正则，说明检测规则不稳定，早期版本存在较多误报或漏报需反复修正"
