@@ -1,8 +1,44 @@
 [[criterion]]
-name = "placeholder"
-description = "placeholder"
+name = "ECharts图表PDF导出"
+description = "[Explicit] 是否修复ECharts canvas在html2canvas导出PDF时显示空白的问题。1: PDF中图表仍为空白; 2: 尝试了导出但图片质量很差; 3: 调用getDataURL但替换DOM时机不对; 4: 导出前遍历ECharts实例调用getDataURL转为静态img替换canvas再执行html2canvas; 5: 替换后图片高清且导出完成后恢复原canvas"
 type = "likert"
 points = 5
 weight = 1.0
-score = 0
-rationale = ""
+score = 4
+rationale = "exportPdf.ts导出前遍历ECharts容器调用chart.getDataURL转为img标签替换canvas确保html2canvas截图正确"
+
+[[criterion]]
+name = "日期时间戳单位修复"
+description = "[Explicit] 是否修复报告中所有日期显示Invalid Date的问题。1: 日期仍显示Invalid Date; 2: 部分日期正确部分仍无效; 3: 修复了但格式化结果不符合业务要求; 4: dateFormat.ts检测时间戳为秒级时乘以1000转为毫秒级再传入new Date; 5: 格式化函数支持秒级和毫秒级自适应且有无效输入的fallback显示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "date.ts中格式化函数判断时间戳小于一定阈值时自动乘以1000从秒转毫秒消除Invalid Date"
+
+[[criterion]]
+name = "表格跨页表头重复"
+description = "[Explicit] 是否修复PDF导出时表格跨页后第二页顶部没有重复表头的问题。1: 跨页后仍无表头; 2: 有表头但样式丢失; 3: 用CSS page-break但效果不稳定; 4: ReportTable使用CSS的thead display table-header-group确保打印和PDF导出时每页重复表头; 5: 表头重复且每页底部有分隔线避免内容和新页表头混在一起"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ReportTable.vue通过CSS设置thead display table-header-group配合print.css确保PDF导出时每页自动重复表头"
+
+[[criterion]]
+name = "PDF导出工具封装"
+description = "[Implicit] 是否将PDF导出逻辑封装为独立模块。1: 导出逻辑混在组件中; 2: 有模块但接口不清; 3: 模块基本可用但异常处理缺失; 4: pdfExport.ts封装导出流程含canvas替换和html2canvas调用和PDF生成; 5: 模块支持配置纸张方向和边距且有进度回调"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "exportPdf.ts独立封装完整导出流程包含ECharts图片替换和html2canvas截图和jsPDF生成"
+
+[[criterion]]
+name = "报告组件结构"
+description = "[Implicit] 是否合理拆分报告页面的组件结构。1: 所有内容在单文件; 2: 有拆分但职责不清; 3: 拆分合理; 4: ReportPage和ReportChart和ReportTable各司其职; 5: 组件间通过props传递数据且支持不同报告模板"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "拆分为CapabilityReport和ReportChart和ReportTable组件各自负责布局和图表和表格渲染"
