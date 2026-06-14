@@ -1,0 +1,53 @@
+[[criterion]]
+name = "依赖自动检测"
+description = "[Explicit] 是否从全项目.py文件的import语句中自动检测出实际使用的第三方库并区分core与optional依赖。1:未扫描import直接手写依赖列表;2:仅扫描部分目录遗漏大量依赖;3:扫描全项目但core与optional未区分;4:全面扫描并正确区分torch等为optional;5:完整检测含依赖来源标注和pypi名映射"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "通过Bash执行全项目import语句扫描并Read逐一确认import来源，pyproject.toml中准确区分了core依赖（psycopg、duckdb、lightgbm）和optional的torch/qlib"
+
+[[criterion]]
+name = "可选依赖分组"
+description = "[Explicit] 是否在pyproject.toml的optional-dependencies中按gpu/qlib/dev正确分组定义可选依赖。1:无optional-dependencies定义;2:有分组但内容错误或遗漏;3:gpu和dev分组正确但qlib缺失;4:三组均正确定义含版本约束;5:分组完整且含extras间的交叉依赖声明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "pyproject.toml的optional-dependencies中gpu、qlib、dev三组均正确定义，gpu含torch>=2.0，qlib含qlib，dev含pytest、pytest-cov、ruff、mypy"
+
+[[criterion]]
+name = "版本锁定"
+description = "[Explicit] 是否用当前环境的实际安装版本锁定主要依赖的最低版本号。1:全部无版本号;2:仅少数包有版本号且不准确;3:主要包有版本号但部分用==而非>=;4:核心依赖均用>=锁定最低版本且版本号来自实际环境;5:完整版本锁定含python_requires和版本兼容性测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "pyproject.toml中通过pip show查询实际安装版本后设置pandas>=2.0、numpy>=1.24、lightgbm>=4.0等最低版本，覆盖主要核心依赖"
+
+[[criterion]]
+name = "入口点配置"
+description = "[Explicit] 是否在pyproject.toml的project.scripts中定义qt-backtest和qt-import等CLI入口点。1:无project.scripts定义;2:有定义但函数路径错误无法执行;3:定义了1个入口点且路径正确;4:定义了qt-backtest和qt-import两个入口点路径正确;5:多个入口点均可通过pip install后直接调用验证"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "pyproject.toml的project.scripts中定义了qt-backtest和qt-import两个入口点，函数路径经过Read验证指向正确的模块main函数"
+
+[[criterion]]
+name = "安装验证"
+description = "[Implicit] 是否执行pip install -e .验证pyproject.toml配置正确性并修复安装过程中的错误。1:未运行安装验证;2:运行但安装失败未修复;3:安装成功但未验证入口点可用性;4:安装成功并验证import正常;5:安装验证含入口点调用测试和依赖冲突检查"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "运行pip install -e .成功安装，并通过import测试验证核心依赖可正常导入"
+
+[[criterion]]
+name = "依赖完整性"
+description = "[Implicit] 是否捕获了项目实际运行所需的全部第三方依赖不遗漏。1:遗漏超过5个实际依赖;2:遗漏3到5个依赖;3:遗漏1到2个非核心依赖;4:核心依赖完整仅遗漏极少工具类依赖;5:全部依赖完整覆盖含间接依赖声明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "pyproject.toml覆盖了psycopg、duckdb、lightgbm、akshare等核心依赖，但schedule和部分工具类依赖未完全列出"
