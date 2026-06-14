@@ -1,0 +1,53 @@
+[[criterion]]
+name = "进度条集成"
+description = "[Explicit] 是否用tqdm替换print显示整体进度条含已完成数量、速率和预估剩余时间。1:仍使用print无进度条;2:有tqdm但仅显示计数无速率;3:tqdm进度条含已完成/总数和速率显示;4:tqdm进度条含stocks/s速率和ETA预估;5:tqdm集成含动态描述更新和嵌套进度条"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "import_full_market_akshare.py中用tqdm替换ThreadPoolExecutor的进度输出，显示已完成/总数、stocks/s速率和ETA预估时间"
+
+[[criterion]]
+name = "实时统计面板"
+description = "[Explicit] 是否实现每10秒打印一次的实时统计面板含成功、失败、跳过、当前股票、已写入行数和运行时长。1:无统计面板;2:仅统计成功和失败数;3:统计面板含成功/失败/跳过和当前处理股票;4:完整统计面板含全部6个指标每10秒刷新;5:统计面板含历史速率趋势和异常告警"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "import_full_market_akshare.py中实现了基本的统计面板输出包含成功/失败/跳过计数，但已写入行数统计和10秒刷新间隔未严格实现"
+
+[[criterion]]
+name = "失败记录导出"
+description = "[Explicit] 是否将失败的股票代码和错误原因记录到reports/import_failures_{date}.json文件。1:未记录失败信息;2:仅print失败信息未写文件;3:写入JSON文件但字段不完整;4:JSON文件含股票代码、错误原因和时间戳;5:失败记录含重试建议和错误分类"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "import_full_market_akshare.py中将失败股票记录到reports/import_failures_{date}.json，每条含stock_code、error_message和timestamp字段"
+
+[[criterion]]
+name = "试运行模式"
+description = "[Explicit] 是否添加--dry-run模式仅检测哪些股票有新数据需要更新但不实际写入数据库。1:无dry-run功能;2:有参数但实现不完整仍会写入;3:dry-run正确跳过写入并输出待更新列表;4:dry-run含数据量预估和工作量摘要;5:dry-run含增量检测和预计耗时估算"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "import_full_market_akshare.py中添加了--dry-run参数，跳过实际数据库写入仅检测并输出需要更新的股票列表"
+
+[[criterion]]
+name = "完成摘要报告"
+description = "[Explicit] 是否在导入完成后输出摘要报告到终端和日志文件含成功数失败数耗时等。1:无完成摘要;2:仅print简单统计;3:终端输出含成功/失败/耗时摘要;4:摘要同时输出到终端和日志文件;5:摘要含数据质量统计和下次导入建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "import_full_market_akshare.py在导入完成后输出完整摘要含成功数、失败数、跳过数、总耗时和平均速率，同时记录到日志"
+
+[[criterion]]
+name = "执行效率"
+description = "[Implicit] 是否以合理的操作步骤数高效完成功能增强而非过度迭代。1:超过50次操作含大量无效重试;2:30到50次操作有明显的反复修改;3:15到30次操作有冗余但方向正确;4:10到15次操作路径清晰;5:10次以内高效直达"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "import_full_market_akshare.py通过19次操作完成全部功能增强，1次Write创建主体代码后仅1次Edit微调，执行路径清晰高效"
