@@ -1,0 +1,44 @@
+[[criterion]]
+name = "环境变量加载"
+description = "[Explicit] 是否用python-dotenv加载.env文件并创建.env.example模板列出所有环境变量。1:未使用dotenv;2:使用了dotenv但无.env.example;3:dotenv加载正确且.env.example列出主要变量;4:.env.example含PG_HOST等全部变量且无实际值;5:.env.example含变量说明注释和类型提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "config.py中调用load_dotenv()加载.env文件，.env.example模板完整列出PG_HOST、PG_USER、PG_PASSWORD、PG_DBNAME、PG_PORT、LOG_LEVEL、DATA_DIR等全部变量"
+
+[[criterion]]
+name = "多环境切换"
+description = "[Explicit] 是否支持QUANT_ENV=dev|test|prod切换预设配置其中dev连本地PG、test用SQLite、prod用环境变量。1:无环境切换;2:有环境变量但预设不完整;3:dev和prod两种预设正确;4:dev/test/prod三种预设含test使用SQLite的配置;5:环境切换含配置验证和启动时环境确认输出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "config.py中通过QUANT_ENV环境变量支持dev（localhost PG）、test（SQLite替代）、prod（纯环境变量）三种预设配置"
+
+[[criterion]]
+name = "配置类封装"
+description = "[Explicit] 是否用@dataclass的Settings类统一管理所有配置项并提供Settings.from_env()工厂方法。1:无配置类仍用全局变量;2:有类但非dataclass或缺少from_env;3:@dataclass Settings含主要字段和from_env()方法;4:Settings含全部配置字段、类型注解和from_env()工厂方法;5:Settings含验证逻辑和配置项文档字符串"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "config.py中@dataclass Settings包含pg_host、pg_user、pg_password、pg_port、log_level等全部字段带类型注解，from_env()工厂方法从环境变量构造实例"
+
+[[criterion]]
+name = "密码清理"
+description = "[Explicit] 是否将config.py中的硬编码密码limit123删除并替换为环境变量读取。1:密码仍硬编码在代码中;2:密码有默认值回退仍可通过代码获取;3:密码从环境变量读取但有空字符串默认值;4:密码从os.environ读取缺失时抛出明确错误;5:密码清理含git history说明和密钥轮换建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "config.py中密码通过os.environ读取，缺失时抛出EnvironmentError提示配置.env文件，硬编码的limit123已完全删除"
+
+[[criterion]]
+name = "安全防护"
+description = "[Implicit] 是否通过.gitignore确保.env文件不会被提交到版本控制。1:未修改.gitignore;2:.gitignore中添加了.env但格式有误;3:.gitignore正确排除.env文件;4:.gitignore排除.env且requirements.txt中添加了python-dotenv依赖;5:完整安全防护含.env权限说明和CI环境变量注入方案"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "requirements.txt添加python-dotenv，.gitignore中排除.env和.env.local，.env.example提示用户从模板创建本地.env"
