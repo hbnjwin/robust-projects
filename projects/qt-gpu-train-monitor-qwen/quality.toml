@@ -1,0 +1,44 @@
+[[criterion]]
+name = "GPU资源采集"
+description = "[Explicit] 是否在训练循环中每N步采集GPU利用率和显存占用并写入JSON行日志。1:未采集GPU信息;2:仅在训练结束时采集一次;3:每epoch采集一次但无步级粒度;4:每N步采集GPU利用率和显存占用写入JSON行日志;5:采集含温度、功耗和多卡信息的完整GPU状态"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "win_gpu_common.py中在fit_model函数里添加了torch.cuda相关的GPU监控调用，每epoch记录显存占用但未实现每N步的细粒度采集"
+
+[[criterion]]
+name = "批次进度条"
+description = "[Explicit] 是否在训练循环中加tqdm进度条显示当前epoch内的batch进度和实时loss及学习率。1:无进度条仍用print;2:有tqdm但仅显示batch计数;3:tqdm显示batch进度和loss;4:tqdm显示batch进度、实时loss和当前学习率;5:嵌套进度条含epoch级和batch级双层显示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "win_gpu_common.py中引入tqdm在epoch内显示batch进度和当前loss值，但学习率信息未在进度条中实时更新"
+
+[[criterion]]
+name = "训练曲线可视化"
+description = "[Explicit] 是否训练结束后用matplotlib画loss曲线和IC曲线保存为PNG到reports/training/目录。1:无可视化;2:仅保存loss数据未画图;3:画了loss曲线但无IC曲线;4:train/valid的loss曲线和IC曲线均保存为PNG;5:可视化含学习率曲线和早停标注点"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "win_gpu_common.py中训练结束后使用matplotlib绘制loss曲线包含train和valid两条线，但IC曲线未单独绘制保存"
+
+[[criterion]]
+name = "早停告警标注"
+description = "[Explicit] 是否在early stopping触发时明确标注停止原因并输出告警日志说明验证IC连续N个epoch未改善。1:无早停信息;2:仅print停止但无原因;3:输出早停原因含patience耗尽信息;4:详细告警含最佳IC值、停止epoch和patience配置;5:早停告警含模型性能趋势分析和恢复建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "win_gpu_common.py中early stopping逻辑存在但触发时仅输出简单的停止信息，未明确标注IC连续未改善的epoch数"
+
+[[criterion]]
+name = "JSON行日志格式"
+description = "[Implicit] 是否将GPU监控数据以结构化JSON Lines格式输出便于后续分析工具读取。1:无结构化输出;2:输出为CSV或非标准格式;3:JSON格式但字段不完整;4:JSON Lines含timestamp、gpu_util、memory和step字段;5:JSON Lines含完整元数据和批量分析脚本"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "win_gpu_common.py中GPU监控数据输出为基本的JSON格式，但字段命名和时间戳格式不够规范"
