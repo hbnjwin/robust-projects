@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Dockerfile构建规范"
+description = "[Explicit] 是否基于python 3.11-slim编写Dockerfile并正确安装项目依赖设置WORKDIR。1:未创建Dockerfile;2:创建了但基础镜像错误或未安装依赖;3:基础镜像正确且安装了依赖但缺少系统库（如libpq-dev）;4:完整Dockerfile含系统库安装和pip依赖和WORKDIR设置;5:多阶段构建优化镜像体积且有.dockerignore配合"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude创建了基于python 3.11-slim的Dockerfile，安装libpq系统依赖后pip install requirements.txt，设置WORKDIR为/app，配合.dockerignore排除构建无关文件保持镜像精简"
+
+[[criterion]]
+name = "双服务编排配置"
+description = "[Explicit] 是否编写docker-compose.yml定义app和postgres两个服务且postgres使用15-alpine镜像并初始化时自动创建quant_tulin数据库。1:未创建docker-compose.yml;2:只有单服务缺少postgres;3:双服务但postgres未配置自动建库;4:双服务且postgres通过环境变量POSTGRES_DB自动创建quant_tulin库;5:双服务含健康检查和启动依赖顺序和网络配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude的docker-compose.yml定义app和postgres双服务，postgres使用15-alpine通过POSTGRES_DB创建quant_tulin库，app通过depends_on依赖postgres服务启动顺序"
+
+[[criterion]]
+name = "开发热重载与环境隔离"
+description = "[Explicit] 是否通过volumes挂载实现源码热重载且环境变量通过.env文件传入而非硬编码。1:无volumes挂载也无.env;2:有volumes但.env中包含真实密码提交到仓库;3:有volumes和.env.example但.env未加入gitignore;4:volumes挂载正确且仅提供.env.example模板不含真实值;5:完整的环境隔离含.env.example模板和.gitignore排除.env和文档说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude通过volumes将本地目录挂载到/app实现热重载，仅创建.env.example模板列出所有环境变量但不含实际值，符合安全最佳实践"
+
+[[criterion]]
+name = "数据库Schema初始化"
+description = "[Explicit] 是否创建init_db.sql包含从dao/和data/目录提取的PostgreSQL表结构并在postgres首次启动时自动执行。1:未创建init_db.sql;2:创建了但表结构不完整仅1-2张表;3:包含3-4张核心表结构;4:包含5-6张表且通过docker-entrypoint-initdb.d自动执行;5:完整表结构含索引定义和外键约束和注释"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude创建的init_db.sql包含6张表的Schema（daily_price、stock_daily_kline、kline_1min、sim_runs、sim_daily、sim_trades），通过volumes挂载到postgres容器的docker-entrypoint-initdb.d目录首次启动自动执行"
+
+[[criterion]]
+name = "Makefile快捷命令"
+description = "[Explicit] 是否在Makefile中定义docker-up、docker-test、docker-down三个快捷命令。1:未创建Makefile;2:创建了但缺少核心命令;3:包含docker-up和docker-down但缺少docker-test;4:三个核心命令齐全;5:三个核心命令加额外辅助命令如shell/logs/rebuild"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude的Makefile定义了docker-up、docker-down、docker-test三个核心命令外还提供了shell、logs、rebuild等辅助命令方便开发调试"
+
+[[criterion]]
+name = "快速启动文档"
+description = "[Explicit] 是否在README中编写Quick Start说明三步启动开发环境。1:未修改README;2:README提及Docker但无具体步骤;3:有步骤但超过三步或缺少前置条件说明;4:清晰的三步启动说明含前置条件;5:三步说明加常见问题排查和架构图"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Claude在README.md中编写了Quick Start三步启动说明，结构清晰包含克隆仓库、启动容器、验证环境三个步骤"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成Docker开发环境的创建。1:超过60次操作含大量无效探索;2:40-60次操作有明显冗余;3:20-40次操作路径基本合理;4:10-20次操作路径清晰高效;5:10次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude共16次操作，Write 7次直接创建核心文件，Read 3次了解项目结构，通过Agent委派子任务高效完成，路径简洁直达"
