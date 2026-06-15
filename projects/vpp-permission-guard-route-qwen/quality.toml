@@ -1,0 +1,44 @@
+[[criterion]]
+name = "页面级权限守卫"
+description = "[Explicit] 是否在页面组件级别添加权限守卫，防止通过DevTools修改activeMenu绕过侧边栏访问。1: 仍可通过修改activeMenu访问未授权页面; 2: 添加了守卫但判断逻辑不完整; 3: v-if中增加权限判断但个别页面遗漏; 4: 所有页面组件渲染前都检查当前角色是否有权限访问该页面; 5: 权限守卫加路由拦截加请求级别API权限校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "App.vue中为各页面组件外层添加了v-if权限判断，但通过vue-router的beforeEach实现，引入了过多架构变更，且guards.ts的权限映射与侧边栏的权限过滤存在重复定义"
+
+[[criterion]]
+name = "角色切换菜单响应"
+description = "[Explicit] 是否修复切换用户角色后菜单列表不更新的问题，让菜单响应角色变化。1: 切换角色后菜单仍不变; 2: watch了角色但菜单更新逻辑有bug; 3: 菜单列表改为computed基于当前角色动态过滤; 4: menuOptions改为computed属性依赖currentRole，角色变化时菜单列表自动重新过滤; 5: 菜单响应加activeMenu自动重置到有权限的首页"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "App.vue中菜单生成逻辑从onMounted改为computed，但角色切换后activeMenu未自动重置到有权限的页面，可能停留在已无权限的页面"
+
+[[criterion]]
+name = "无权限Fallback页面"
+description = "[Explicit] 是否在权限不足时显示提示页面而非白屏。1: 仍显示白屏; 2: 有提示文字但样式简陋; 3: 显示无权限提示但缺少操作引导; 4: 渲染专门的NoPermission组件含权限不足说明和跳转建议; 5: NoPermission页面加返回有权限页面按钮加联系管理员入口"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "App.vue中v-if权限判断不通过时v-else渲染了一个无权限提示组件NoPermissionView.vue，但组件中缺少具体的操作引导按钮"
+
+[[criterion]]
+name = "权限配置集中管理"
+description = "[Implicit] 是否将角色权限映射关系集中定义而非分散在多个组件中。1: 权限判断分散在各组件; 2: 部分集中但有重复定义; 3: 创建了权限配置但与菜单配置有冗余; 4: store中统一定义rolePermissions映射表，菜单过滤和页面守卫都引用同一数据源; 5: 集中配置加TypeScript类型约束加可扩展的权限模型"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "创建了auth.ts和guards.ts等多个文件管理权限逻辑，但权限映射在useMenu.ts和guards.ts中存在重复定义不够DRY"
+
+[[criterion]]
+name = "改动范围合理性"
+description = "[Implicit] 是否将修复控制在合理的文件范围内避免过度架构变更。1: 引入了vue-router等新依赖改动超过10个文件; 2: 改动5-10个文件部分与权限无关; 3: 改动3-4个文件基本围绕权限; 4: 仅改动App.vue和store等2-3个核心文件; 5: 最小改动且不引入新依赖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "引入了vue-router并创建了router目录下的guards.ts和index.ts等多个文件，对现有的v-if页面切换机制做了较大架构变更，改动涉及15个文件超出bug修复范围"
