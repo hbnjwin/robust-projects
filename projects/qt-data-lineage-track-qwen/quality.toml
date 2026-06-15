@@ -1,0 +1,62 @@
+[[criterion]]
+name = "血缘记录字段规范"
+description = "[Explicit] 是否在每个pipeline环节运行时写入包含全部8个必须字段的JSON血缘记录（stage_name、input_source、output_target、record_count、data_date_range、checksum、run_timestamp、duration_seconds）。1:未写入任何血缘记录;2:写入了记录但缺失3个以上必须字段;3:记录包含6-7个字段但缺少checksum或duration_seconds;4:全部8个字段均存在且类型正确;5:8个字段完整且有字段校验和默认值处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen的utils/lineage.py中record_lineage函数写入了stage_name、input_source、output_target、record_count、data_date_range、run_timestamp等核心字段，包含checksum计算（MD5），但duration_seconds依赖调用方传入而非自动计时"
+
+[[criterion]]
+name = "五阶段埋点覆盖"
+description = "[Explicit] 是否对数据链路的全部5个环节（AKShare导入、PG导出Parquet、DuckDB因子计算、ML模型训练、信号生成）都添加了血缘记录写入。1:仅覆盖1个环节;2:覆盖2个环节;3:覆盖3-4个环节;4:全部5个环节均有埋点;5:5个环节埋点完整且每个环节的input_source与上一环节的output_target正确串联"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Qwen修改了import_full_market_akshare.py（akshare_ingest）、ml_data_export.py（data_export）、factor_engine/pipeline.py（factor_compute）、ml_model_retrain.py（model_train）、ml_signal_generate.py（signal_generate）共5个阶段全覆盖"
+
+[[criterion]]
+name = "血缘链构建与展示"
+description = "[Explicit] 是否实现了lineage.py脚本能从reports/lineage/读取所有记录并构建完整血缘链以表格形式展示（含每阶段输出作为下一阶段输入的关系、最后更新时间、数据量）。1:未实现脚本;2:脚本能读取记录但无法构建链;3:能构建基本链但展示为纯文本无表格;4:表格展示含阶段关系和更新时间和数据量;5:交互式表格支持JSON输出和历史版本对比"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen的scripts/lineage.py实现了血缘链构建和表格展示功能，支持--json输出和archive历史查看，但链的构建基于阶段名称顺序匹配而非input/output自动串联"
+
+[[criterion]]
+name = "数据新鲜度告警"
+description = "[Explicit] 是否实现了新鲜度检查机制——当Parquet文件的数据日期范围落后于PG表最新日期超过1天时发出告警。1:未实现新鲜度检查;2:有检查但未对比PG和Parquet的日期差;3:对比了日期差但阈值硬编码且无告警输出;4:正确实现日期差>1天告警且阈值可配置;5:告警含详细信息（PG最新日期、Parquet日期、差距天数）且支持多种通知方式"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen的utils/lineage.py中check_freshness函数对比各阶段的data_date_range检测数据滞后，支持自定义阈值天数，但新鲜度检查基于血缘记录中的日期而非实时查询PG表"
+
+[[criterion]]
+name = "信号生成预检集成"
+description = "[Explicit] 是否在services/ml_signal_generate.py中加载模型和因子数据前先检查血缘记录确认数据新鲜。1:未修改ml_signal_generate.py;2:修改了但未在加载前检查;3:加载前调用了检查但仅打印警告不阻断;4:加载前检查新鲜度且不新鲜时抛出异常或明确告警;5:预检含多级策略（警告/阻断可配置）且记录检查结果到血缘日志"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Qwen在ml_signal_generate.py中添加Step 0预检，调用check_freshness()和check_stage_freshness()在加载模型和因子数据之前验证数据新鲜度，不新鲜时输出警告信息"
+
+[[criterion]]
+name = "血缘模块架构"
+description = "[Implicit] 是否将血缘追踪功能设计为独立可复用的模块而非散落在各pipeline文件中。1:血缘逻辑直接写在各pipeline文件内无抽取;2:抽取了公共函数但放在utils中无独立模块;3:独立模块但职责混合（记录和展示混在一起）;4:独立包结构且记录（tracker）和展示（viewer）职责分离;5:完整包结构含__init__.py导出、类型定义、配置外置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen将所有血缘功能集中在utils/lineage.py单一文件中，包含记录写入、链构建、表格展示、新鲜度检查等全部功能，虽然函数划分清晰但缺少职责分离和独立包结构"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成血缘追踪系统的设计和实现。1:超过80次操作含大量重复读取和回退;2:60-80次操作有明显冗余;3:40-60次操作路径基本合理;4:20-40次操作路径清晰高效;5:20次以内精准实现"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen共55次操作，其中TaskUpdate占20次用于进度追踪，实际代码操作约35次，Read 9次了解项目结构后Write 3次创建新文件Edit 5次修改pipeline阶段，路径基本合理"
