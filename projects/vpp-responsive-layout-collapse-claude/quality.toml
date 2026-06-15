@@ -1,0 +1,44 @@
+[[criterion]]
+name = "移动端侧边栏折叠"
+description = "[Explicit] 是否修复小于768px时侧边栏消失的问题，改为自动收起collapsed状态而非display:none。1: 侧边栏仍直接消失; 2: 改了CSS但折叠效果不对; 3: resize监听中设置collapsed=true但无汉堡菜单按钮; 4: windowWidth小于768px时设置collapsed=true且显示汉堡菜单按钮点击可展开; 5: 自动折叠加汉堡按钮加展开时的遮罩层"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中添加windowWidth ref和resize事件监听，小于768px自动设置collapsed=true并显示汉堡菜单按钮，点击按钮可切换侧边栏展开"
+
+[[criterion]]
+name = "KPI卡片响应式网格"
+description = "[Explicit] 是否修复平板尺寸下四个KPI卡片挤在一行文字被截断的问题。1: NGrid cols仍固定为4; 2: 改了cols但断点阈值不合理; 3: 使用响应式cols但中间尺寸仍有挤压; 4: NGrid通过responsive或动态cols在768-1024px显示两列在小于768px显示一列; 5: 响应式网格加卡片最小宽度保护加文字截断处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中NGrid通过computed根据windowWidth动态计算cols值，大于1024px为4列，768-1024px为2列，小于768px为1列"
+
+[[criterion]]
+name = "大屏恢复侧边栏展开"
+description = "[Explicit] 是否修复窗口从小屏拉大后侧边栏不自动展开恢复的问题。1: 拉大后仍保持收起; 2: resize时判断但阈值与收起不一致; 3: 大于768px时设置collapsed=false但与用户手动折叠冲突; 4: resize回调中大于768px时自动恢复collapsed=false且区分用户手动折叠和自动折叠; 5: 自动恢复加记忆用户偏好加过渡动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中通过isAutoCollapsed标志区分响应式自动折叠和用户手动操作，resize回大屏时仅恢复自动折叠的状态不覆盖用户手动选择"
+
+[[criterion]]
+name = "resize事件性能"
+description = "[Implicit] 是否对window resize事件做防抖处理避免频繁触发。1: 每次resize都直接执行; 2: 添加了防抖但时间过长有卡顿; 3: 合理的防抖间隔如100-200ms; 4: resize回调使用debounce或requestAnimationFrame节流; 5: 防抖加组件卸载时removeEventListener清理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中resize事件处理使用防抖函数包裹，间隔150ms内只执行最后一次，onUnmounted时移除事件监听器"
+
+[[criterion]]
+name = "构建验证通过"
+description = "[Implicit] 是否确保修改后TypeScript类型检查和Vite构建通过。1: 存在类型错误; 2: 有编译警告; 3: 构建通过无错误; 4: vue-tsc和vite build均通过; 5: 构建通过且无运行时错误"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "vue-tsc类型检查和vite build构建均通过无错误"
