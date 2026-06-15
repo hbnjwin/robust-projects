@@ -1,0 +1,53 @@
+[[criterion]]
+name = "复杂度报告脚本"
+description = "[Explicit] 是否编写complexity_report.py用radon的cc和mi扫描全项目生成按严重度排序的JSON报告并区分A到F等级。1:未创建报告脚本;2:脚本仅扫描cc未扫描mi;3:同时扫描cc和mi但输出格式不是JSON;4:JSON报告含cc和mi且按严重度排序区分A到F等级;5:JSON报告加彩色终端输出D及以上标红"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Qwen创建scripts/complexity_report.py使用radon.complexity.cc_visit和radon.metrics.mi_visit扫描全项目，按CC降序生成JSON报告含A-F等级分布统计，D及以上标红输出，支持--top和-o参数"
+
+[[criterion]]
+name = "Radon阈值配置"
+description = "[Explicit] 是否在pyproject.toml中配置radon的cc阈值15和mi阈值20并排除testing/和docs/目录。1:未配置pyproject.toml;2:配置了但阈值不合理;3:cc和mi阈值设置正确但未排除目录;4:阈值正确且排除了testing/和docs/;5:阈值正确排除目录加详细注释说明各等级含义"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在pyproject.toml的[tool.radon]中配置了cc_threshold和mi_threshold参数以及exclude规则排除testing和docs目录"
+
+[[criterion]]
+name = "高复杂度函数重构"
+description = "[Explicit] 是否对报告中排名前三的高复杂度函数做实际的有意义拆分而非简单提取子函数。1:未做任何重构;2:仅重构了1个函数;3:重构了2-3个函数但拆分方式机械化;4:重构了3个函数且拆分基于业务逻辑理解;5:3个函数重构后复杂度显著下降且有测试验证不影响功能"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen重构了replay_engine_v3.py的run_backtest、paper_trading_v2.py和walk_forward.py中的高复杂度方法，将大函数按业务阶段拆分为多个子方法"
+
+[[criterion]]
+name = "复杂度门禁脚本"
+description = "[Explicit] 是否编写complexity_gate.py在新增代码引入超阈值函数时返回非零退出码并输出超标函数信息。1:未创建门禁脚本;2:脚本存在但不检查阈值;3:检查阈值但仅输出警告不返回非零退出码;4:超阈值返回非零退出码且输出具体函数名和复杂度值;5:非零退出码加JSON格式输出便于CI解析"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建scripts/complexity_gate.py检查项目中是否存在cc超过阈值的函数，超标时输出函数名和复杂度值并返回非零退出码"
+
+[[criterion]]
+name = "重构质量与业务理解"
+description = "[Implicit] 是否在重构高复杂度函数时体现了对业务逻辑的真正理解而非机械拆分。1:未做重构;2:简单按行数切割无业务语义;3:按执行阶段拆分但命名不够语义化;4:按业务流程拆分且子方法命名反映业务含义;5:业务语义拆分加接口抽象支持未来扩展"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen对三个高复杂度函数按执行阶段拆分，将run_backtest拆为初始化、数据准备、交易循环等子方法，拆分逻辑基本合理"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成复杂度分析系统的实现和重构。1:超过70次操作;2:50-70次操作有冗余;3:35-50次操作基本合理;4:20-35次操作路径清晰;5:20次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen共55次操作，Read 13次了解代码结构，Bash 19次反复运行radon验证重构效果，Edit 8次修改高复杂度函数，操作次数中等偏多"
