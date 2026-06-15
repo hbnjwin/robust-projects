@@ -1,0 +1,62 @@
+[[criterion]]
+name = "快照测试实现"
+description = "[Explicit] 是否用syrupy或pytest-snapshot实现ContractManager配置的快照测试并在CI中自动对比。1:未创建快照测试;2:创建了普通断言测试但未使用快照框架;3:使用快照框架但仅覆盖部分配置;4:快照覆盖完整配置含市场默认值和涨跌停参数;5:多维度快照（原始JSON、加载后配置、关键参数子集）分层保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude使用syrupy创建4个快照测试覆盖配置不同维度（raw_config_snapshot、loaded_configs_snapshot等），配置pytest.ini和conftest.py完整集成快照框架"
+
+[[criterion]]
+name = "快照更新确认机制"
+description = "[Explicit] 是否配置--snapshot-update显式确认变更且快照不匹配时测试自动失败。1:无快照对比机制;2:有对比但变更时自动更新不需确认;3:变更时测试失败但更新方式不够便捷;4:测试失败且通过--snapshot-update显式确认更新;5:测试失败加CI中阻断加更新命令提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude的快照测试配置变更后自动失败，开发者需要运行--snapshot-update显式确认，requirements.txt中包含syrupy依赖确保CI环境一致"
+
+[[criterion]]
+name = "配置验证脚本"
+description = "[Explicit] 是否编写validate_contract_settings.py检查JSON配置完整性（市场类型、费率范围、涨跌停幅度、lot_size）。1:未创建验证脚本;2:仅检查JSON格式是否合法;3:检查了2-3项业务规则;4:检查全部4项（市场类型默认值、费率范围、涨跌停幅度、lot_size倍数）;5:4项检查加详细错误报告含行号和修复建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude创建scripts/validate_contract_settings.py完整检查市场类型默认值存在性、fee_rate在0到0.01范围内、涨跌停幅度限制为0.1或0.2、lot_size为100倍数四项业务规则"
+
+[[criterion]]
+name = "Pre-commit Hook集成"
+description = "[Explicit] 是否在pre-commit中添加hook当contract_settings.json被修改时自动运行验证脚本。1:未配置pre-commit hook;2:有hook但未针对特定文件触发;3:hook针对JSON文件触发但未限定contract_settings.json;4:hook精确匹配contract_settings.json修改时触发validate脚本;5:hook触发验证加快照更新提醒"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude在.pre-commit-config.yaml中配置local hook精确匹配contract_settings.json的修改事件触发validate_contract_settings.py验证"
+
+[[criterion]]
+name = "配置Diff对比脚本"
+description = "[Explicit] 是否编写diff_contract_settings.py对比两个版本的配置文件并以人类可读方式展示差异。1:未创建diff脚本;2:脚本仅输出JSON diff原始格式;3:输出可读diff但未区分变更类型;4:区分新增、删除、修改且按股票代码组织展示;5:支持git版本对比和表格化输出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude创建scripts/diff_contract_settings.py支持两个文件路径对比，人类可读地展示每只股票规则的具体变化（新增/删除/修改）"
+
+[[criterion]]
+name = "测试基础设施"
+description = "[Implicit] 是否配置了完善的测试基础设施支持快照测试运行（conftest.py fixture、pytest配置、依赖声明）。1:无conftest和pytest配置;2:有基本conftest但缺少fixture;3:conftest含fixture但pytest配置不完整;4:conftest含contract_config_path和loaded_manager等fixture且pytest配置完整;5:完善的fixture加参数化支持和CI集成配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude创建conftest.py提供完整fixture支持，配置pytest.ini设定测试路径和快照选项，requirements.txt声明syrupy和pytest依赖"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成快照测试保护系统的实现。1:超过70次操作;2:50-70次操作有冗余;3:35-50次操作基本合理;4:20-35次操作路径清晰;5:20次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Claude共41次操作，Write 7次创建核心文件，Bash 14次运行测试验证快照功能，路径较为清晰"
