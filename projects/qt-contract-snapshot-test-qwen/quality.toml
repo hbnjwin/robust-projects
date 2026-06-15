@@ -1,0 +1,62 @@
+[[criterion]]
+name = "快照测试实现"
+description = "[Explicit] 是否用syrupy或pytest-snapshot实现ContractManager配置的快照测试并在CI中自动对比。1:未创建快照测试;2:创建了普通断言测试但未使用快照框架;3:使用快照框架但仅覆盖部分配置;4:快照覆盖完整配置含市场默认值和涨跌停参数;5:多维度快照（原始JSON、加载后配置、关键参数子集）分层保护"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen使用syrupy创建4个快照测试（原始JSON快照、已加载配置快照、涨跌停参数快照、字段范围检查），在tests/目录下生成__snapshots__目录存储快照数据"
+
+[[criterion]]
+name = "快照更新确认机制"
+description = "[Explicit] 是否配置--snapshot-update显式确认变更且快照不匹配时测试自动失败。1:无快照对比机制;2:有对比但变更时自动更新不需确认;3:变更时测试失败但更新方式不够便捷;4:测试失败且通过--snapshot-update显式确认更新;5:测试失败加CI中阻断加更新命令提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen的快照测试在配置变更后自动检测不匹配并失败，通过pytest --snapshot-update命令显式确认更新"
+
+[[criterion]]
+name = "配置验证脚本"
+description = "[Explicit] 是否编写validate_contract_settings.py检查JSON配置完整性（市场类型、费率范围、涨跌停幅度、lot_size）。1:未创建验证脚本;2:仅检查JSON格式是否合法;3:检查了2-3项业务规则;4:检查全部4项（市场类型默认值、费率范围、涨跌停幅度、lot_size倍数）;5:4项检查加详细错误报告含行号和修复建议"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建scripts/validate_contract_settings.py验证fee_rate范围(0到0.01)、涨跌停幅度仅允许0.1或0.2、lot_size为100倍数、市场类型完整性等业务规则"
+
+[[criterion]]
+name = "Pre-commit Hook集成"
+description = "[Explicit] 是否在pre-commit中添加hook当contract_settings.json被修改时自动运行验证脚本。1:未配置pre-commit hook;2:有hook但未针对特定文件触发;3:hook针对JSON文件触发但未限定contract_settings.json;4:hook精确匹配contract_settings.json修改时触发validate脚本;5:hook触发验证加快照更新提醒"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在.pre-commit-config.yaml中配置了local hook，当contract_settings.json被修改时自动运行validate_contract_settings.py脚本"
+
+[[criterion]]
+name = "配置Diff对比脚本"
+description = "[Explicit] 是否编写diff_contract_settings.py对比两个版本的配置文件并以人类可读方式展示差异。1:未创建diff脚本;2:脚本仅输出JSON diff原始格式;3:输出可读diff但未区分变更类型;4:区分新增、删除、修改且按股票代码组织展示;5:支持git版本对比和表格化输出"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建scripts/diff_contract_settings.py对比两份配置文件差异，按股票代码展示新增、删除和修改的规则变更"
+
+[[criterion]]
+name = "测试基础设施"
+description = "[Implicit] 是否配置了完善的测试基础设施支持快照测试运行（conftest.py fixture、pytest配置、依赖声明）。1:无conftest和pytest配置;2:有基本conftest但缺少fixture;3:conftest含fixture但pytest配置不完整;4:conftest含contract_config_path和loaded_manager等fixture且pytest配置完整;5:完善的fixture加参数化支持和CI集成配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建tests/conftest.py提供contract_config_path、raw_settings、loaded_manager等fixture，pyproject.toml配置testpaths和pythonpath"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成快照测试保护系统的实现。1:超过70次操作;2:50-70次操作有冗余;3:35-50次操作基本合理;4:20-35次操作路径清晰;5:20次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen共58次操作，Write 10次创建文件较多，Bash 19次用于反复测试验证，TaskUpdate 12次追踪进度，使用了EnterPlanMode先规划再实施"
