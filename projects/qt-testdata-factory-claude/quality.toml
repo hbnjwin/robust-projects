@@ -1,0 +1,53 @@
+[[criterion]]
+name = "MarketDataFactory核心实现"
+description = "[Explicit] 是否实现MarketDataFactory类能生成指定股票数量和日期范围的日线OHLCV数据且价格符合金融常识（开盘价在前收盘价附近、高低价包含开收盘、成交量随波动率正相关）。1:未创建工厂类;2:生成了DataFrame但价格关系不合理;3:OHLCV价格关系基本正确但成交量随机无关联;4:价格关系正确且成交量与波动率正相关支持随机种子;5:价格逻辑完整加支持自定义参数（波动率、起始价）"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude实现MarketDataFactory.create_ohlcv方法生成长格式OHLCV DataFrame，价格逻辑符合金融常识（open在prev_close附近跳空、high/low包含open和close），支持随机种子和自定义参数"
+
+[[criterion]]
+name = "预设行情场景方法"
+description = "[Explicit] 是否提供create_bull_market、create_crash_scenario、create_sideways_market、create_limit_up_down四个预设场景方法且各场景数据特征正确。1:未提供预设场景;2:仅实现1-2个场景;3:实现3个场景但特征不够明显;4:4个场景齐全且各具特征（如涨停场景有连续10%涨幅加缩量）;5:4个场景加场景可组合和自定义参数"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude实现四个预设场景方法，各场景数据特征明确——牛市持续上涨、崩盘急速下跌、横盘小幅震荡、涨跌停连续触及10%限制，场景参数可配置"
+
+[[criterion]]
+name = "FactorDataFactory实现"
+description = "[Explicit] 是否实现FactorDataFactory能生成与行情数据对齐的因子数据（momentum、volatility、turnover等列）且值域合理。1:未实现FactorDataFactory;2:实现了但因子列不完整;3:包含3个以上因子列且与行情数据日期对齐;4:因子列完整且值域在合理范围内;5:因子计算基于行情数据派生而非独立随机生成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude实现FactorDataFactory生成momentum、volatility、turnover等因子列，因子值基于行情数据特征派生保证语义合理性且与OHLCV数据日期完全对齐"
+
+[[criterion]]
+name = "现有测试文件重写"
+description = "[Explicit] 是否用工厂重写testing/下至少两个现有测试文件的硬编码数据并确认测试通过。1:未修改现有测试;2:修改了1个测试文件;3:修改了2个文件但测试未全部通过;4:修改了2个测试文件且测试全部通过;5:修改2个以上测试文件且通过率100%"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude重写了test_p0_t1_lotsize.py和test_phase1.py的硬编码DataFrame为工厂生成数据，确认测试全部通过"
+
+[[criterion]]
+name = "数据工厂可复现性"
+description = "[Implicit] 是否支持随机种子保证工厂生成的数据可复现且不同调用间结果一致。1:无种子支持;2:有种子参数但实现不正确;3:种子正确但仅对MarketDataFactory有效;4:MarketDataFactory和FactorDataFactory均支持种子且可复现;5:种子支持加数据一致性断言测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude的MarketDataFactory和FactorDataFactory均支持seed参数保证生成数据可复现，相同种子产出完全一致的DataFrame"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成测试数据工厂的实现。1:超过60次操作;2:40-60次操作有冗余;3:25-40次操作基本合理;4:15-25次操作路径清晰;5:15次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Claude共34次操作，Read 8次了解项目后Edit 9次高效修改，Bash 4次验证测试通过，路径清晰精准"
