@@ -1,0 +1,62 @@
+[[criterion]]
+name = "种子管理函数实现"
+description = "[Explicit] 是否在utils/seed.py中实现set_global_seed(seed)函数一次性设置random、numpy、torch（CPU+CUDA）和PYTHONHASHSEED。1:未创建种子管理函数;2:仅设置了1-2个随机源;3:设置了random和numpy但缺少torch CUDA种子;4:覆盖random、numpy、torch CPU+CUDA和PYTHONHASHSEED全部四类随机源;5:全部随机源加DataLoader worker种子函数seed_worker"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在utils/seed.py中实现set_global_seed函数覆盖random、numpy、torch CPU和全部CUDA设备、PYTHONHASHSEED，并提供seed_worker用于DataLoader worker进程的确定性种子派生"
+
+[[criterion]]
+name = "训练入口种子调用"
+description = "[Explicit] 是否在ml/trainer.py和gpu-train/win_gpu_common.py的训练开始时调用set_global_seed。1:均未调用;2:仅一处调用;3:两处都调用但种子值硬编码不可配置;4:两处调用且种子值来自配置参数;5:两处调用且种子值记录到训练日志便于复现"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在ml/trainer.py的train_all方法和gpu-train/win_gpu_common.py的fit_model开头均调用set_global_seed，种子值从config.GLOBAL_SEED获取，并额外修改了train_gru_gpu.py、train_gats_gpu.py、train_hist_gpu.py三个脚本"
+
+[[criterion]]
+name = "CUDNN确定性配置"
+description = "[Explicit] 是否设置torch.backends.cudnn.deterministic=True和benchmark=False确保GPU计算可复现。1:未设置CUDNN配置;2:仅设置了deterministic未关闭benchmark;3:deterministic和benchmark都设置但未调用use_deterministic_algorithms;4:三项配置齐全（deterministic、benchmark、use_deterministic_algorithms）;5:配置齐全且有性能影响的文档说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Qwen在set_global_seed中设置cudnn.deterministic=True、cudnn.benchmark=False和torch.use_deterministic_algorithms(True, warn_only=True)三项配置齐全"
+
+[[criterion]]
+name = "数据加载行序一致"
+description = "[Explicit] 是否修改ml/dataset.py在数据加载后按(ts_code, trade_date)排序确保行顺序一致。1:未修改dataset.py;2:修改了但排序字段不对;3:按正确字段排序但仅在部分数据加载路径;4:所有数据加载路径均按(ts_code, trade_date)排序;5:排序加数据完整性校验确保无缺失值影响排序"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen修改ml/dataset.py在数据加载后按ts_code和trade_date双字段排序，确保不同机器上DataFrame行顺序一致"
+
+[[criterion]]
+name = "可复现性验证测试"
+description = "[Explicit] 是否编写test_reproducibility.py用固定seed跑两次LightGBM小样本训练验证模型预测结果完全一致。1:未创建测试文件;2:创建了但测试逻辑不完整;3:测试完整但仅验证模型输出相近而非完全一致;4:验证两次训练的预测结果数组完全一致（np.array_equal或allclose）;5:验证预测一致且覆盖多种模型类型和edge case"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建testing/test_reproducibility.py用固定种子跑两次LightGBM训练验证预测结果一致性"
+
+[[criterion]]
+name = "种子架构集中化"
+description = "[Implicit] 是否将种子管理逻辑集中在少数核心位置而非分散修改多个文件。1:种子设置散落在超过8个文件中无统一入口;2:有统一函数但仍然在6-8个文件中重复调用;3:统一函数且调用点控制在4-5个文件;4:统一函数且通过修改共享模块将调用点控制在3个以内;5:统一函数加装饰器或上下文管理器模式零侵入"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen虽然创建了集中的utils/seed.py，但在10个文件中进行了修改，包括逐个修改train_gru_gpu.py、train_gats_gpu.py、train_hist_gpu.py三个独立GPU训练脚本，存在重复集成的冗余"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成种子管理系统的实现。1:超过70次操作含大量回退;2:50-70次操作有明显冗余;3:30-50次操作路径基本合理;4:15-30次操作路径清晰;5:15次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen共52次操作，其中Edit 21次（多次修改同一文件的不同位置），Read 13次，Bash 9次用于测试验证，操作次数偏多但最终完成了全面覆盖"
