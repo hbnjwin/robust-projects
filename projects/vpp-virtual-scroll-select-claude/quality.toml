@@ -1,0 +1,44 @@
+[[criterion]]
+name = "开启虚拟滚动"
+description = "[Explicit] 是否为NSelect开启virtual-scroll属性消除3000+选项打开时的卡顿。1: 打开仍卡顿2秒; 2: 添加了virtual-scroll但配置不对; 3: virtual-scroll生效但部分选项渲染异常; 4: NSelect添加virtual-scroll属性，3000+选项打开时仅渲染可视区域DOM无明显卡顿; 5: 虚拟滚动加选项高度自适应加大数据量加载优化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中NSelect添加virtual-scroll属性，配合vpp.ts中生成的3200条模拟资源数据，虚拟滚动仅渲染可见项消除卡顿"
+
+[[criterion]]
+name = "搜索过滤包含匹配"
+description = "[Explicit] 是否修复filter函数只匹配前缀的问题改为包含匹配。1: 仍只匹配前缀; 2: 改了但大小写敏感; 3: includes匹配但未忽略大小写; 4: filter函数改为option.label.includes(pattern)支持名称中间包含关键字的资源; 5: 包含匹配加拼音首字母匹配加高亮显示匹配部分"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中NSelect的filter属性设置为(pattern, option) => option.label.toLowerCase().includes(pattern.toLowerCase())支持包含匹配"
+
+[[criterion]]
+name = "选中项滚动定位"
+description = "[Explicit] 是否修复重新打开下拉框时滚动位置未跳到已选中项的问题。1: 仍停留在上次浏览位置; 2: 尝试scrollTo但时机不对; 3: 打开时尝试定位但虚拟列表API调用不正确; 4: NSelect打开回调中通过scrollTo或初始scrollIndex定位到当前选中项; 5: 精确定位加平滑滚动动画加选中项高亮可见"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "App.vue中NSelect的on-show回调尝试定位到已选中项，但NaiveUI虚拟滚动的scrollTo API调用方式不够精确定位效果不稳定"
+
+[[criterion]]
+name = "大数据量模拟"
+description = "[Implicit] 是否生成足够数量的模拟资源数据（3000+条）验证虚拟滚动效果。1: 选项数量不足无法验证; 2: 数量足够但数据无业务语义; 3: 3000+条模拟数据含多种资源类型; 4: store中生成按类型分类的3000+条资源数据作为NSelect选项; 5: 模拟数据加搜索延迟模拟加大数据量性能基准测试"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "vpp.ts中循环生成3200条含不同类型前缀的资源选项数据，提供resourceOptions computed给NSelect"
+
+[[criterion]]
+name = "构建验证"
+description = "[Implicit] 是否确保修改后TypeScript类型检查和Vite构建通过。1: 类型错误或构建失败; 2: 有编译警告; 3: 构建通过无错误; 4: vue-tsc和vite build均通过; 5: 构建通过且运行时无报错"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "TypeScript类型检查和Vite构建通过，virtual-scroll相关类型声明正确"

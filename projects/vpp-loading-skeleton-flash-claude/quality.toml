@@ -1,0 +1,44 @@
+[[criterion]]
+name = "骨架屏最小显示时长"
+description = "[Explicit] 是否为骨架屏添加最小显示时长（如300ms）防止加载太快时一闪而过。1: 骨架屏仍闪烁; 2: 添加了setTimeout但逻辑不对; 3: 实现了最小时长但与实际加载时间配合不当; 4: 创建composable记录加载开始时间，数据返回后计算剩余时间延迟隐藏骨架屏; 5: 最小时长可配置加自适应策略（快网络短延迟慢网络不延迟）"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useMinLoading.ts记录请求开始时间戳，resolve时计算elapsed与minDuration的差值，不足则setTimeout补齐，确保骨架屏至少显示300ms"
+
+[[criterion]]
+name = "加载失败骨架屏消失"
+description = "[Explicit] 是否修复加载数据失败时骨架屏永远不消失的问题。1: 失败时骨架屏仍不消失; 2: catch中设置loading=false但时机不对; 3: catch和finally中都处理了但有竞态; 4: 使用finally块确保无论成功失败isLoading都设为false; 5: finally加错误状态显示加重试按钮替代骨架屏"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "DashboardPage.vue中数据获取使用try/finally结构，finally块中统一设置loading=false，无论成功失败或异常都确保骨架屏消失"
+
+[[criterion]]
+name = "内容过渡动画"
+description = "[Explicit] 是否为骨架屏到真实内容的切换添加过渡效果避免突然弹出。1: 仍无过渡直接切换; 2: 添加了Transition但效果不明显; 3: Transition包裹了内容区但骨架屏切换无淡出; 4: 使用Vue Transition组件配合opacity或fade动画实现骨架屏淡出内容淡入; 5: 淡入淡出加骨架屏渐隐加内容区平滑展现"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "DashboardPage.vue中骨架屏和内容区都包裹在Transition组件内，mode=out-in确保骨架屏淡出后内容再淡入，过渡平滑"
+
+[[criterion]]
+name = "加载状态composable"
+description = "[Implicit] 是否将加载状态管理逻辑封装为可复用的composable。1: 各页面独立管理isLoading; 2: 提取了但接口不统一; 3: composable封装了基本的loading管理; 4: composable含最小时长和finally处理且多个页面复用; 5: composable加TypeScript泛型加错误状态管理加重试能力"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useMinLoading.ts composable封装完整的loading状态管理，DashboardPage和ResourceListPage复用同一逻辑"
+
+[[criterion]]
+name = "错误状态UI展示"
+description = "[Implicit] 是否在加载失败后显示错误提示或重试按钮而非空白内容。1: 失败后显示空白; 2: 有console.error但无UI提示; 3: 有错误提示文字但无重试按钮; 4: 加载失败时显示NResult错误状态含重试按钮; 5: 错误状态加具体错误原因加自动重试倒计时"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "加载失败后显示错误提示文字，但未提供重试按钮让用户主动重新加载"
