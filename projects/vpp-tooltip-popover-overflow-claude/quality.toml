@@ -1,0 +1,44 @@
+[[criterion]]
+name = "Popover挂载到body"
+description = "[Explicit] 是否修复NPopover被overflow:hidden截断的问题，将弹出层挂载到document.body。1: NPopover仍被截断; 2: 尝试修改overflow但影响表格布局; 3: 添加了to属性但值不对; 4: NPopover添加to=\"body\"属性使弹出层挂载到body脱离父容器的overflow限制; 5: to=body加定位补偿加弹出方向自动调整"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中NPopover设置to=\"body\"，弹出层渲染到body元素下脱离表格容器的overflow限制"
+
+[[criterion]]
+name = "Modal内Tooltip层级"
+description = "[Explicit] 是否修复NTooltip在NModal弹窗内被遮挡的z-index问题。1: tooltip仍显示在modal下面; 2: 手动设置z-index但值不对; 3: z-index设得很高但不够优雅; 4: NTooltip通过z-index属性或to=\"body\"确保层级高于NModal; 5: 层级管理全局化加自动z-index递增策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中Modal内的NTooltip使用to=\"body\"挂载并设置z-index高于NModal的默认值，确保tooltip始终可见"
+
+[[criterion]]
+name = "滚动跟随定位更新"
+description = "[Explicit] 是否修复表格滚动时NTooltip不跟随移动仍悬浮在原位的问题。1: tooltip仍停留在原位; 2: 监听了scroll但更新不及时; 3: scroll时强制重新计算但性能差; 4: NTooltip配合表格滚动事件在scroll时触发位置重算或关闭tooltip; 5: 虚拟定位更新加节流加滚动时临时隐藏tooltip"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中表格滚动时通过关闭并重新触发tooltip或使用NTooltip的updatePosition方法刷新定位，滚动后tooltip位置正确"
+
+[[criterion]]
+name = "弹出层统一配置"
+description = "[Implicit] 是否对系统中所有NTooltip和NPopover的挂载和层级做统一配置而非逐个修改。1: 每个tooltip逐个改; 2: 部分统一部分遗漏; 3: 通过NConfigProvider全局配置部分属性; 4: 使用NConfigProvider或全局默认props统一配置所有弹出层的to和z-index; 5: 全局配置加按场景覆写加层级管理策略文档"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "App.vue中多数弹出层通过手动添加to=\"body\"修复，未完全通过NConfigProvider全局化配置"
+
+[[criterion]]
+name = "修复验证完整性"
+description = "[Implicit] 是否验证修复后三种场景（overflow截断、Modal遮挡、滚动跟随）都正常工作。1: 仅修复未验证; 2: 验证了部分场景; 3: 三种场景代码修复完整但未运行验证; 4: 代码修复完整且通过构建验证; 5: 构建验证加浏览器实际测试三种场景截图确认"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中三种场景修复完整，vue-tsc和vite build通过验证"

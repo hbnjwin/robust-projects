@@ -1,0 +1,44 @@
+[[criterion]]
+name = "全量数据复制"
+description = "[Explicit] 是否修复复制只包含当前页数据的问题，改为复制筛选后的全部数据。1: 仍只复制当前页数据; 2: 复制全量但未经筛选; 3: 复制筛选后数据但分页参数干扰; 4: 复制函数接收filteredData而非分页后的tableData，输出所有匹配筛选条件的记录; 5: 全量复制加进度提示加大数据量分批处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useClipboardExport.ts的handleCopy方法接收filteredData参数，ResourceList.vue中传入computed的过滤后完整数据集，复制内容覆盖所有匹配记录"
+
+[[criterion]]
+name = "VNode文本提取"
+description = "[Explicit] 是否修复状态列NTag组件复制为[object Object]的问题，正确提取纯文本值。1: 仍输出[object Object]; 2: 用JSON.stringify但格式混乱; 3: 对render列做typeof判断但VNode提取不完整; 4: 为每列定义textValue提取函数，NTag类型的列直接返回原始状态文本而非VNode; 5: 通用的VNode转文本工具函数支持嵌套组件"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useClipboardExport.ts中为状态列定义专门的textExtractor函数，直接从数据源取原始状态字符串而非从render结果提取，避免VNode转换问题"
+
+[[criterion]]
+name = "Firefox剪贴板兼容"
+description = "[Explicit] 是否修复Firefox浏览器上复制无反应的问题，添加Clipboard API的fallback方案。1: Firefox上仍无反应; 2: 添加了try-catch但无fallback; 3: fallback到document.execCommand但实现不完整; 4: navigator.clipboard.writeText失败时fallback到创建textarea加execCommand(copy)的方案; 5: 双方案加用户反馈（成功提示或失败原因）"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useClipboardExport.ts中try块使用navigator.clipboard.writeText，catch块创建隐藏textarea设置value后execCommand(copy)再移除元素，两种方案都有成功/失败的message提示"
+
+[[criterion]]
+name = "复制结果反馈"
+description = "[Implicit] 是否在复制成功或失败后给用户明确的视觉反馈。1: 无任何反馈; 2: 仅console.log; 3: 成功时有提示但失败时无; 4: 成功时NMessage.success提示复制行数，失败时NMessage.error提示原因; 5: 反馈含复制行数和列数且按钮状态临时变为已复制"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "handleCopy成功后message.success显示已复制N行数据，失败后message.error显示复制失败请重试，用户始终有明确反馈"
+
+[[criterion]]
+name = "数据格式化导出"
+description = "[Implicit] 是否确保复制的Tab分隔文本包含表头行且数值列格式化为可读文本。1: 无表头行; 2: 有表头但列名为英文key; 3: 中文表头行加数据行但数值未格式化; 4: 首行为中文列标题，数据行中功率等数值列经过格式化，Tab分隔可直接粘贴Excel; 5: 格式化导出加CSV格式可选加编码处理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "useClipboardExport.ts输出首行为中文表头，数据行中数值列通过formatter函数转换为带单位的可读文本，Tab分隔格式可直接粘贴到Excel"
