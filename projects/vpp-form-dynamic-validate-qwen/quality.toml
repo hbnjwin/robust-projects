@@ -1,0 +1,44 @@
+[[criterion]]
+name = "动态验证规则切换"
+description = "[Explicit] 是否修复切换指令类型后旧字段的验证规则未清除导致已隐藏字段仍报错的问题。1: 切换后仍报旧字段验证错误; 2: 清除了部分规则但不完整; 3: rules改为computed但响应时机有延迟; 4: formRules改为computed属性根据当前commandType动态返回仅包含可见字段的规则; 5: 动态规则加切换时自动触发一次校验确保新字段即时反馈"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ControlCommand.vue中将formRules从静态对象改为computed属性，根据commandType.value动态返回当前类型对应的字段规则，切换后旧字段规则自动消失"
+
+[[criterion]]
+name = "错误提示清除"
+description = "[Explicit] 是否在切换指令类型时调用formRef.restoreValidation()清除残留的验证错误提示。1: 切换后旧错误提示仍残留; 2: 调用了restoreValidation但时机不对; 3: watch中调用但有时序问题偶尔残留; 4: watch commandType变化时立即调用formRef.value.restoreValidation()清除所有验证错误; 5: 清除错误加重置字段值加视觉过渡"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ControlCommand.vue中watch监听commandType变化，回调中调用formRef.value?.restoreValidation()清除所有残留的验证错误提示"
+
+[[criterion]]
+name = "v-for唯一key修复"
+description = "[Explicit] 是否将动态数组字段的v-for key从index改为唯一id防止删除中间项后验证规则错位。1: key仍用index验证错位; 2: 改了key但id生成不唯一; 3: 使用唯一id但NForm的path与数据不对应; 4: 每个数组项生成唯一id作为v-for key，NFormItemGi的path使用数组索引对应formData; 5: 唯一key加拖拽排序支持加动态添加删除动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ControlCommand.vue中频率阈值数组的v-for改用item.id作为key，但id生成使用自增计数器在删除后重新添加时可能与已删除项的id冲突"
+
+[[criterion]]
+name = "动态字段数据重置"
+description = "[Implicit] 是否在切换指令类型时重置表单字段值为新类型的默认值。1: 切换后旧字段值残留; 2: 重置了部分字段; 3: 重置所有字段但默认值不对; 4: watch commandType时将formData重置为当前类型的默认字段值; 5: 重置加保留公共字段值加切换确认提示"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ControlCommand.vue中watch commandType时重置了formData的字段，但公共字段（如指令名称）也被清空需要重新填写"
+
+[[criterion]]
+name = "表单提交数据正确性"
+description = "[Implicit] 是否确保提交时仅包含当前指令类型对应的参数字段且验证通过。1: 提交数据包含其他类型字段; 2: 字段过滤了但验证未触发; 3: formRef.validate()调用但动态字段路径不匹配; 4: 提交前validate通过后按当前类型筛选字段组装提交数据; 5: 字段筛选加提交loading加成功/失败反馈"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ControlCommand.vue中handleSubmit调用formRef.validate()但提交时直接发送完整formData未按当前指令类型过滤，导致调频类型的提交数据中仍包含调峰的目标功率和爬坡速率字段"

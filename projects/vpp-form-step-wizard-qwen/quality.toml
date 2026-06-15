@@ -1,0 +1,44 @@
+[[criterion]]
+name = "步骤切换状态保持"
+description = "[Explicit] 是否将v-if替换为v-show防止步骤切换时表单数据丢失。1: 仍用v-if切换步骤数据全丢; 2: 改用v-show但部分步骤仍用v-if; 3: 全部改为v-show但初始渲染性能未考虑; 4: 三个步骤内容都用v-show控制显隐，切回第一步时类型下拉框值保持; 5: v-show加首次渲染延迟加步骤间数据校验联动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ResourceWizard.vue中三个NStep对应的表单区域都改用v-show控制显隐，切回第一步时NSelect下拉框的值正确保持"
+
+[[criterion]]
+name = "确认页数值格式化"
+description = "[Explicit] 是否修复第三步确认页功率字段显示原始字符串而非格式化MW值的问题。1: 确认页仍显示原始数字; 2: 格式化了但单位转换系数错误; 3: 调用formatPowerMw但传参单位不对; 4: 确认页通过computed属性调用格式化函数将原始值转换为带单位的显示文本; 5: 所有数值字段都格式化且含单位和精度对齐"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "ResourceWizard.vue中确认页通过formattedPower计算属性调用formatPowerMw将kW原始值转换为MW格式化显示"
+
+[[criterion]]
+name = "提交失败保持步骤"
+description = "[Explicit] 是否修复网络请求失败后向导跳回第一步的问题，应保持在第三步显示错误提示。1: 失败后仍跳回第一步; 2: 不跳回但无错误提示; 3: catch中保持当前步骤但错误提示不明确; 4: catch中保持currentStep不变并通过NMessage或NAlert显示明确的错误提示让用户重试; 5: 错误提示加重试按钮加提交中loading状态防重复点击"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "ResourceWizard.vue中catch分支移除了currentStep.value=1的跳转，但未添加任何用户可见的错误提示，失败后表单保持在第三步但用户不知道发生了什么需要自行判断是否重试"
+
+[[criterion]]
+name = "NSteps组件集成"
+description = "[Implicit] 是否正确使用NaiveUI的NSteps组件控制步骤状态和进度显示。1: 未使用NSteps组件; 2: NSteps显示但current属性未绑定; 3: NSteps的current绑定currentStep但状态样式不准确; 4: NSteps正确显示当前步骤高亮且已完成步骤有对勾标记; 5: NSteps加步骤间校验（第一步必填项未填不能进第二步）"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ResourceWizard.vue使用NSteps组件绑定currentStep，步骤高亮正确但未实现步骤间的表单校验拦截"
+
+[[criterion]]
+name = "向导表单数据流"
+description = "[Implicit] 是否确保表单数据在三个步骤间正确共享且提交时包含完整字段。1: 各步骤独立formData提交时缺字段; 2: 共享formData但字段类型不一致; 3: 统一的reactive formData对象跨步骤共享; 4: 单一formData对象在三个步骤间共享且提交时包含所有字段类型正确; 5: 共享数据加TypeScript接口定义加提交前完整性校验"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "ResourceWizard.vue中使用单一reactive对象formData在三个步骤间共享数据，但提交时未做字段完整性的最终校验"
