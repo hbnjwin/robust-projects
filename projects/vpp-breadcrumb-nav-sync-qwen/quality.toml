@@ -1,0 +1,44 @@
+[[criterion]]
+name = "面包屑层级累加"
+description = "[Explicit] 是否修复面包屑只显示首页和当前页而丢失中间层级的问题。1: 面包屑仍丢失中间层级; 2: 手动拼接部分层级但不完整; 3: 基于页面层级关系表构建完整路径但配置有遗漏; 4: 建立页面层级关系映射，导航时根据当前页面递归查找父级生成完整面包屑路径; 5: 层级关系映射完整且支持动态页面如资源详情的参数化面包屑"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "navigation.ts中建立了页面层级关系，导航时递归查找父级生成面包屑数组，但对动态子页面如设备详情的层级关系配置不够完善"
+
+[[criterion]]
+name = "面包屑点击导航"
+description = "[Explicit] 是否修复点击面包屑中间层级不跳转页面的问题，将router.push改为activeMenu状态切换。1: 点击面包屑仍无反应; 2: 绑定了click但跳转方式不对; 3: NBreadcrumbItem的click事件改为修改activeMenu但未更新面包屑自身; 4: 点击面包屑项时同时更新activeMenu和面包屑路径，页面正确切换; 5: 导航切换加面包屑高亮加过渡动画"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "App.vue中NBreadcrumbItem绑定click事件修改activeMenu触发页面切换，但面包屑自身状态的同步更新有延迟"
+
+[[criterion]]
+name = "页面标题同步"
+description = "[Explicit] 是否修复document.title与当前页面不同步的问题。1: 标题仍不随页面切换更新; 2: 手动设置title但遗漏部分页面; 3: watch activeMenu变化时更新title但格式不统一; 4: 导航函数中根据页面名称统一设置document.title为\"虚拟电厂 - 页面名\"; 5: title同步加浏览器标签页favicon联动"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "App.vue中watch了activeMenu变化并更新document.title，但部分页面的中文名称映射不完整导致个别页面标题显示为英文key"
+
+[[criterion]]
+name = "导航状态管理架构"
+description = "[Implicit] 是否将面包屑和导航状态合理组织在store或composable中而非分散在组件内。1: 所有逻辑内联在App.vue模板中; 2: 提取了部分逻辑但状态分散; 3: 创建了导航相关的store或composable集中管理; 4: store中统一管理activeMenu和breadcrumbs和pageTitle的联动; 5: 导航store加TypeScript类型约束加组合式API封装"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "navigation.ts中集中管理了面包屑路径和层级关系，但activeMenu状态仍在App.vue中单独管理未完全统一"
+
+[[criterion]]
+name = "构建验证"
+description = "[Implicit] 是否确保修改后TypeScript类型检查和Vite构建通过。1: 存在类型错误或构建失败; 2: 构建通过但有类型警告; 3: 构建通过无错误; 4: vue-tsc和vite build都通过无错误; 5: 构建通过且生产包体积合理"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "vue-tsc类型检查和vite build构建均通过无错误"
