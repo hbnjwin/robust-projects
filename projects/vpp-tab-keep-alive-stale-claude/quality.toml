@@ -1,0 +1,44 @@
+[[criterion]]
+name = "activated数据刷新"
+description = "[Explicit] 是否在keep-alive缓存的组件中使用activated钩子刷新数据，解决切回标签页显示旧数据的问题。1: 切回仍显示旧数据; 2: 使用了onActivated但未调用数据获取函数; 3: onActivated中调用了数据刷新但部分页面遗漏; 4: 所有缓存页面的onActivated钩子中都调用数据获取函数刷新最新数据; 5: activated刷新加loading状态加增量更新而非全量替换"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "所有缓存页面组件（DashboardPage、TradingPage、ResourcePage）的onActivated钩子中都调用各自的fetchData方法刷新数据"
+
+[[criterion]]
+name = "keep-alive缓存数量限制"
+description = "[Explicit] 是否为keep-alive设置max属性限制缓存组件数量防止内存持续增长。1: 未设置max内存持续增长; 2: 设置了max但值过大无效; 3: max设置合理但超出max时LRU淘汰策略未验证; 4: keep-alive设置max=5或合理值，超出时自动淘汰最久未使用的缓存; 5: max限制加内存监控加用户可配置缓存策略"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中keep-alive设置max=5，最多缓存5个页面组件实例，超出时自动按LRU策略清除最久未访问的缓存"
+
+[[criterion]]
+name = "关闭标签清除缓存"
+description = "[Explicit] 是否在关闭标签页时同步从keep-alive的include列表移除组件名使缓存被清除。1: 关闭后重新打开仍显示旧状态; 2: 从tabs中移除但include未同步; 3: include列表同步更新但缓存清除有延迟; 4: 关闭标签时同时从tabs数组和include列表移除组件名，keep-alive自动销毁对应缓存; 5: 缓存清除加滚动位置重置加组件状态完全初始化"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "App.vue中keep-alive的include绑定为computed属性依赖tabs数组，关闭标签时tabs.splice移除后include自动更新，对应缓存被销毁"
+
+[[criterion]]
+name = "标签页组件命名"
+description = "[Implicit] 是否为缓存页面组件正确设置name属性使keep-alive的include能精确匹配。1: 组件无name导致include无效; 2: 部分组件有name但与include不一致; 3: 所有组件defineOptions设置name但个别拼写不匹配; 4: 所有缓存页面通过defineOptions设置与include列表一致的组件名; 5: 组件命名规范加自动化校验防止不匹配"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "所有页面组件通过defineOptions({ name: \"XxxPage\" })设置name，与keep-alive include中的字符串精确匹配"
+
+[[criterion]]
+name = "改动范围合理性"
+description = "[Implicit] 是否将修复控制在合理范围内避免过度架构变更。1: 引入新依赖改动超过10个文件; 2: 改动5-10个文件; 3: 改动3-5个文件基本围绕修复; 4: 改动2-3个核心文件精准定位; 5: 最小改动且无新依赖"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "修改App.vue和3个页面组件共4个文件，在现有结构上添加activated钩子和keep-alive配置，未引入新依赖"
