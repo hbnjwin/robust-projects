@@ -1,0 +1,62 @@
+[[criterion]]
+name = "Dockerfile构建规范"
+description = "[Explicit] 是否基于python 3.11-slim编写Dockerfile并正确安装项目依赖设置WORKDIR。1:未创建Dockerfile;2:创建了但基础镜像错误或未安装依赖;3:基础镜像正确且安装了依赖但缺少系统库（如libpq-dev）;4:完整Dockerfile含系统库安装和pip依赖和WORKDIR设置;5:多阶段构建优化镜像体积且有.dockerignore配合"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建了基于python 3.11-slim的Dockerfile，安装gcc和libpq系统依赖后pip install requirements-docker.txt，设置WORKDIR，配合.dockerignore排除git/venv/数据文件"
+
+[[criterion]]
+name = "双服务编排配置"
+description = "[Explicit] 是否编写docker-compose.yml定义app和postgres两个服务且postgres使用15-alpine镜像并初始化时自动创建quant_tulin数据库。1:未创建docker-compose.yml;2:只有单服务缺少postgres;3:双服务但postgres未配置自动建库;4:双服务且postgres通过环境变量POSTGRES_DB自动创建quant_tulin库;5:双服务含健康检查和启动依赖顺序和网络配置"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen的docker-compose.yml定义app和postgres双服务，postgres使用15-alpine通过POSTGRES_DB环境变量创建quant_tulin库，但app服务的depends_on未配置healthcheck条件"
+
+[[criterion]]
+name = "开发热重载与环境隔离"
+description = "[Explicit] 是否通过volumes挂载实现源码热重载且环境变量通过.env文件传入而非硬编码。1:无volumes挂载也无.env;2:有volumes但.env中包含真实密码提交到仓库;3:有volumes和.env.example但.env未加入gitignore;4:volumes挂载正确且仅提供.env.example模板不含真实值;5:完整的环境隔离含.env.example模板和.gitignore排除.env和文档说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen创建了volumes挂载实现热重载，但同时创建了.env文件包含实际PG连接参数和Tushare Token值，存在密钥泄露风险，虽然也提供了.env.example模板"
+
+[[criterion]]
+name = "数据库Schema初始化"
+description = "[Explicit] 是否创建init_db.sql包含从dao/和data/目录提取的PostgreSQL表结构并在postgres首次启动时自动执行。1:未创建init_db.sql;2:创建了但表结构不完整仅1-2张表;3:包含3-4张核心表结构;4:包含5-6张表且通过docker-entrypoint-initdb.d自动执行;5:完整表结构含索引定义和外键约束和注释"
+type = "likert"
+points = 5
+weight = 1.0
+score = 4
+rationale = "Qwen通过分析data/db.py、dao/postgres_dao.py、testing/create_sim_tables.py等源文件提取了6张表的DDL（daily_price、stock_daily_kline、kline_1min、sim_runs、sim_daily、sim_trades），挂载到docker-entrypoint-initdb.d自动执行"
+
+[[criterion]]
+name = "Makefile快捷命令"
+description = "[Explicit] 是否在Makefile中定义docker-up、docker-test、docker-down三个快捷命令。1:未创建Makefile;2:创建了但缺少核心命令;3:包含docker-up和docker-down但缺少docker-test;4:三个核心命令齐全;5:三个核心命令加额外辅助命令如shell/logs/rebuild"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen的Makefile定义了docker-up、docker-down、docker-test三个核心命令，docker-test在容器内执行pytest"
+
+[[criterion]]
+name = "快速启动文档"
+description = "[Explicit] 是否在README中编写Quick Start说明三步启动开发环境。1:未修改README;2:README提及Docker但无具体步骤;3:有步骤但超过三步或缺少前置条件说明;4:清晰的三步启动说明含前置条件;5:三步说明加常见问题排查和架构图"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在README.md中编写了Quick Start章节，包含三步启动说明（clone、复制.env、docker-compose up），有基本的前置条件说明"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成Docker开发环境的创建。1:超过60次操作含大量无效探索;2:40-60次操作有明显冗余;3:20-40次操作路径基本合理;4:10-20次操作路径清晰高效;5:10次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen共44次操作，其中Read 15次和Glob 8次用于分析源码提取表结构和依赖信息，Write 9次创建文件，虽然源码分析较彻底但操作次数偏多"
