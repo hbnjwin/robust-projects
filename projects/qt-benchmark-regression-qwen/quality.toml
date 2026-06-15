@@ -1,0 +1,53 @@
+[[criterion]]
+name = "基准测试用例编写"
+description = "[Explicit] 是否在testing/test_benchmarks.py中对四个性能敏感路径编写benchmark测试（ReplayEngineV3.run_backtest、DailyMatcher.match、PortfolioOptimizer.optimize、rolling_sharpe）。1:未创建benchmark测试;2:仅覆盖1-2个路径;3:覆盖3个路径;4:覆盖全部4个性能敏感路径;5:4个路径加参数化不同数据规模"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建testing/test_benchmarks.py包含4个基准测试，分别覆盖ReplayEngineV3.run_backtest（30天50只股票）、DailyMatcher.match（100笔订单）、PortfolioOptimizer.optimize（20只股票）和rolling_sharpe（1000行数据）"
+
+[[criterion]]
+name = "Benchmark输出配置"
+description = "[Explicit] 是否配置pytest-benchmark的JSON输出到.benchmarks/目录并启用--benchmark-compare和--benchmark-autosave。1:未配置输出;2:有JSON输出但目录不对;3:JSON输出到.benchmarks/但未配置compare和autosave;4:JSON输出加compare和autosave配置在pyproject.toml中;5:完整配置加.gitignore排除benchmark数据"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在pyproject.toml中配置pytest-benchmark的JSON输出保存到.benchmarks/目录，启用autosave和compare功能，并在.gitignore中排除.benchmarks/目录"
+
+[[criterion]]
+name = "性能退化检测脚本"
+description = "[Explicit] 是否编写benchmark_check.py对比两次benchmark结果当mean时间退化超过20%时返回非零退出码并输出退化详情。1:未创建检测脚本;2:脚本存在但不对比JSON结果;3:对比了但阈值硬编码且输出不清晰;4:正确对比两次结果超20%退化返回非零退出码输出具体退化项和百分比;5:对比加趋势分析支持自定义阈值"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen创建scripts/benchmark_check.py读取.benchmarks/目录下两次JSON结果对比mean时间，退化超过20%时输出具体项和退化百分比并返回非零退出码"
+
+[[criterion]]
+name = "Benchmark Marker配置"
+description = "[Explicit] 是否在conftest.py中注册pytest.mark.benchmark_suite marker方便单独运行性能测试。1:未添加marker;2:添加了marker但未在conftest注册;3:注册了marker但test_benchmarks.py未使用;4:conftest注册marker且test_benchmarks.py中使用方便-m筛选;5:marker注册加pyproject.toml中配置markers说明"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在conftest.py中注册benchmark_suite marker，test_benchmarks.py的测试函数使用@pytest.mark.benchmark_suite装饰器，可通过-m benchmark_suite单独运行"
+
+[[criterion]]
+name = "rolling_sharpe函数补充"
+description = "[Implicit] 是否在factor_lib/ts_factors.py中补充了rolling_sharpe函数实现以支持benchmark测试。1:未补充直接引用导致测试失败;2:补充了但实现逻辑错误;3:实现正确但缺少参数验证;4:实现正确含window和annualize参数;5:实现正确加边界处理和文档"
+type = "likert"
+points = 5
+weight = 1.0
+score = 3
+rationale = "Qwen在factor_lib/ts_factors.py中补充了rolling_sharpe函数实现，支持window窗口大小和年化参数"
+
+[[criterion]]
+name = "执行路径效率"
+description = "[Implicit] 是否以高效路径完成性能基准测试系统的实现。1:超过70次操作;2:50-70次操作有冗余;3:35-50次操作基本合理;4:20-35次操作路径清晰;5:20次以内精准完成"
+type = "likert"
+points = 5
+weight = 1.0
+score = 2
+rationale = "Qwen共62次操作，Read 23次大量阅读源码了解项目结构，Bash 13次反复运行测试，Edit 5次和Write 4次修改文件，阅读操作占比过高"
